@@ -3,144 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Random Picker Final</title>
+    <title>Picker Pro</title>
     <style>
         :root {
             --primary: #00ce7a; 
             --secondary: #2196d3; 
             --bg: #1e1e1e; 
             --btn-gray: #333333;
-            --text: #ffffff;
         }
 
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: var(--bg); color: var(--text);
-            font-family: sans-serif; overflow: hidden;
+            background-color: var(--bg); color: #ffffff;
+            font-family: -apple-system, sans-serif; overflow: hidden;
         }
 
-        .main-wrapper {
-            position: relative;
-            height: 100vh; width: 100%;
-            display: flex; flex-direction: column;
-            align-items: center;
-            padding-top: 20px;
+        .container {
+            position: relative; height: 100vh; width: 100%;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- HAUT --- */
+        /* --- NAVIGATION EN HAUT --- */
+        .nav-top {
+            width: 90%; display: flex; gap: 12px; margin-top: 15px;
+        }
+
+        .btn-grey {
+            flex: 1; padding: 14px; border-radius: 12px;
+            border: none; background: var(--btn-gray); color: white;
+            font-weight: bold; font-size: 0.85rem;
+        }
+
+        /* --- AFFICHAGE CENTRAL --- */
         #count-info {
             background: rgba(33, 150, 211, 0.2); color: #3498db;
-            padding: 6px 20px; border-radius: 20px; font-weight: bold;
+            padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 20px; font-size: 0.9rem;
         }
 
-        .label-encours {
-            color: #3498db; font-weight: bold; font-size: 0.8rem;
-            margin: 20px 0 10px 0; text-transform: uppercase;
+        .title-session {
+            color: #3498db; font-weight: bold; font-size: 0.75rem;
+            margin: 15px 0; text-transform: uppercase; letter-spacing: 1px;
         }
 
         #current-players {
             display: flex; flex-wrap: wrap; justify-content: center;
-            gap: 10px; padding: 0 15px; width: 100%;
+            gap: 10px; padding: 0 10px; width: 100%;
         }
 
-        .player-badge {
+        .badge {
             background: var(--secondary); padding: 10px 20px;
             border-radius: 40px; font-weight: bold; font-size: 1rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        /* --- MILIEU (BOUTON VERT) --- */
-        .middle-zone {
-            position: absolute; top: 55%; left: 50%;
-            transform: translate(-50%, -50%);
+        /* --- BOUTON VERT --- */
+        .btn-center-wrapper {
+            position: absolute; bottom: 15%; left: 50%;
+            transform: translateX(-50%);
         }
         
         .roll-btn {
             width: 140px; height: 140px; border-radius: 50%;
             border: none; background: var(--primary); color: white;
-            font-weight: 800; font-size: 1rem;
-            box-shadow: 0 0 30px rgba(0, 206, 122, 0.3);
-            cursor: pointer;
-        }
-
-        /* --- BAS (BOUTONS GRIS) --- */
-        .bottom-zone {
-            position: absolute; bottom: 25px;
-            width: 90%; display: flex; gap: 10px;
-        }
-
-        .btn-nav {
-            flex: 1; padding: 18px; border-radius: 12px;
-            border: none; background: var(--btn-gray); color: white;
-            font-weight: bold; font-size: 0.9rem;
+            font-weight: 800; font-size: 0.95rem; cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 206, 122, 0.4);
         }
 
         /* --- MODALES --- */
-        .modal-overlay {
+        .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; z-index: 1000;
+            background: rgba(0,0,0,0.85); display: none; z-index: 1000;
         }
 
-        .modal-content {
+        .modal {
             position: absolute; bottom: 0; width: 100%; height: 85vh;
-            background: #ffffff; color: #1e1e1e; border-radius: 25px 25px 0 0;
+            background: #ffffff; border-radius: 25px 25px 0 0;
             padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
         }
 
-        #list-container, #stats-display {
-            flex: 1; overflow-y: auto; margin-top: 15px;
-        }
+        #list-p, #list-stats { flex: 1; overflow-y: auto; margin-top: 15px; }
 
         /* Participants 2 colonnes */
-        #list-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .p-card { display: flex; align-items: center; background: #f2f2f2; padding: 10px; border-radius: 10px; color: #333; }
 
-        .item {
-            display: flex; align-items: center; background: #f4f4f4;
-            padding: 12px; border-radius: 10px;
+        /* Stats lignes */
+        .stat-row { 
+            display: flex; align-items: center; 
+            padding: 12px 5px; border-bottom: 1px solid #eee; 
+            color: #000000;
         }
+        .stat-name { flex: 1; font-weight: 600; }
+        .stat-games { font-weight: bold; margin-right: 15px; }
+        .stat-mix { color: #555555; font-size: 0.9rem; width: 30px; text-align: right; }
 
-        .stat-line {
-            display: flex; justify-content: space-between; padding: 15px;
-            border-bottom: 1px solid #eee; color: #333; font-size: 1rem;
-        }
-
-        input[type="checkbox"] { width: 22px; height: 22px; margin-right: 10px; }
-        .close-btn { align-self: flex-end; font-size: 28px; border: none; background: none; color: #333; font-weight: bold; }
+        .close-x { align-self: flex-end; font-size: 28px; border: none; background: none; color: #333; font-weight: bold; }
+        h2 { margin: 0; color: #000000; font-size: 1.3rem; }
+        .total-info { color: #666; font-size: 0.9rem; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="main-wrapper">
+    <div class="container">
+        <div class="nav-top">
+            <button class="btn-grey" onclick="openM('modal-p')">Participants</button>
+            <button class="btn-grey" onclick="openM('modal-s')">Stats</button>
+        </div>
+
         <div id="count-info">Nous sommes : 0</div>
-        <div class="label-encours">PARTIE EN COURS</div>
+        <div class="title-session">PARTIE EN COURS</div>
         <div id="current-players"></div>
 
-        <div class="middle-zone">
-            <button class="roll-btn" onclick="executeRoll()">PROCHAINE<br>PARTIE</button>
-        </div>
-
-        <div class="bottom-zone">
-            <button class="btn-nav" onclick="toggleModal('modal-participants', true)">Participants</button>
-            <button class="btn-nav" onclick="toggleModal('modal-stats', true)">Stats</button>
+        <div class="btn-center-wrapper">
+            <button class="roll-btn" onclick="tirage()">PROCHAINE<br>PARTIE</button>
         </div>
     </div>
 
-    <div id="modal-participants" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-btn" onclick="toggleModal('modal-participants', false)">✕</button>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="new-name" placeholder="Nom..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc; font-size: 16px;">
-                <button onclick="addNewName()" style="background:var(--primary); color:white; border:none; padding:0 20px; border-radius:10px; font-weight:bold; font-size:20px;">+</button>
+    <div id="modal-p" class="overlay">
+        <div class="modal">
+            <button class="close-x" onclick="closeM('modal-p')">✕</button>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="add-input" placeholder="Ajouter un nom..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc; font-size: 16px;">
+                <button onclick="addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold; font-size:20px;">+</button>
             </div>
-            <div id="list-container"></div>
+            <div id="list-p"></div>
         </div>
     </div>
 
-    <div id="modal-stats" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-btn" onclick="toggleModal('modal-stats', false)">✕</button>
-            <h2 style="margin:0; color:#333;">Statistiques</h2>
-            <div id="stats-display"></div>
+    <div id="modal-s" class="overlay">
+        <div class="modal">
+            <button class="close-x" onclick="closeM('modal-s')">✕</button>
+            <h2 id="total-title">Total parties : 0</h2>
+            <div id="list-stats"></div>
         </div>
     </div>
 
@@ -148,95 +142,120 @@
         const initialNames = ["Eric", "Danièle", "René", "Louis", "Madeleine", "Antoine", "Patrice", "Eliott", "Henrick", "Yann", "Philippe O", "Philippe M", "Damien", "Patricia L", "Valérie", "Geoffrey", "Michèle", "Patricia C", "Sébastien", "Lysiane", "Rolande", "Jean-Pierre", "Jean-Marie"];
         const excluded = ["Philippe M", "Michèle", "Rolande", "Jean-Pierre", "Jean-Marie"];
 
-        let participants = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 9), name: n, active: !excluded.includes(n) }));
-        let stats = {};
-        let poolEnJeu = [], poolIndispo = [];
+        let players = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 5), name: n, active: !excluded.includes(n) }));
+        let scores = {};
+        let mixScores = {};
+        let encounters = {};
+        let totalGames = 0;
+        let currentPool = [], lastPool = [];
 
-        initialNames.forEach(n => stats[n] = { games: 0 });
+        initialNames.forEach(n => {
+            scores[n] = 0;
+            mixScores[n] = 0;
+            encounters[n] = {};
+        });
 
-        function getMinScoreExcluding(name) {
-            const others = participants.filter(p => p.active && p.name !== name);
-            return others.length ? Math.min(...others.map(p => stats[p.name].games)) : 0;
+        function getMinScore() {
+            const active = players.filter(p => p.active);
+            return active.length ? Math.min(...active.map(p => scores[p.name])) : 0;
         }
 
-        function updateLists() {
-            participants.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
-            const container = document.getElementById('list-container');
+        function updateUI() {
+            const container = document.getElementById('list-p');
             container.innerHTML = '';
-            let activeCount = 0;
-            participants.forEach(p => {
-                if (p.active) activeCount++;
-                const div = document.createElement('div');
-                div.className = 'item';
-                div.innerHTML = `<input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleP('${p.id}')"><span style="font-weight:600; font-size:0.9rem;">${p.name}</span>`;
-                container.appendChild(div);
+            let count = 0;
+            players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+                if(p.active) count++;
+                const d = document.createElement('div');
+                d.className = 'p-card';
+                d.innerHTML = `<input type="checkbox" ${p.active?'checked':''} onchange="toggleP('${p.id}')"> <span style="flex:1; overflow:hidden; text-overflow:ellipsis; font-size:0.85rem;">${p.name}</span>`;
+                container.appendChild(d);
             });
-            document.getElementById('count-info').innerText = `Nous sommes : ${activeCount}`;
+            document.getElementById('count-info').innerText = `Nous sommes : ${count}`;
         }
 
         function toggleP(id) {
-            const p = participants.find(x => x.id === id);
+            const p = players.find(x => x.id === id);
             if(p) {
                 p.active = !p.active;
-                if (p.active) stats[p.name].games = getMinScoreExcluding(p.name);
-                updateLists();
+                if(p.active) {
+                    scores[p.name] = getMinScore();
+                    mixScores[p.name] = 0;
+                }
+                updateUI();
             }
         }
 
-        function addNewName() {
-            const val = document.getElementById('new-name').value.trim();
-            if(val) {
-                const score = getMinScoreExcluding("");
-                participants.push({ id: Date.now().toString(), name: val, active: true });
-                stats[val] = { games: score };
-                document.getElementById('new-name').value = '';
-                updateLists();
+        function addPlayer() {
+            const input = document.getElementById('add-input');
+            const name = input.value.trim();
+            if(name) {
+                const min = getMinScore();
+                players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
+                scores[name] = min;
+                mixScores[name] = 0;
+                encounters[name] = {};
+                input.value = '';
+                updateUI();
             }
         }
 
-        function executeRoll() {
-            const activeNames = participants.filter(p => p.active).map(p => p.name);
-            let candidates = activeNames.filter(n => !poolEnJeu.includes(n) && !poolIndispo.includes(n));
-            if (candidates.length < 5) candidates.push(...poolIndispo.filter(n => activeNames.includes(n)));
-            if (candidates.length < 5) return;
+        function tirage() {
+            const activeNames = players.filter(p => p.active).map(p => p.name);
+            let candidates = activeNames.filter(n => !currentPool.includes(n) && !lastPool.includes(n));
+            if(candidates.length < 5) candidates = activeNames.filter(n => !currentPool.includes(n));
+            if(candidates.length < 5) candidates = activeNames;
 
-            candidates.sort((a, b) => stats[a].games - stats[b].games || Math.random() - 0.5);
-            let selection = candidates.slice(0, 5);
+            candidates.sort((a,b) => scores[a] - scores[b] || Math.random() - 0.5);
+            const selection = candidates.slice(0, 5);
 
-            poolIndispo = [...poolEnJeu];
-            poolEnJeu = [...selection];
-            selection.forEach(p => stats[p].games++);
-            renderDisplay();
-        }
+            lastPool = [...currentPool];
+            currentPool = [...selection];
+            totalGames++;
 
-        function renderDisplay() {
-            const container = document.getElementById('current-players');
-            container.innerHTML = '';
-            poolEnJeu.forEach(name => {
-                const d = document.createElement('div');
-                d.className = 'player-badge'; d.innerText = name;
-                container.appendChild(d);
+            selection.forEach(n => {
+                scores[n]++;
+                const others = selection.filter(other => other !== n);
+                others.forEach(partner => {
+                    const met = encounters[n][partner] || 0;
+                    if(met > 0) mixScores[n] -= met;
+                    encounters[n][partner] = met + 1;
+                });
+            });
+            
+            const display = document.getElementById('current-players');
+            display.innerHTML = '';
+            selection.forEach(n => {
+                const b = document.createElement('div');
+                b.className = 'badge'; b.innerText = n;
+                display.appendChild(b);
             });
         }
 
         function renderStats() {
-            const container = document.getElementById('stats-display');
+            document.getElementById('total-title').innerText = `Total parties : ${totalGames}`;
+            const container = document.getElementById('list-stats');
             container.innerHTML = '';
-            const activeNames = participants.filter(p => p.active).map(p => p.name);
-            activeNames.sort((a,b) => a.localeCompare(b)).forEach(name => {
+            players.filter(p => p.active).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
                 const row = document.createElement('div');
-                row.className = 'stat-line';
-                row.innerHTML = `<span>${name}</span> <b>${stats[name].games}</b>`;
+                row.className = 'stat-row';
+                row.innerHTML = `
+                    <span class="stat-name">${p.name}</span>
+                    <span class="stat-games">${scores[p.name]}</span>
+                    <span class="stat-mix">${mixScores[p.name]}</span>
+                `;
                 container.appendChild(row);
             });
         }
 
-        function toggleModal(id, show) {
-            document.getElementById(id).style.display = show ? 'block' : 'none';
-            if(show && id === 'modal-stats') renderStats();
+        function openM(id) { 
+            document.getElementById(id).style.display = 'block'; 
+            if(id === 'modal-s') renderStats();
+            if(id === 'modal-p') updateUI();
         }
+        function closeM(id) { document.getElementById(id).style.display = 'none'; }
 
-        updateLists();
+        updateUI();
     </script>
 </body>
 </html>
