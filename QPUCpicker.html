@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Random Picker - Équité Corrigée</title>
+    <title>Random Picker - Compact</title>
     <style>
         :root {
             --primary: #2ecc71; --secondary: #3498db; --danger: #e74c3c;
@@ -14,54 +14,93 @@
             color: var(--text); margin: 0; display: flex; flex-direction: column;
             height: 100vh; overflow: hidden; align-items: center;
         }
-        #display-area { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; padding: 20px; }
-        #count-info { background: rgba(52, 152, 219, 0.2); padding: 5px 15px; border-radius: 15px; font-size: 0.9rem; color: var(--secondary); margin-bottom: 10px; font-weight: bold; }
-        #current-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; min-height: 120px; }
-        .player-badge { background: var(--secondary); padding: 12px 20px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        /* Zone d'affichage réduite pour remonter le bouton vert */
+        #display-area { 
+            flex: 0 1 auto; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            width: 100%; 
+            padding: 10px 20px; 
+            margin-top: 10px;
+        }
+
+        #count-info { background: rgba(52, 152, 219, 0.2); padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; color: var(--secondary); margin-bottom: 5px; font-weight: bold; }
+        
+        #current-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 100px; }
+        
+        .player-badge { background: var(--secondary); padding: 8px 16px; border-radius: 30px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); animation: popIn 0.4s; }
+        
         @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        #control-area { padding: 20px; }
-        .roll-btn { width: 140px; height: 140px; border-radius: 50%; border: none; background: var(--primary); color: white; font-weight: bold; font-size: 1rem; text-transform: uppercase; box-shadow: 0 0 25px rgba(46, 204, 113, 0.3); cursor: pointer; }
-        #footer { padding: 15px; width: 100%; box-sizing: border-box; display: flex; gap: 10px; }
-        .btn-nav { flex: 1; padding: 15px; border-radius: 12px; border: none; background: var(--card); color: white; font-weight: bold; }
+
+        /* Positionnement du bouton vert */
+        #control-area { padding: 10px; }
+        .roll-btn { 
+            width: 120px; height: 120px; border-radius: 50%; border: none; 
+            background: var(--primary); color: white; font-weight: bold; 
+            font-size: 0.9rem; text-transform: uppercase; 
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3); cursor: pointer; 
+        }
+
+        /* Pied de page remonté */
+        #footer { padding: 10px; width: 100%; box-sizing: border-box; display: flex; gap: 10px; margin-bottom: 5px; }
+        .btn-nav { flex: 1; padding: 12px; border-radius: 12px; border: none; background: var(--card); color: white; font-weight: bold; font-size: 0.8rem; }
+
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 1000; }
-        .modal-content { position: absolute; bottom: 0; width: 100%; height: 85vh; background: #fff; color: #333; border-radius: 25px 25px 0 0; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
-        #list-container, #stats-container { overflow-y: auto; flex: 1; }
-        .item { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
-        input[type="checkbox"] { width: 28px; height: 28px; cursor: pointer; }
-        .name { flex: 1; margin: 0 15px; font-size: 1.1rem; }
-        .stat-header { display: flex; font-weight: bold; font-size: 0.8rem; color: #666; padding: 10px 0; border-bottom: 2px solid #eee; }
-        .stat-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-        .col-name { flex: 2; font-weight: bold; }
+        .modal-content { position: absolute; bottom: 0; width: 100%; height: 85vh; background: #fff; color: #333; border-radius: 20px 20px 0 0; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; }
+        
+        /* 2 Colonnes pour les participants */
+        #list-container { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            overflow-y: auto; 
+            flex: 1; 
+            padding-top: 10px;
+        }
+        
+        #stats-container { overflow-y: auto; flex: 1; }
+
+        .item { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9; border-radius: 8px; }
+        input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; }
+        .name { flex: 1; margin: 0 8px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .del-btn { color: var(--danger); border: none; background: none; font-size: 1.4rem; padding: 0 5px; }
+
+        .stat-header { display: flex; font-weight: bold; font-size: 0.75rem; color: #666; padding: 8px 0; border-bottom: 2px solid #eee; }
+        .stat-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .col-name { flex: 2; font-weight: bold; font-size: 0.9rem; }
         .col-games { flex: 1; text-align: center; }
         .col-mix { flex: 1; text-align: center; color: var(--mix); font-weight: bold; }
-        .total-parties { background: var(--bg); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
-        .close-btn { align-self: flex-end; font-size: 24px; border: none; background: none; padding: 10px; }
+        
+        .total-parties { background: var(--bg); color: white; padding: 10px; border-radius: 10px; margin-bottom: 10px; text-align: center; font-size: 0.9rem; }
+        .close-btn { align-self: flex-end; font-size: 22px; border: none; background: none; padding: 5px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
     <div id="display-area">
-        <div id="count-info">Nous sommes : 0</div>
-        <div style="color:var(--secondary); margin-bottom:15px; letter-spacing:1px; font-size:0.8rem; font-weight: bold;">PARTIE EN COURS</div>
-        <div id="current-players"><p style="opacity: 0.4;">Prêt pour le lancement</p></div>
+        <div id="count-info">Actifs : 0</div>
+        <div style="color:var(--secondary); margin-bottom:10px; letter-spacing:1px; font-size:0.7rem; font-weight: bold;">PLATEAU ACTUEL</div>
+        <div id="current-players"><p style="opacity: 0.4; font-size: 0.8rem;">Prêt à jouer</p></div>
     </div>
 
     <div id="control-area">
-        <button class="roll-btn" onclick="executeRoll()">Prochaine<br>partie</button>
+        <button class="roll-btn" onclick="executeRoll()">SUIVANT</button>
     </div>
 
     <div id="footer">
-        <button class="btn-nav" onclick="toggleModal('modal-participants', true)">Participants</button>
-        <button class="btn-nav" onclick="toggleModal('modal-stats', true)">Stats</button>
+        <button class="btn-nav" onclick="toggleModal('modal-participants', true)">PARTICIPANTS</button>
+        <button class="btn-nav" onclick="toggleModal('modal-stats', true)">STATS</button>
     </div>
 
     <div id="modal-participants" class="modal-overlay">
         <div class="modal-content">
             <button class="close-btn" onclick="toggleModal('modal-participants', false)">✕</button>
-            <h3 style="margin:0 0 15px 0">Participants</h3>
-            <div style="display:flex; gap:10px; margin-bottom: 15px;">
-                <input type="text" id="new-name" placeholder="Nouveau..." style="flex:1; padding:12px; border:1px solid #ccc; border-radius:8px; font-size: 16px;">
-                <button onclick="addNewName()" style="background:var(--primary); color:white; border:none; width:50px; border-radius:8px; font-size:24px;">+</button>
+            <div style="display:flex; gap:8px; margin-bottom: 10px;">
+                <input type="text" id="new-name" placeholder="Nom..." style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; font-size: 16px;">
+                <button onclick="addNewName()" style="background:var(--primary); color:white; border:none; width:45px; border-radius:8px; font-size:20px;">+</button>
             </div>
             <div id="list-container"></div>
         </div>
@@ -70,9 +109,8 @@
     <div id="modal-stats" class="modal-overlay">
         <div class="modal-content">
             <button class="close-btn" onclick="toggleModal('modal-stats', false)">✕</button>
-            <h3 style="margin:0 0 15px 0">Statistiques</h3>
             <div class="total-parties">Parties : <span id="total-rounds-count">0</span></div>
-            <div class="stat-header"><span style="flex:2">NOM</span><span style="flex:1; text-align:center">GAMES</span><span style="flex:1; text-align:center">MIXAGE</span></div>
+            <div class="stat-header"><span style="flex:2">NOM</span><span style="flex:1; text-align:center">JEUX</span><span style="flex:1; text-align:center">MIX</span></div>
             <div id="stats-container"></div>
         </div>
     </div>
@@ -87,7 +125,6 @@
 
         initialNames.forEach(n => stats[n] = { games: 0, mixScore: 0, encounters: {} });
 
-        // Calcule le score min parmi les AUTRES joueurs actifs
         function getMinScoreExcluding(excludeName) {
             const others = participants.filter(p => p.active && p.name !== excludeName);
             if (others.length === 0) return 0;
@@ -103,19 +140,17 @@
                 if (p.active) activeCount++;
                 const div = document.createElement('div');
                 div.className = 'item';
-                div.innerHTML = `<input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleP('${p.id}')"><span class="name" style="${p.active ? 'font-weight:bold; color:black;' : 'color:#999;'}">${p.name}</span><button style="color:var(--danger); border:none; background:none; font-size:1.8rem;" onclick="deleteP('${p.id}')">−</button>`;
+                div.innerHTML = `<input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleP('${p.id}')"><span class="name" style="${p.active ? 'font-weight:bold;' : 'color:#999;'}">${p.name}</span><button class="del-btn" onclick="deleteP('${p.id}')">−</button>`;
                 container.appendChild(div);
             });
-            document.getElementById('count-info').innerText = `Nous sommes : ${activeCount}`;
+            document.getElementById('count-info').innerText = `Actifs : ${activeCount}`;
         }
 
         function toggleP(id) {
             const p = participants.find(x => x.id === id);
             if(p) {
                 p.active = !p.active;
-                if (p.active) {
-                    stats[p.name].games = getMinScoreExcluding(p.name);
-                }
+                if (p.active) stats[p.name].games = getMinScoreExcluding(p.name);
                 updateLists();
             }
         }
@@ -128,12 +163,11 @@
         function addNewName() {
             const val = document.getElementById('new-name').value.trim();
             if(val) {
-                // On ajoute d'abord le participant en inactif pour calculer le min des autres
-                participants.push({ id: Date.now().toString(), name: val, active: false });
-                stats[val] = { games: 0, mixScore: 0, encounters: {} };
-                // Puis on l'active : toggleP va lui donner le score min des autres
-                toggleP(participants[participants.length-1].id);
+                const min = getMinScoreExcluding(""); 
+                participants.push({ id: Date.now().toString(), name: val, active: true });
+                stats[val] = { games: min, mixScore: 0, encounters: {} };
                 document.getElementById('new-name').value = '';
+                updateLists();
             }
         }
 
@@ -144,9 +178,7 @@
 
         function executeRoll() {
             const activeNames = participants.filter(p => p.active).map(p => p.name);
-            let excludedFromDraw = [...poolEnJeu, ...poolIndispo];
-            let candidates = activeNames.filter(name => !excludedFromDraw.includes(name));
-
+            let candidates = activeNames.filter(name => !poolEnJeu.includes(name) && !poolIndispo.includes(name));
             if (candidates.length < 5) candidates.push(...poolIndispo.filter(name => activeNames.includes(name)));
             if (candidates.length === 0) return;
 
@@ -165,7 +197,7 @@
             if(selection.length > 0) {
                 totalRounds++;
                 const signature = [...selection].sort().join('|');
-                if (historyPools.indexOf(signature) !== -1) alert(`⚠️ Pool identique au round ${historyPools.indexOf(signature) + 1}`);
+                if (historyPools.indexOf(signature) !== -1) alert(`⚠️ Doublon Round ${historyPools.indexOf(signature) + 1}`);
                 historyPools.push(signature);
 
                 selection.forEach(player => {
