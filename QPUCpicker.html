@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Random Picker - Équité Corrigée</title>
+    <style>
+        :root {
+            --primary: #2ecc71; --secondary: #3498db; --danger: #e74c3c;
+            --bg: #1a1a1a; --card: #2d2d2d; --text: #ffffff; --mix: #888888;
+        }
+        body {
+            font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg);
+            color: var(--text); margin: 0; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden; align-items: center;
+        }
+        #display-area { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; padding: 20px; }
+        #count-info { background: rgba(52, 152, 219, 0.2); padding: 5px 15px; border-radius: 15px; font-size: 0.9rem; color: var(--secondary); margin-bottom: 10px; font-weight: bold; }
+        #current-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; min-height: 120px; }
+        .player-badge { background: var(--secondary); padding: 12px 20px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #control-area { padding: 20px; }
+        .roll-btn { width: 140px; height: 140px; border-radius: 50%; border: none; background: var(--primary); color: white; font-weight: bold; font-size: 1rem; text-transform: uppercase; box-shadow: 0 0 25px rgba(46, 204, 113, 0.3); cursor: pointer; }
+        #footer { padding: 15px; width: 100%; box-sizing: border-box; display: flex; gap: 10px; }
+        .btn-nav { flex: 1; padding: 15px; border-radius: 12px; border: none; background: var(--card); color: white; font-weight: bold; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 1000; }
+        .modal-content { position: absolute; bottom: 0; width: 100%; height: 85vh; background: #fff; color: #333; border-radius: 25px 25px 0 0; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
+        #list-container, #stats-container { overflow-y: auto; flex: 1; }
+        .item { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+        input[type="checkbox"] { width: 28px; height: 28px; cursor: pointer; }
+        .name { flex: 1; margin: 0 15px; font-size: 1.1rem; }
+        .stat-header { display: flex; font-weight: bold; font-size: 0.8rem; color: #666; padding: 10px 0; border-bottom: 2px solid #eee; }
+        .stat-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .col-name { flex: 2; font-weight: bold; }
+        .col-games { flex: 1; text-align: center; }
+        .col-mix { flex: 1; text-align: center; color: var(--mix); font-weight: bold; }
+        .total-parties { background: var(--bg); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
+        .close-btn { align-self: flex-end; font-size: 24px; border: none; background: none; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="display-area">
+        <div id="count-info">Nous sommes : 0</div>
+        <div style="color:var(--secondary); margin-bottom:15px; letter-spacing:1px; font-size:0.8rem; font-weight: bold;">PARTIE EN COURS</div>
+        <div id="current-players"><p style="opacity: 0.4;">Prêt pour le lancement</p></div>
+    </div>
+
+    <div id="control-area">
+        <button class="roll-btn" onclick="executeRoll()">Prochaine<br>partie</button>
+    </div>
+
+    <div id="footer">
+        <button class="btn-nav" onclick="toggleModal('modal-participants', true)">Participants</button>
+        <button class="btn-nav" onclick="toggleModal('modal-stats', true)">Stats</button>
+    </div>
+
+    <div id="modal-participants" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleModal('modal-participants', false)">✕</button>
+            <h3 style="margin:0 0 15px 0">Participants</h3>
+            <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                <input type="text" id="new-name" placeholder="Nouveau..." style="flex:1; padding:12px; border:1px solid #ccc; border-radius:8px; font-size: 16px;">
+                <button onclick="addNewName()" style="background:var(--primary); color:white; border:none; width:50px; border-radius:8px; font-size:24px;">+</button>
+            </div>
+            <div id="list-container"></div>
+        </div>
+    </div>
+
+    <div id="modal-stats" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleModal('modal-stats', false)">✕</button>
+            <h3 style="margin:0 0 15px 0">Statistiques</h3>
+            <div class="total-parties">Parties : <span id="total-rounds-count">0</span></div>
+            <div class="stat-header"><span style="flex:2">NOM</span><span style="flex:1; text-align:center">GAMES</span><span style="flex:1; text-align:center">MIXAGE</span></div>
+            <div id="stats-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const initialNames = ["Eric", "Danièle", "René", "Louis", "Madeleine", "Antoine", "Patrice", "Eliott", "Henrick", "Yann", "Philippe O", "Philippe M", "Damien", "Patricia L", "Valérie", "Geoffrey", "Michèle", "Patricia C", "Sébastien", "Lysiane", "Rolande", "Jean-Pierre", "Jean-Marie"];
+        const excluded = ["Philippe M", "Michèle", "Rolande", "Jean-Pierre", "Jean-Marie"];
+
+        let participants = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 9), name: n, active: !excluded.includes(n) }));
+        let stats = {};
+        let historyPools = [], poolEnJeu = [], poolIndispo = [], totalRounds = 0;
+
+        initialNames.forEach(n => stats[n] = { games: 0, mixScore: 0, encounters: {} });
+
+        // Calcule le score min parmi les AUTRES joueurs actifs
+        function getMinScoreExcluding(excludeName) {
+            const others = participants.filter(p => p.active && p.name !== excludeName);
+            if (others.length === 0) return 0;
+            return Math.min(...others.map(p => stats[p.name].games));
+        }
+
+        function updateLists() {
+            participants.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+            const container = document.getElementById('list-container');
+            container.innerHTML = '';
+            let activeCount = 0;
+            participants.forEach(p => {
+                if (p.active) activeCount++;
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `<input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleP('${p.id}')"><span class="name" style="${p.active ? 'font-weight:bold; color:black;' : 'color:#999;'}">${p.name}</span><button style="color:var(--danger); border:none; background:none; font-size:1.8rem;" onclick="deleteP('${p.id}')">−</button>`;
+                container.appendChild(div);
+            });
+            document.getElementById('count-info').innerText = `Nous sommes : ${activeCount}`;
+        }
+
+        function toggleP(id) {
+            const p = participants.find(x => x.id === id);
+            if(p) {
+                p.active = !p.active;
+                if (p.active) {
+                    stats[p.name].games = getMinScoreExcluding(p.name);
+                }
+                updateLists();
+            }
+        }
+
+        function deleteP(id) {
+            const p = participants.find(x => x.id === id);
+            if(p) { delete stats[p.name]; participants = participants.filter(x => x.id !== id); updateLists(); }
+        }
+
+        function addNewName() {
+            const val = document.getElementById('new-name').value.trim();
+            if(val) {
+                // On ajoute d'abord le participant en inactif pour calculer le min des autres
+                participants.push({ id: Date.now().toString(), name: val, active: false });
+                stats[val] = { games: 0, mixScore: 0, encounters: {} };
+                // Puis on l'active : toggleP va lui donner le score min des autres
+                toggleP(participants[participants.length-1].id);
+                document.getElementById('new-name').value = '';
+            }
+        }
+
+        function toggleModal(id, show) {
+            document.getElementById(id).style.display = show ? 'block' : 'none';
+            if (id === 'modal-stats' && show) renderStats();
+        }
+
+        function executeRoll() {
+            const activeNames = participants.filter(p => p.active).map(p => p.name);
+            let excludedFromDraw = [...poolEnJeu, ...poolIndispo];
+            let candidates = activeNames.filter(name => !excludedFromDraw.includes(name));
+
+            if (candidates.length < 5) candidates.push(...poolIndispo.filter(name => activeNames.includes(name)));
+            if (candidates.length === 0) return;
+
+            let minGames = Math.min(...candidates.map(name => stats[name].games));
+            let priority = candidates.filter(name => stats[name].games === minGames);
+            let secondary = candidates.filter(name => stats[name].games > minGames);
+
+            priority.sort(() => Math.random() - 0.5);
+            secondary.sort(() => Math.random() - 0.5);
+
+            let selection = priority.splice(0, 5);
+            if (selection.length < 5) selection.push(...secondary.splice(0, 5 - selection.length));
+
+            poolIndispo = [...poolEnJeu]; poolEnJeu = [...selection];
+
+            if(selection.length > 0) {
+                totalRounds++;
+                const signature = [...selection].sort().join('|');
+                if (historyPools.indexOf(signature) !== -1) alert(`⚠️ Pool identique au round ${historyPools.indexOf(signature) + 1}`);
+                historyPools.push(signature);
+
+                selection.forEach(player => {
+                    const pStat = stats[player];
+                    const others = selection.filter(p => p !== player);
+                    others.forEach(partner => {
+                        const timesMet = pStat.encounters[partner] || 0;
+                        if (timesMet > 0 && pStat.games > 0) pStat.mixScore -= timesMet;
+                        pStat.encounters[partner] = timesMet + 1;
+                    });
+                    pStat.games += 1;
+                });
+                renderDisplay();
+            }
+        }
+
+        function renderDisplay() {
+            const container = document.getElementById('current-players');
+            container.innerHTML = '';
+            poolEnJeu.forEach(name => {
+                const d = document.createElement('div');
+                d.className = 'player-badge'; d.innerText = name;
+                container.appendChild(d);
+            });
+        }
+
+        function renderStats() {
+            document.getElementById('total-rounds-count').innerText = totalRounds;
+            const container = document.getElementById('stats-container');
+            container.innerHTML = '';
+            const activeNamesSet = new Set(participants.filter(p => p.active).map(p => p.name));
+            Object.keys(stats).filter(name => activeNamesSet.has(name)).sort((a,b) => a.localeCompare(b,'fr')).forEach(name => {
+                const p = stats[name];
+                const div = document.createElement('div');
+                div.className = 'stat-row';
+                div.innerHTML = `<span class="col-name">${name}</span><span class="col-games">${p.games}</span><span class="col-mix">${p.mixScore}</span>`;
+                container.appendChild(div);
+            });
+        }
+        updateLists();
+    </script>
+</body>
+</html>
