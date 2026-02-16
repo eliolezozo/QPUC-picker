@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Picker Pro</title>
+    <title>Picker Equité & Mixage</title>
     <style>
         :root {
             --primary: #00ce7a; 
@@ -31,7 +31,7 @@
         .btn-grey {
             flex: 1; padding: 14px; border-radius: 12px;
             border: none; background: var(--btn-gray); color: white;
-            font-weight: bold; font-size: 0.85rem;
+            font-weight: bold; font-size: 0.85rem; cursor: pointer;
         }
 
         /* --- AFFICHAGE CENTRAL --- */
@@ -83,23 +83,16 @@
 
         #list-p, #list-stats { flex: 1; overflow-y: auto; margin-top: 15px; }
 
-        /* Participants 2 colonnes */
         #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .p-card { display: flex; align-items: center; background: #f2f2f2; padding: 10px; border-radius: 10px; color: #333; }
 
-        /* Stats lignes */
-        .stat-row { 
-            display: flex; align-items: center; 
-            padding: 12px 5px; border-bottom: 1px solid #eee; 
-            color: #000000;
-        }
+        .stat-row { display: flex; align-items: center; padding: 12px 5px; border-bottom: 1px solid #eee; color: #000; }
         .stat-name { flex: 1; font-weight: 600; }
         .stat-games { font-weight: bold; margin-right: 15px; }
-        .stat-mix { color: #555555; font-size: 0.9rem; width: 30px; text-align: right; }
+        .stat-mix { color: #666; font-size: 0.9rem; width: 35px; text-align: right; font-weight: bold; }
 
-        .close-x { align-self: flex-end; font-size: 28px; border: none; background: none; color: #333; font-weight: bold; }
-        h2 { margin: 0; color: #000000; font-size: 1.3rem; }
-        .total-info { color: #666; font-size: 0.9rem; margin-top: 5px; }
+        .close-x { align-self: flex-end; font-size: 28px; border: none; background: none; color: #333; font-weight: bold; padding: 5px; cursor: pointer; }
+        h2 { margin: 0; color: #000; font-size: 1.3rem; }
     </style>
 </head>
 <body>
@@ -123,7 +116,7 @@
         <div class="modal">
             <button class="close-x" onclick="closeM('modal-p')">✕</button>
             <div style="display:flex; gap:8px;">
-                <input type="text" id="add-input" placeholder="Ajouter un nom..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc; font-size: 16px;">
+                <input type="text" id="add-input" placeholder="Ajouter..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc; font-size: 16px;">
                 <button onclick="addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold; font-size:20px;">+</button>
             </div>
             <div id="list-p"></div>
@@ -143,21 +136,17 @@
         const excluded = ["Philippe M", "Michèle", "Rolande", "Jean-Pierre", "Jean-Marie"];
 
         let players = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 5), name: n, active: !excluded.includes(n) }));
-        let scores = {};
-        let mixScores = {};
-        let encounters = {};
+        let stats = {};
         let totalGames = 0;
-        let currentPool = [], lastPool = [];
+        let poolEnJeu = [], poolIndispo = [];
 
         initialNames.forEach(n => {
-            scores[n] = 0;
-            mixScores[n] = 0;
-            encounters[n] = {};
+            stats[n] = { games: 0, mixScore: 0, encounters: {} };
         });
 
-        function getMinScore() {
-            const active = players.filter(p => p.active);
-            return active.length ? Math.min(...active.map(p => scores[p.name])) : 0;
+        function getMinScore(excludeName = "") {
+            const active = players.filter(p => p.active && p.name !== excludeName);
+            return active.length ? Math.min(...active.map(p => stats[p.name].games)) : 0;
         }
 
         function updateUI() {
@@ -179,8 +168,8 @@
             if(p) {
                 p.active = !p.active;
                 if(p.active) {
-                    scores[p.name] = getMinScore();
-                    mixScores[p.name] = 0;
+                    stats[p.name].games = getMinScore(p.name);
+                    stats[p.name].mixScore = 0;
                 }
                 updateUI();
             }
@@ -192,9 +181,7 @@
             if(name) {
                 const min = getMinScore();
                 players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
-                scores[name] = min;
-                mixScores[name] = 0;
-                encounters[name] = {};
+                stats[name] = { games: min, mixScore: 0, encounters: {} };
                 input.value = '';
                 updateUI();
             }
@@ -202,30 +189,81 @@
 
         function tirage() {
             const activeNames = players.filter(p => p.active).map(p => p.name);
-            let candidates = activeNames.filter(n => !currentPool.includes(n) && !lastPool.includes(n));
-            if(candidates.length < 5) candidates = activeNames.filter(n => !currentPool.includes(n));
-            if(candidates.length < 5) candidates = activeNames;
+            if(activeNames.length < 5) return;
 
-            candidates.sort((a,b) => scores[a] - scores[b] || Math.random() - 0.5);
-            const selection = candidates.slice(0, 5);
+            const minGamesGlobal = Math.min(...activeNames.map(n => stats[n].games));
+            let prioritaires = activeNames.filter(n => stats[n].games === minGamesGlobal && !poolEnJeu.includes(n));
+            let secondaires = activeNames.filter(n => (stats[n].games > minGamesGlobal || poolEnJeu.includes(n)) && !poolEnJeu.includes(n));
 
-            lastPool = [...currentPool];
-            currentPool = [...selection];
+            // Si on n'a pas assez de monde hors du terrain actuel, on pioche dans ceux qui jouent
+            if((prioritaires.length + secondaires.length) < 5) {
+                secondaires = activeNames.filter(n => !poolEnJeu.includes(n) || true);
+            }
+
+            let bestGroup = [];
+            let lowestConflict = Infinity;
+
+            for (let i = 0; i < 100; i++) {
+                let testGroup = [];
+                let pPool = [...prioritaires];
+                let sPool = [...secondaires].filter(n => !pPool.includes(n));
+                
+                for (let j = 0; j < 5; j++) {
+                    if (pPool.length > 0) {
+                        testGroup.push(pPool.splice(Math.floor(Math.random() * pPool.length), 1)[0]);
+                    } else if (sPool.length > 0) {
+                        testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
+                    }
+                }
+
+                let totalGroupConflict = 0;
+                testGroup.forEach(player => {
+                    let encounteredHistory = [];
+                    testGroup.filter(o => o !== player).forEach(partner => {
+                        const times = stats[player].encounters[partner] || 0;
+                        if (times > 0) encounteredHistory.push(times);
+                    });
+                    if (encounteredHistory.length > 1) {
+                        encounteredHistory.sort((a, b) => b - a);
+                        encounteredHistory.shift(); 
+                        totalGroupConflict += encounteredHistory.reduce((a, b) => a + b, 0);
+                    }
+                });
+
+                if (totalGroupConflict < lowestConflict) {
+                    lowestConflict = totalGroupConflict;
+                    bestGroup = testGroup;
+                }
+                if (lowestConflict === 0) break; 
+            }
+
+            poolIndispo = [...poolEnJeu];
+            poolEnJeu = [...bestGroup];
             totalGames++;
 
-            selection.forEach(n => {
-                scores[n]++;
-                const others = selection.filter(other => other !== n);
-                others.forEach(partner => {
-                    const met = encounters[n][partner] || 0;
-                    if(met > 0) mixScores[n] -= met;
-                    encounters[n][partner] = met + 1;
+            bestGroup.forEach(n => {
+                let conflictHistory = [];
+                bestGroup.filter(other => other !== n).forEach(partner => {
+                    const times = stats[n].encounters[partner] || 0;
+                    if (times > 0) conflictHistory.push(times);
+                    stats[n].encounters[partner] = times + 1;
                 });
+
+                if (conflictHistory.length > 1) {
+                    conflictHistory.sort((a, b) => b - a);
+                    conflictHistory.shift(); 
+                    stats[n].mixScore -= conflictHistory.reduce((a, b) => a + b, 0);
+                }
+                stats[n].games++;
             });
             
+            renderDisplay();
+        }
+
+        function renderDisplay() {
             const display = document.getElementById('current-players');
             display.innerHTML = '';
-            selection.forEach(n => {
+            poolEnJeu.forEach(n => {
                 const b = document.createElement('div');
                 b.className = 'badge'; b.innerText = n;
                 display.appendChild(b);
@@ -237,12 +275,13 @@
             const container = document.getElementById('list-stats');
             container.innerHTML = '';
             players.filter(p => p.active).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+                const s = stats[p.name];
                 const row = document.createElement('div');
                 row.className = 'stat-row';
                 row.innerHTML = `
                     <span class="stat-name">${p.name}</span>
-                    <span class="stat-games">${scores[p.name]}</span>
-                    <span class="stat-mix">${mixScores[p.name]}</span>
+                    <span class="stat-games">${s.games}</span>
+                    <span class="stat-mix">${s.mixScore}</span>
                 `;
                 container.appendChild(row);
             });
