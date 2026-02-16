@@ -3,104 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Random Picker - Compact</title>
+    <title>Random Picker</title>
     <style>
         :root {
-            --primary: #2ecc71; --secondary: #3498db; --danger: #e74c3c;
-            --bg: #1a1a1a; --card: #2d2d2d; --text: #ffffff; --mix: #888888;
-        }
-        body {
-            font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg);
-            color: var(--text); margin: 0; display: flex; flex-direction: column;
-            height: 100vh; overflow: hidden; align-items: center;
-        }
-        
-        /* Zone d'affichage réduite pour remonter le bouton vert */
-        #display-area { 
-            flex: 0 1 auto; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            width: 100%; 
-            padding: 10px 20px; 
-            margin-top: 10px;
+            --primary: #00ce7a; /* Vert exact de l'image */
+            --secondary: #2196d3; /* Bleu des badges */
+            --bg: #1e1e1e; /* Fond gris très foncé */
+            --btn-gray: #333333;
+            --text: #ffffff;
         }
 
-        #count-info { background: rgba(52, 152, 219, 0.2); padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; color: var(--secondary); margin-bottom: 5px; font-weight: bold; }
-        
-        #current-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 100px; }
-        
-        .player-badge { background: var(--secondary); padding: 8px 16px; border-radius: 30px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); animation: popIn 0.4s; }
-        
-        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        /* Positionnement du bouton vert */
-        #control-area { padding: 10px; }
-        .roll-btn { 
-            width: 120px; height: 120px; border-radius: 50%; border: none; 
-            background: var(--primary); color: white; font-weight: bold; 
-            font-size: 0.9rem; text-transform: uppercase; 
-            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3); cursor: pointer; 
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            background-color: var(--bg); color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
         }
 
-        /* Pied de page remonté */
-        #footer { padding: 10px; width: 100%; box-sizing: border-box; display: flex; gap: 10px; margin-bottom: 5px; }
-        .btn-nav { flex: 1; padding: 12px; border-radius: 12px; border: none; background: var(--card); color: white; font-weight: bold; font-size: 0.8rem; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 1000; }
-        .modal-content { position: absolute; bottom: 0; width: 100%; height: 85vh; background: #fff; color: #333; border-radius: 20px 20px 0 0; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; }
-        
-        /* 2 Colonnes pour les participants */
-        #list-container { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            overflow-y: auto; 
-            flex: 1; 
-            padding-top: 10px;
+        /* Container principal en colonne */
+        .main-container {
+            display: flex; flex-direction: column;
+            height: 100vh; width: 100%;
+            justify-content: space-between; align-items: center;
+            padding: 20px 0; box-sizing: border-box;
         }
-        
-        #stats-container { overflow-y: auto; flex: 1; }
 
-        .item { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #eee; background: #f9f9f9; border-radius: 8px; }
-        input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; }
-        .name { flex: 1; margin: 0 8px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .del-btn { color: var(--danger); border: none; background: none; font-size: 1.4rem; padding: 0 5px; }
+        /* Header */
+        #count-info {
+            background: #253a4d; color: #3498db;
+            padding: 6px 20px; border-radius: 20px;
+            font-weight: bold; font-size: 1rem;
+        }
 
-        .stat-header { display: flex; font-weight: bold; font-size: 0.75rem; color: #666; padding: 8px 0; border-bottom: 2px solid #eee; }
-        .stat-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-        .col-name { flex: 2; font-weight: bold; font-size: 0.9rem; }
-        .col-games { flex: 1; text-align: center; }
-        .col-mix { flex: 1; text-align: center; color: var(--mix); font-weight: bold; }
+        .label-encours {
+            color: #3498db; font-weight: bold; font-size: 0.8rem;
+            margin: 15px 0; letter-spacing: 1px;
+        }
+
+        /* Badges Joueurs */
+        #current-players {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 12px; padding: 0 10px; min-height: 120px;
+        }
+
+        .player-badge {
+            background: var(--secondary); padding: 12px 25px;
+            border-radius: 40px; font-weight: bold; font-size: 1.1rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Bouton Central */
+        .roll-container { flex: 1; display: flex; align-items: center; justify-content: center; }
         
-        .total-parties { background: var(--bg); color: white; padding: 10px; border-radius: 10px; margin-bottom: 10px; text-align: center; font-size: 0.9rem; }
-        .close-btn { align-self: flex-end; font-size: 22px; border: none; background: none; padding: 5px; margin-bottom: 5px; }
+        .roll-btn {
+            width: 160px; height: 160px; border-radius: 50%;
+            border: none; background: var(--primary); color: white;
+            font-weight: 900; font-size: 1.1rem; text-align: center;
+            box-shadow: 0 0 30px rgba(0, 206, 122, 0.2);
+            cursor: pointer; line-height: 1.2;
+        }
+
+        /* Navigation Basse */
+        .footer-nav {
+            display: flex; width: 90%; gap: 15px; margin-bottom: 10px;
+        }
+
+        .btn-nav {
+            flex: 1; padding: 18px; border-radius: 15px;
+            border: none; background: var(--btn-gray); color: white;
+            font-weight: bold; font-size: 0.9rem;
+        }
+
+        /* Modales */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute; bottom: 0; width: 100%; height: 80vh;
+            background: #fff; color: #333; border-radius: 25px 25px 0 0;
+            padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
+        }
+
+        /* Liste en 2 colonnes */
+        #list-container {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; overflow-y: auto; margin-top: 15px;
+        }
+
+        .item {
+            display: flex; align-items: center; background: #f0f0f0;
+            padding: 10px; border-radius: 10px;
+        }
+
+        input[type="checkbox"] { width: 22px; height: 22px; margin-right: 8px; }
+        
+        .name-label { 
+            flex: 1; font-size: 0.85rem; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .close-btn { align-self: flex-end; font-size: 24px; border: none; background: none; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="display-area">
-        <div id="count-info">Actifs : 0</div>
-        <div style="color:var(--secondary); margin-bottom:10px; letter-spacing:1px; font-size:0.7rem; font-weight: bold;">PLATEAU ACTUEL</div>
-        <div id="current-players"><p style="opacity: 0.4; font-size: 0.8rem;">Prêt à jouer</p></div>
-    </div>
+    <div class="main-container">
+        <div id="count-info">Nous sommes : 0</div>
+        
+        <div style="text-align: center; width: 100%;">
+            <div class="label-encours">PARTIE EN COURS</div>
+            <div id="current-players">
+                </div>
+        </div>
 
-    <div id="control-area">
-        <button class="roll-btn" onclick="executeRoll()">SUIVANT</button>
-    </div>
+        <div class="roll-container">
+            <button class="roll-btn" onclick="executeRoll()">PROCHAINE<br>PARTIE</button>
+        </div>
 
-    <div id="footer">
-        <button class="btn-nav" onclick="toggleModal('modal-participants', true)">PARTICIPANTS</button>
-        <button class="btn-nav" onclick="toggleModal('modal-stats', true)">STATS</button>
+        <div class="footer-nav">
+            <button class="btn-nav" onclick="toggleModal('modal-participants', true)">Participants</button>
+            <button class="btn-nav" onclick="toggleModal('modal-stats', true)">Stats</button>
+        </div>
     </div>
 
     <div id="modal-participants" class="modal-overlay">
         <div class="modal-content">
             <button class="close-btn" onclick="toggleModal('modal-participants', false)">✕</button>
-            <div style="display:flex; gap:8px; margin-bottom: 10px;">
-                <input type="text" id="new-name" placeholder="Nom..." style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; font-size: 16px;">
-                <button onclick="addNewName()" style="background:var(--primary); color:white; border:none; width:45px; border-radius:8px; font-size:20px;">+</button>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="new-name" placeholder="Nouveau..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
+                <button onclick="addNewName()" style="background:var(--primary); color:white; border:none; padding:0 20px; border-radius:10px; font-weight:bold;">+</button>
             </div>
             <div id="list-container"></div>
         </div>
@@ -109,9 +142,8 @@
     <div id="modal-stats" class="modal-overlay">
         <div class="modal-content">
             <button class="close-btn" onclick="toggleModal('modal-stats', false)">✕</button>
-            <div class="total-parties">Parties : <span id="total-rounds-count">0</span></div>
-            <div class="stat-header"><span style="flex:2">NOM</span><span style="flex:1; text-align:center">JEUX</span><span style="flex:1; text-align:center">MIX</span></div>
-            <div id="stats-container"></div>
+            <div id="stats-display" style="overflow-y: auto;">
+                </div>
         </div>
     </div>
 
@@ -121,14 +153,13 @@
 
         let participants = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 9), name: n, active: !excluded.includes(n) }));
         let stats = {};
-        let historyPools = [], poolEnJeu = [], poolIndispo = [], totalRounds = 0;
+        let poolEnJeu = [], poolIndispo = [];
 
-        initialNames.forEach(n => stats[n] = { games: 0, mixScore: 0, encounters: {} });
+        initialNames.forEach(n => stats[n] = { games: 0, encounters: {} });
 
-        function getMinScoreExcluding(excludeName) {
-            const others = participants.filter(p => p.active && p.name !== excludeName);
-            if (others.length === 0) return 0;
-            return Math.min(...others.map(p => stats[p.name].games));
+        function getMinScoreExcluding(name) {
+            const others = participants.filter(p => p.active && p.name !== name);
+            return others.length ? Math.min(...others.map(p => stats[p.name].games)) : 0;
         }
 
         function updateLists() {
@@ -140,10 +171,13 @@
                 if (p.active) activeCount++;
                 const div = document.createElement('div');
                 div.className = 'item';
-                div.innerHTML = `<input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleP('${p.id}')"><span class="name" style="${p.active ? 'font-weight:bold;' : 'color:#999;'}">${p.name}</span><button class="del-btn" onclick="deleteP('${p.id}')">−</button>`;
+                div.innerHTML = `
+                    <input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleP('${p.id}')">
+                    <span class="name-label">${p.name}</span>
+                `;
                 container.appendChild(div);
             });
-            document.getElementById('count-info').innerText = `Actifs : ${activeCount}`;
+            document.getElementById('count-info').innerText = `Nous sommes : ${activeCount}`;
         }
 
         function toggleP(id) {
@@ -155,63 +189,32 @@
             }
         }
 
-        function deleteP(id) {
-            const p = participants.find(x => x.id === id);
-            if(p) { delete stats[p.name]; participants = participants.filter(x => x.id !== id); updateLists(); }
-        }
-
         function addNewName() {
             const val = document.getElementById('new-name').value.trim();
             if(val) {
-                const min = getMinScoreExcluding(""); 
+                const score = getMinScoreExcluding("");
                 participants.push({ id: Date.now().toString(), name: val, active: true });
-                stats[val] = { games: min, mixScore: 0, encounters: {} };
+                stats[val] = { games: score, encounters: {} };
                 document.getElementById('new-name').value = '';
                 updateLists();
             }
         }
 
-        function toggleModal(id, show) {
-            document.getElementById(id).style.display = show ? 'block' : 'none';
-            if (id === 'modal-stats' && show) renderStats();
-        }
-
         function executeRoll() {
             const activeNames = participants.filter(p => p.active).map(p => p.name);
-            let candidates = activeNames.filter(name => !poolEnJeu.includes(name) && !poolIndispo.includes(name));
-            if (candidates.length < 5) candidates.push(...poolIndispo.filter(name => activeNames.includes(name)));
+            let candidates = activeNames.filter(n => !poolEnJeu.includes(n) && !poolIndispo.includes(n));
+            
+            if (candidates.length < 5) candidates.push(...poolIndispo.filter(n => activeNames.includes(n)));
             if (candidates.length === 0) return;
 
-            let minGames = Math.min(...candidates.map(name => stats[name].games));
-            let priority = candidates.filter(name => stats[name].games === minGames);
-            let secondary = candidates.filter(name => stats[name].games > minGames);
+            candidates.sort((a, b) => stats[a].games - stats[b].games || Math.random() - 0.5);
+            let selection = candidates.slice(0, 5);
 
-            priority.sort(() => Math.random() - 0.5);
-            secondary.sort(() => Math.random() - 0.5);
+            poolIndispo = [...poolEnJeu];
+            poolEnJeu = [...selection];
 
-            let selection = priority.splice(0, 5);
-            if (selection.length < 5) selection.push(...secondary.splice(0, 5 - selection.length));
-
-            poolIndispo = [...poolEnJeu]; poolEnJeu = [...selection];
-
-            if(selection.length > 0) {
-                totalRounds++;
-                const signature = [...selection].sort().join('|');
-                if (historyPools.indexOf(signature) !== -1) alert(`⚠️ Doublon Round ${historyPools.indexOf(signature) + 1}`);
-                historyPools.push(signature);
-
-                selection.forEach(player => {
-                    const pStat = stats[player];
-                    const others = selection.filter(p => p !== player);
-                    others.forEach(partner => {
-                        const timesMet = pStat.encounters[partner] || 0;
-                        if (timesMet > 0 && pStat.games > 0) pStat.mixScore -= timesMet;
-                        pStat.encounters[partner] = timesMet + 1;
-                    });
-                    pStat.games += 1;
-                });
-                renderDisplay();
-            }
+            selection.forEach(p => stats[p].games++);
+            renderDisplay();
         }
 
         function renderDisplay() {
@@ -224,19 +227,11 @@
             });
         }
 
-        function renderStats() {
-            document.getElementById('total-rounds-count').innerText = totalRounds;
-            const container = document.getElementById('stats-container');
-            container.innerHTML = '';
-            const activeNamesSet = new Set(participants.filter(p => p.active).map(p => p.name));
-            Object.keys(stats).filter(name => activeNamesSet.has(name)).sort((a,b) => a.localeCompare(b,'fr')).forEach(name => {
-                const p = stats[name];
-                const div = document.createElement('div');
-                div.className = 'stat-row';
-                div.innerHTML = `<span class="col-name">${name}</span><span class="col-games">${p.games}</span><span class="col-mix">${p.mixScore}</span>`;
-                container.appendChild(div);
-            });
+        function toggleModal(id, show) {
+            document.getElementById(id).style.display = show ? 'block' : 'none';
+            if(id === 'modal-participants') updateLists();
         }
+
         updateLists();
     </script>
 </body>
