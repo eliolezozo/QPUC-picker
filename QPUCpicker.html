@@ -87,8 +87,14 @@
 
         .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
         #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .p-pill { border: 1.5px solid #ddd; border-radius: 20px; padding: 8px; text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; font-weight: 600; }
+        
+        .p-pill { 
+            border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
+            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
+            font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+        }
         .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
+        .del-x { color: #cc0000; font-weight: bold; padding: 0 5px; font-size: 1rem; }
 
         .stats-table { width: 100%; border-collapse: collapse; }
         .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; text-transform: uppercase; }
@@ -129,7 +135,18 @@
         </div>
     </div>
 
-    <div id="modal-p" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-p')">✕</div><div class="modal-header" id="header-p-count">Participants (0)</div><div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="add-input" placeholder="Nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px;"><button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%;">+</button></div><div class="scroll-content"><div id="list-p"></div></div></div></div>
+    <div id="modal-p" class="overlay">
+        <div class="modal">
+            <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
+            <div class="modal-header" id="header-p-count">Participants (0)</div>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="add-input" placeholder="Nouveau nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px;">
+                <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button>
+            </div>
+            <div class="scroll-content"><div id="list-p"></div></div>
+        </div>
+    </div>
+
     <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Parties aujourd'hui</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PARTIES</th><th>MIXAGE</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
     <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
 
@@ -212,8 +229,11 @@
         let count = 0;
         window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
             if(p.active) count++;
-            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
-            d.innerText = p.name; d.onclick = () => window.toggleP(p.id); cont.appendChild(d);
+            const d = document.createElement('div'); 
+            d.className = `p-pill ${p.active?'active':''}`;
+            d.innerHTML = `<span style="flex:1" onclick="window.toggleP('${p.id}')">${p.name}</span>
+                           <span class="del-x" onclick="window.removePlayer('${p.id}')">✕</span>`;
+            cont.appendChild(d);
         });
         document.getElementById('header-p-count').innerText = `Participants (${count})`;
     };
@@ -223,9 +243,20 @@
         if(p) { p.active = !p.active; window.updateUI(); await save(); }
     };
 
+    window.removePlayer = async (id) => {
+        if(confirm("Supprimer définitivement ce participant ?")) {
+            window.players = window.players.filter(x => x.id !== id);
+            window.updateUI(); await save();
+        }
+    };
+
     window.addPlayer = async () => {
         const n = document.getElementById('add-input').value.trim();
-        if(n) { window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true}); document.getElementById('add-input').value = ''; window.updateUI(); await save(); }
+        if(n) { 
+            window.players.push({id: Math.random().toString(36).substr(2,5), name: n.toUpperCase(), active: true}); 
+            document.getElementById('add-input').value = ''; 
+            window.updateUI(); await save(); 
+        }
     };
 
     window.openM = (id) => {
@@ -249,12 +280,7 @@
 
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
     window.resetSession = async () => { if(confirm("Nouvelle séance ?")) { window.poolEnJeu = []; window.players.forEach(p => window.stats[p.name] = {games:0}); window.renderDisplay(); await save(); }};
-    
-    // Le bouton RESET n'efface plus window.players
-    window.fullReset = async () => { if(confirm("Effacer toutes les statistiques mais GARDER les participants ?")) { 
-        window.stats = {}; window.permStats = {}; window.poolEnJeu = []; 
-        await save(); location.reload(); 
-    }};
+    window.fullReset = async () => { if(confirm("Effacer toutes les statistiques ?")) { window.stats = {}; window.permStats = {}; window.poolEnJeu = []; await save(); location.reload(); }};
 </script>
 </body>
 </html>
