@@ -12,10 +12,10 @@
             --bg: #1e1e1e; 
             --btn-gray: #333333;
             --danger: #e74c3c;
-            --step-qualif: #3498db; /* Bleu */
-            --step-faf: #9b59b6;    /* Violet */
-            --step-win: #e67e22;    /* Orange */
-            --step-win-dark: #d35400; /* Orange foncé */
+            --step-qualif: #3498db; 
+            --step-faf: #9b59b6;    
+            --step-win: #e67e22;    
+            --step-win-dark: #d35400; 
         }
 
         body, html {
@@ -62,7 +62,6 @@
             gap: 10px; padding: 0 10px; width: 100%;
         }
 
-        /* --- ÉTATS DES BADGES --- */
         .badge {
             padding: 12px 18px; border-radius: 40px; font-weight: bold; font-size: 0.95rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer; transition: 0.2s;
@@ -81,7 +80,6 @@
             box-shadow: 0 0 20px rgba(0, 206, 122, 0.4);
         }
 
-        /* --- MODALES --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; z-index: 1000;
@@ -95,19 +93,20 @@
         h2 { margin: 0 0 10px 0; color: #000; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         
         #list-p, .stats-container { flex: 1; overflow-y: auto; }
+        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
-        /* Tableaux de stats */
+        .p-card { display: flex; align-items: center; background: #f2f2f2; padding: 10px; border-radius: 10px; color: #333; }
         .stat-header { display: flex; font-size: 0.65rem; font-weight: bold; color: #666; padding: 5px 0; border-bottom: 1px solid #ddd; text-transform: uppercase; }
         .stat-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; color: #000; font-size: 0.85rem; }
         
-        .col-name { flex: 2; font-weight: bold; }
+        .col-name { flex: 2; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .col-val { flex: 1; text-align: center; }
         .txt-orange { color: var(--step-win); font-weight: bold; }
         .txt-blue { color: var(--step-qualif); font-weight: bold; }
         .txt-purple { color: var(--step-faf); font-weight: bold; }
         .txt-dark-orange { color: var(--step-win-dark); font-weight: bold; }
 
-        .btn-danger-small { background: var(--danger); color: white; border: none; padding: 8px; border-radius: 5px; font-size: 0.7rem; margin-top: 10px; cursor: pointer; }
+        .btn-danger-small { background: var(--danger); color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.8rem; margin-top: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -133,8 +132,8 @@
         <div class="modal">
             <button class="close-x" onclick="window.closeM('modal-p')">✕</button>
             <div style="display:flex; gap:8px; margin-bottom: 15px;">
-                <input type="text" id="add-input" placeholder="Ajouter..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
-                <button onclick="window.addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold;">+</button>
+                <input type="text" id="add-input" placeholder="Ajouter..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc; font-size: 16px;">
+                <button onclick="window.addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold; font-size: 20px;">+</button>
             </div>
             <div id="list-p"></div>
         </div>
@@ -188,11 +187,11 @@
     const docRef = doc(db, "projets", "picker_equite");
 
     window.players = [];
-    window.stats = {};      // Stats du jour
-    window.permStats = {};  // Stats permanentes
+    window.stats = {};      
+    window.permStats = {};  
     window.totalGames = 0;
     window.poolEnJeu = [];
-    window.playerStates = {}; // État local des badges (0:noir, 1:bleu, 2:violet, 3:orange)
+    window.playerStates = {}; 
 
     async function saveToFirebase() {
         try {
@@ -216,8 +215,9 @@
             window.totalGames = data.totalGames || 0;
             window.poolEnJeu = data.poolEnJeu || [];
             
-            // Initialisation des stats perm si nouveaux joueurs
+            // Sécurité : Initialisation si données manquantes
             window.players.forEach(p => {
+                if(!window.stats[p.name]) window.stats[p.name] = { games: 0, encounters: {} };
                 if(!window.permStats[p.name]) window.permStats[p.name] = { pj:0, v:0, q4als:0, qfaf:0 };
             });
         }
@@ -232,10 +232,10 @@
     };
 
     window.tirage = function() {
-        // Avant de changer, on enregistre les perfs de la partie qui vient de se finir
         if(window.poolEnJeu.length === 5) {
             window.poolEnJeu.forEach(name => {
                 const state = window.playerStates[name] || 0;
+                if(!window.permStats[name]) window.permStats[name] = { pj:0, v:0, q4als:0, qfaf:0 };
                 const ps = window.permStats[name];
                 ps.pj++;
                 if(state >= 1) ps.q4als++;
@@ -247,10 +247,9 @@
         const activeNames = window.players.filter(p => p.active).map(p => p.name);
         if(activeNames.length < 5) { alert("Besoin de 5 actifs !"); return; }
 
-        // Logique de tirage identique
-        const minGamesGlobal = Math.min(...activeNames.map(n => window.stats[n].games));
-        let prioritaires = activeNames.filter(n => window.stats[n].games === minGamesGlobal && !window.poolEnJeu.includes(n));
-        let secondaires = activeNames.filter(n => (window.stats[n].games > minGamesGlobal || window.poolEnJeu.includes(n)) && !window.poolEnJeu.includes(n));
+        const minGamesGlobal = Math.min(...activeNames.map(n => window.stats[n].games || 0));
+        let prioritaires = activeNames.filter(n => (window.stats[n].games || 0) === minGamesGlobal && !window.poolEnJeu.includes(n));
+        let secondaires = activeNames.filter(n => ((window.stats[n].games || 0) > minGamesGlobal || window.poolEnJeu.includes(n)) && !window.poolEnJeu.includes(n));
         if((prioritaires.length + secondaires.length) < 5) secondaires = activeNames;
 
         let bestGroup = [];
@@ -263,15 +262,18 @@
                 else if (sPool.length > 0) testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
             }
             let conflict = 0;
-            testGroup.forEach(p => testGroup.filter(o=>o!==p).forEach(partner => conflict += (window.stats[p].encounters[partner]||0)));
+            testGroup.forEach(p => testGroup.filter(o=>o!==p).forEach(partner => {
+                if(window.stats[p] && window.stats[p].encounters) conflict += (window.stats[p].encounters[partner]||0);
+            }));
             if(conflict < lowestConflict) { lowestConflict = conflict; bestGroup = testGroup; }
         }
 
         window.poolEnJeu = [...bestGroup];
-        window.playerStates = {}; // Reset des couleurs pour la nouvelle partie
+        window.playerStates = {}; 
         window.totalGames++;
 
         bestGroup.forEach(n => {
+            if(!window.stats[n]) window.stats[n] = { games: 0, encounters: {} };
             bestGroup.filter(other => other !== n).forEach(partner => {
                 window.stats[n].encounters[partner] = (window.stats[n].encounters[partner] || 0) + 1;
             });
@@ -295,20 +297,38 @@
         });
     };
 
+    window.updateUI = function() {
+        const container = document.getElementById('list-p'); 
+        if(!container) return;
+        container.innerHTML = '';
+        let count = 0;
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            if(p.active) count++;
+            const d = document.createElement('div'); 
+            d.className = 'p-card';
+            d.innerHTML = `
+                <input type="checkbox" ${p.active?'checked':''} onchange="window.toggleP('${p.id}')"> 
+                <span style="flex:1; margin-left:10px; overflow:hidden; text-overflow:ellipsis;">${p.name}</span>
+            `;
+            container.appendChild(d);
+        });
+        document.getElementById('count-info').innerText = `Nous sommes : ${count}`;
+    };
+
     window.renderStatsPerm = function() {
         const container = document.getElementById('list-stats-perm');
         container.innerHTML = '';
         window.players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const ps = window.permStats[p.name] || { pj:0, v:0, q4als:0, qfaf:0 };
-            const pj = ps.pj || 1; // Eviter div par 0
+            const pj = ps.pj || 0;
             const row = document.createElement('div');
             row.className = 'stat-row';
             row.innerHTML = `
                 <span class="col-name">${p.name}</span>
-                <span class="col-val">${ps.pj}</span>
-                <span class="col-val txt-orange">${Math.round(ps.v/pj*100)}%</span>
-                <span class="col-val txt-blue">${Math.round(ps.q4als/pj*100)}%</span>
-                <span class="col-val txt-purple">${Math.round(ps.qfaf/pj*100)}%</span>
+                <span class="col-val">${pj}</span>
+                <span class="col-val txt-orange">${pj > 0 ? Math.round(ps.v/pj*100) : 0}%</span>
+                <span class="col-val txt-blue">${pj > 0 ? Math.round(ps.q4als/pj*100) : 0}%</span>
+                <span class="col-val txt-purple">${pj > 0 ? Math.round(ps.qfaf/pj*100) : 0}%</span>
                 <span class="col-val txt-dark-orange">${ps.v}</span>
             `;
             container.appendChild(row);
@@ -319,7 +339,7 @@
         const container = document.getElementById('list-stats-jour');
         container.innerHTML = '';
         window.players.filter(p=>p.active).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const s = window.stats[p.name];
+            const s = window.stats[p.name] || { games:0 };
             const row = document.createElement('div');
             row.className = 'stat-row';
             row.innerHTML = `<span class="col-name">${p.name}</span><span class="col-val">${s.games}</span><span class="col-val">${s.mixScore || 0}</span>`;
@@ -347,7 +367,8 @@
         const input = document.getElementById('add-input');
         const name = input.value.trim();
         if(name) {
-            window.players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
+            const id = Math.random().toString(36).substr(2,5);
+            window.players.push({ id: id, name: name, active: true });
             window.stats[name] = { games: window.getMinScore(), encounters: {} };
             window.permStats[name] = { pj:0, v:0, q4als:0, qfaf:0 };
             input.value = ''; window.updateUI(); saveToFirebase();
@@ -359,21 +380,9 @@
         if(p) { p.active = !p.active; window.updateUI(); saveToFirebase(); }
     };
 
-    window.updateUI = function() {
-        const container = document.getElementById('list-p'); container.innerHTML = '';
-        let count = 0;
-        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            if(p.active) count++;
-            const d = document.createElement('div'); d.className = 'p-card';
-            d.innerHTML = `<input type="checkbox" ${p.active?'checked':''} onchange="window.toggleP('${p.id}')"> <span style="flex:1; margin-left:10px;">${p.name}</span>`;
-            container.appendChild(d);
-        });
-        document.getElementById('count-info').innerText = `Nous sommes : ${count}`;
-    };
-
     window.getMinScore = function() {
         const active = window.players.filter(p => p.active);
-        return active.length ? Math.min(...active.map(p => window.stats[p.name].games)) : 0;
+        return active.length ? Math.min(...active.map(p => (window.stats[p.name]?.games || 0))) : 0;
     };
 
     window.openM = function(id) { 
