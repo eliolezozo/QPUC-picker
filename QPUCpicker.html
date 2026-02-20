@@ -9,9 +9,8 @@
             --bg-dark: #1a1a1a;
             --blue-main: #3498db;
             --white: #ffffff;
-            --gray-text: #888;
-            --yellow-4als: #f1c40f; /* Jaune plus vif */
-            --orange-faf: #e67e22;  /* Orange plus profond */
+            --yellow-4als: #f1c40f;
+            --orange-faf: #e67e22;
             --red-win: #c0392b;
             --btn-border: #ffffff;
         }
@@ -19,115 +18,94 @@
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
             background-color: var(--bg-dark); color: var(--white);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            overflow: hidden;
-            display: flex; flex-direction: column; align-items: center;
+            font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden;
         }
 
-        /* --- PAGE PRINCIPALE --- */
         .main-container {
-            width: 100%; max-width: 500px; height: 100vh;
+            width: 100%; max-width: 400px; height: 100vh; margin: 0 auto;
             display: flex; flex-direction: column; align-items: center;
-            padding: 20px; box-sizing: border-box;
-            justify-content: space-between;
+            padding: 15px; box-sizing: border-box; justify-content: space-between;
         }
 
+        /* --- BOUTONS HAUT --- */
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
         .btn-top-reset {
             background: none; border: 1.5px solid var(--btn-border);
-            color: white; border-radius: 30px; padding: 8px 20px;
-            font-size: 0.9rem; cursor: pointer; text-transform: uppercase;
-            font-weight: 600;
+            color: white; border-radius: 30px; padding: 6px 15px;
+            font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
         }
+        .btn-super-reset { background: #d00; border: none; color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.6rem; cursor: pointer; font-weight: bold; }
 
         .btn-prochaine-partie {
             background-color: var(--blue-main); color: white;
-            width: 95%; border-radius: 50px; padding: 18px 0;
-            font-size: 1.5rem; border: none; cursor: pointer;
-            text-transform: uppercase; margin-top: 15px;
-            font-weight: 700; letter-spacing: 1px;
+            width: 100%; border-radius: 50px; padding: 15px 0;
+            font-size: 1.4rem; border: none; cursor: pointer;
+            text-transform: uppercase; margin-top: 10px; font-weight: 700;
         }
 
-        .section-title {
-            color: var(--blue-main); font-size: 0.85rem;
-            margin-top: 30px; text-transform: uppercase;
-            font-weight: 700;
-        }
+        .section-title { color: var(--blue-main); font-size: 0.8rem; margin-top: 20px; text-transform: uppercase; font-weight: 700; }
 
-        #current-players {
-            display: flex; flex-direction: column; align-items: center;
-            gap: 12px; margin-top: 15px; flex: 1; width: 100%;
-        }
-        .player-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
+        #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
+        .player-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
 
         .player-badge {
-            background: white; color: black; border-radius: 30px;
-            padding: 10px 20px; font-size: 1.1rem; min-width: 90px;
-            text-align: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            font-weight: 600; text-transform: uppercase;
-            transition: background 0.2s;
+            background: white; color: black; border-radius: 25px;
+            padding: 8px 15px; font-size: 1rem; min-width: 85px;
+            text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
         }
 
-        /* --- LEGENDE --- */
-        .legend-area { width: 100%; text-align: center; margin-bottom: 10px; }
-        .legend-title { font-size: 0.75rem; margin-bottom: 8px; color: #aaa; text-transform: uppercase; }
-        .legend-flex { display: flex; justify-content: center; align-items: center; gap: 4px; font-size: 0.65rem; }
-        .leg-box { padding: 4px 8px; border-radius: 12px; font-weight: 700; color: white; text-transform: uppercase; }
-        .arrow { color: #555; font-weight: bold; }
+        .legend-area { width: 100%; text-align: center; margin-bottom: 5px; }
+        .legend-flex { display: flex; justify-content: center; align-items: center; gap: 3px; font-size: 0.55rem; }
+        .leg-box { padding: 3px 6px; border-radius: 10px; font-weight: 700; color: white; text-transform: uppercase; }
 
-        /* --- BOUTONS NAVIGATION --- */
-        .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+        .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px; }
         .btn-nav {
             background: none; border: 1.5px solid var(--btn-border);
             color: white; border-radius: 30px; padding: 10px 0;
-            font-size: 0.9rem; cursor: pointer; text-transform: uppercase; width: 100%;
-            font-weight: 600;
+            font-size: 0.85rem; cursor: pointer; text-transform: uppercase; width: 100%; font-weight: 600;
         }
 
         /* --- MODALES --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; z-index: 1000;
-            padding: 15px; box-sizing: border-box;
+            background: rgba(0,0,0,0.85); display: none; z-index: 1000; padding: 10px; box-sizing: border-box;
         }
         .modal {
-            background: white; border-radius: 30px; width: 100%; max-width: 450px;
-            margin: 30px auto; position: relative; padding: 15px;
-            color: black; display: flex; flex-direction: column; max-height: 85vh;
+            background: white; border-radius: 25px; width: 95%; max-width: 380px;
+            margin: 20px auto; position: relative; padding: 15px;
+            color: black; display: flex; flex-direction: column; max-height: 80vh;
         }
         .modal-header {
-            background: var(--blue-main); color: white; border-radius: 30px;
-            padding: 12px; text-align: center; font-size: 1.1rem; text-transform: uppercase;
-            margin-bottom: 15px; font-weight: 700;
+            background: var(--blue-main); color: white; border-radius: 20px;
+            padding: 10px; text-align: center; font-size: 1rem; text-transform: uppercase;
+            margin-bottom: 10px; font-weight: 700;
         }
         .close-btn {
             position: absolute; top: -10px; right: -5px; width: 35px; height: 35px;
             background: #d00; border-radius: 50%; color: white; border: 2px solid white;
             font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer;
-            font-weight: bold;
         }
 
-        /* Liste Participants */
-        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; padding: 5px; }
-        .p-pill {
-            border: 1.5px solid #ddd; border-radius: 20px; padding: 8px;
-            text-align: center; font-size: 0.95rem; cursor: pointer; color: #999;
-            font-weight: 600;
-        }
+        /* SCROLL INTERNE */
+        .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
+        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .p-pill { border: 1.5px solid #ddd; border-radius: 20px; padding: 8px; text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; font-weight: 600; }
         .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
 
-        /* Stats Tables */
-        .stats-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        .stats-table th { font-size: 0.6rem; color: #888; text-align: center; padding-bottom: 8px; text-transform: uppercase; }
-        .stats-table td { padding: 10px 5px; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #f0f0f0; }
+        .stats-table { width: 100%; border-collapse: collapse; }
+        .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; text-transform: uppercase; }
+        .stats-table td { padding: 8px 4px; text-align: center; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0; }
         .name-col { text-align: left; color: #bbb; font-weight: 600; }
         .name-col.active { color: black; }
-
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        <button class="btn-top-reset" onclick="window.resetSession()">Nouvelle séance</button>
+        <div class="top-bar">
+            <button class="btn-top-reset" onclick="window.resetSession()">Nouvelle séance</button>
+            <button class="btn-super-reset" onclick="window.fullReset()">RESET TOTAL DATA</button>
+        </div>
         
         <button class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
         
@@ -135,14 +113,13 @@
         <div id="current-players"></div>
 
         <div class="legend-area">
-            <div class="legend-title">Légende :</div>
             <div class="legend-flex">
-                <div class="leg-box" style="background:white; color:black; border:1px solid #ddd; padding: 4px 6px;">Non qualifié</div>
-                <span class="arrow">➔</span>
-                <div class="leg-box" style="background:var(--yellow-4als)">4 à la suite</div>
-                <span class="arrow">➔</span>
-                <div class="leg-box" style="background:var(--orange-faf)">Face à face</div>
-                <span class="arrow">➔</span>
+                <div class="leg-box" style="background:white; color:black; border:1px solid #ddd">Non qualifié</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--yellow-4als)">4ALS</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--orange-faf)">FaF</div>
+                <span style="color:#555">➔</span>
                 <div class="leg-box" style="background:var(--red-win)">Gagnant</div>
             </div>
         </div>
@@ -154,9 +131,43 @@
         </div>
     </div>
 
-    <div id="modal-p" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-p')">✕</div><div class="modal-header" id="header-p-count">Participants (0)</div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="text" id="add-input" placeholder="Nouveau nom..." style="flex:1; border-radius:20px; border:1px solid #ccc; padding:10px;"><button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:40px; border-radius:50%; font-size:20px; cursor:pointer;">+</button></div><div id="list-p"></div></div></div>
-    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Parties jouées aujourd'hui</div><table class="stats-table"><tr><th style="text-align:left">NOM</th><th>PARTIES</th><th>MIXAGE</th></tr><tbody id="list-stats-jour"></tbody></table></div></div>
-    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques</div><table class="stats-table"><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">% 4ALS</th><th style="color:var(--orange-faf)">% FAF</th><th style="color:var(--red-win)">% WIN</th><th style="color:var(--blue-main)">WINS</th></tr><tbody id="list-stats-perm"></tbody></table></div></div>
+    <div id="modal-p" class="overlay">
+        <div class="modal">
+            <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
+            <div class="modal-header" id="header-p-count">Participants (0)</div>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="add-input" placeholder="Nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px;">
+                <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%;">+</button>
+            </div>
+            <div class="scroll-content"><div id="list-p"></div></div>
+        </div>
+    </div>
+
+    <div id="modal-sj" class="overlay">
+        <div class="modal">
+            <div class="close-btn" onclick="window.closeM('modal-sj')">✕</div>
+            <div class="modal-header">Parties aujourd'hui</div>
+            <div class="scroll-content">
+                <table class="stats-table">
+                    <thead><tr><th style="text-align:left">NOM</th><th>PARTIES</th><th>MIXAGE</th></tr></thead>
+                    <tbody id="list-stats-jour"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-sp" class="overlay">
+        <div class="modal">
+            <div class="close-btn" onclick="window.closeM('modal-sp')">✕</div>
+            <div class="modal-header">Statistiques</div>
+            <div class="scroll-content">
+                <table class="stats-table">
+                    <thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead>
+                    <tbody id="list-stats-perm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -176,7 +187,7 @@
         const snap = await getDoc(docRef);
         if (snap.exists()) {
             const d = snap.data();
-            window.players = d.players || [];
+            window.players = (d.players || []).filter(p => p.name !== "dzd"); // Suppression "dzd"
             window.stats = d.stats || {};
             window.permStats = d.permStats || {};
             window.poolEnJeu = d.poolEnJeu || [];
@@ -190,51 +201,60 @@
     };
 
     window.renderDisplay = () => {
-        const div = document.getElementById('current-players');
-        div.innerHTML = '';
+        const div = document.getElementById('current-players'); div.innerHTML = '';
         const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
         rows.forEach(row => {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'player-row';
+            const rowDiv = document.createElement('div'); rowDiv.className = 'player-row';
             row.forEach(n => {
                 const s = window.playerStates[n] || 0;
-                const b = document.createElement('div');
-                b.className = 'player-badge';
-                if(s === 1) { b.style.background = 'var(--yellow-4als)'; b.style.color = 'black'; }
-                if(s === 2) { b.style.background = 'var(--orange-faf)'; b.style.color = 'white'; }
-                if(s === 3) { b.style.background = 'var(--red-win)'; b.style.color = 'white'; }
-                b.innerText = n;
-                b.onclick = () => window.cycleStatus(n);
-                rowDiv.appendChild(b);
+                const b = document.createElement('div'); b.className = 'player-badge';
+                if(s===1){ b.style.background='var(--yellow-4als)'; b.style.color='black'; }
+                else if(s===2){ b.style.background='var(--orange-faf)'; b.style.color='white'; }
+                else if(s===3){ b.style.background='var(--red-win)'; b.style.color='white'; }
+                b.innerText = n; b.onclick = () => window.cycleStatus(n); rowDiv.appendChild(b);
             });
             div.appendChild(rowDiv);
         });
     };
 
-    window.updateUI = () => {
-        const cont = document.getElementById('list-p');
-        cont.innerHTML = '';
-        let count = 0;
-        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            if(p.active) count++;
-            const d = document.createElement('div');
-            d.className = `p-pill ${p.active?'active':''}`;
-            d.innerText = p.name;
-            d.onclick = () => window.toggleP(p.id);
-            cont.appendChild(d);
-        });
-        document.getElementById('header-p-count').innerText = `Participants (${count})`;
-    };
-
     window.tirage = async () => {
+        // Enregistrement des stats de la partie FINIE avant le nouveau tirage
+        if(window.poolEnJeu.length === 5) {
+            window.poolEnJeu.forEach(n => {
+                const s = window.playerStates[n] || 0;
+                if(!window.permStats[n]) window.permStats[n] = {pj:0, v:0, q4als:0, qfaf:0};
+                window.permStats[n].pj++;
+                if(s >= 1) window.permStats[n].q4als++;
+                if(s >= 2) window.permStats[n].qfaf++;
+                if(s === 3) window.permStats[n].v++;
+            });
+        }
+
         const active = window.players.filter(p => p.active).map(p => p.name);
         if(active.length < 5) return alert("Besoin de 5 actifs");
+        
         const sorted = [...active].sort((a,b) => (window.stats[a]?.games || 0) - (window.stats[b]?.games || 0));
         window.poolEnJeu = sorted.slice(0, 5);
         window.playerStates = {};
-        window.poolEnJeu.forEach(n => { if(!window.stats[n]) window.stats[n] = {games:0}; window.stats[n].games++; });
+        
+        window.poolEnJeu.forEach(n => {
+            if(!window.stats[n]) window.stats[n] = {games:0};
+            window.stats[n].games++;
+        });
+        
         window.renderDisplay();
         await save();
+    };
+
+    window.updateUI = () => {
+        const cont = document.getElementById('list-p'); cont.innerHTML = '';
+        let count = 0;
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            if(p.active) count++;
+            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
+            d.innerText = p.name; d.onclick = () => window.toggleP(p.id); cont.appendChild(d);
+        });
+        document.getElementById('header-p-count').innerText = `Participants (${count})`;
     };
 
     window.toggleP = async (id) => {
@@ -244,7 +264,7 @@
 
     window.addPlayer = async () => {
         const n = document.getElementById('add-input').value.trim();
-        if(n) {
+        if(n && !window.players.find(p=>p.name === n)) {
             window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true});
             document.getElementById('add-input').value = '';
             window.updateUI(); await save();
@@ -253,27 +273,29 @@
 
     window.openM = (id) => {
         document.getElementById(id).style.display = 'block';
-        if(id === 'modal-sj') renderSJ();
-        if(id === 'modal-sp') renderSP();
+        if(id === 'modal-sj') {
+            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
+            window.players.filter(p=>p.active).forEach(p => {
+                const s = window.stats[p.name] || {games:0};
+                b.innerHTML += `<tr><td class="name-col active">${p.name}</td><td>${s.games}</td><td>0</td></tr>`;
+            });
+        }
+        if(id === 'modal-sp') {
+            const b = document.getElementById('list-stats-perm'); b.innerHTML = '';
+            window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+                const s = window.permStats[p.name] || {pj:0, v:0, q4als:0, qfaf:0};
+                const pj = s.pj || 0;
+                b.innerHTML += `<tr><td class="name-col ${p.active?'active':''}">${p.name}</td><td>${pj}</td>
+                    <td style="color:var(--yellow-4als)">${pj?Math.round(s.q4als/pj*100):0}%</td>
+                    <td style="color:var(--orange-faf)">${pj?Math.round(s.qfaf/pj*100):0}%</td>
+                    <td style="color:var(--red-win)">${pj?Math.round(s.v/pj*100):0}%</td><td>${s.v}</td></tr>`;
+            });
+        }
     };
+
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
-
-    function renderSJ() {
-        const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
-        window.players.forEach(p => {
-            const s = window.stats[p.name] || {games:0};
-            b.innerHTML += `<tr><td class="name-col ${p.active?'active':''}">${p.name}</td><td>${s.games}</td><td>0</td></tr>`;
-        });
-    }
-
-    function renderSP() {
-        const b = document.getElementById('list-stats-perm'); b.innerHTML = '';
-        window.players.forEach(p => {
-            b.innerHTML += `<tr><td class="name-col ${p.active?'active':''}">${p.name}</td><td>0</td><td>0%</td><td>0%</td><td>0%</td><td>0</td></tr>`;
-        });
-    }
-
     window.resetSession = async () => { if(confirm("Nouvelle séance ?")) { window.poolEnJeu = []; window.players.forEach(p => window.stats[p.name] = {games:0}); window.renderDisplay(); await save(); }};
+    window.fullReset = async () => { if(confirm("ATTENTION: RESET TOTAL DES DATA ?")) { window.players = []; window.stats = {}; window.permStats = {}; window.poolEnJeu = []; await save(); location.reload(); }};
 </script>
 </body>
 </html>
