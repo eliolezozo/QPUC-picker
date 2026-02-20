@@ -199,7 +199,7 @@
         return active.length ? Math.min(...active.map(p => window.stats[p.name].games)) : 0;
     };
 
-    window.updateUI = function() {
+   window.updateUI = function() {
         const container = document.getElementById('list-p');
         container.innerHTML = '';
         let count = 0;
@@ -211,104 +211,6 @@
             container.appendChild(d);
         });
         document.getElementById('count-info').innerText = `Nous sommes : ${count}`;
-    };
-
-    window.toggleP = function(id) {
-        const p = window.players.find(x => x.id === id);
-        if(p) {
-            p.active = !p.active;
-            if(p.active) {
-                window.stats[p.name].games = window.getMinScore(p.name);
-                window.stats[p.name].mixScore = 0;
-            }
-            window.updateUI();
-            saveToFirebase();
-        }
-    };
-
-    window.addPlayer = function() {
-        const input = document.getElementById('add-input');
-        const name = input.value.trim();
-        if(name) {
-            const min = window.getMinScore();
-            window.players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
-            window.stats[name] = { games: min, mixScore: 0, encounters: {} };
-            input.value = '';
-            window.updateUI();
-            saveToFirebase();
-        }
-    };
-
-    window.tirage = function() {
-        const activeNames = window.players.filter(p => p.active).map(p => p.name);
-        if(activeNames.length < 5) return;
-
-        const minGamesGlobal = Math.min(...activeNames.map(n => window.stats[n].games));
-        let prioritaires = activeNames.filter(n => window.stats[n].games === minGamesGlobal && !window.poolEnJeu.includes(n));
-        let secondaires = activeNames.filter(n => (window.stats[n].games > minGamesGlobal || window.poolEnJeu.includes(n)) && !window.poolEnJeu.includes(n));
-
-        if((prioritaires.length + secondaires.length) < 5) {
-            secondaires = activeNames.filter(n => !window.poolEnJeu.includes(n) || true);
-        }
-
-        let bestGroup = [];
-        let lowestConflict = Infinity;
-
-        for (let i = 0; i < 100; i++) {
-            let testGroup = [];
-            let pPool = [...prioritaires];
-            let sPool = [...secondaires].filter(n => !pPool.includes(n));
-            
-            for (let j = 0; j < 5; j++) {
-                if (pPool.length > 0) {
-                    testGroup.push(pPool.splice(Math.floor(Math.random() * pPool.length), 1)[0]);
-                } else if (sPool.length > 0) {
-                    testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
-                }
-            }
-
-            let totalGroupConflict = 0;
-            testGroup.forEach(player => {
-                let encounteredHistory = [];
-                testGroup.filter(o => o !== player).forEach(partner => {
-                    const times = window.stats[player].encounters[partner] || 0;
-                    if (times > 0) encounteredHistory.push(times);
-                });
-                if (encounteredHistory.length > 1) {
-                    encounteredHistory.sort((a, b) => b - a);
-                    encounteredHistory.shift(); 
-                    totalGroupConflict += encounteredHistory.reduce((a, b) => a + b, 0);
-                }
-            });
-
-            if (totalGroupConflict < lowestConflict) {
-                lowestConflict = totalGroupConflict;
-                bestGroup = testGroup;
-            }
-            if (lowestConflict === 0) break; 
-        }
-
-        window.poolIndispo = [...window.poolEnJeu];
-        window.poolEnJeu = [...bestGroup];
-        window.totalGames++;
-
-        bestGroup.forEach(n => {
-            let conflictHistory = [];
-            bestGroup.filter(other => other !== n).forEach(partner => {
-                const times = window.stats[n].encounters[partner] || 0;
-                if (times > 0) conflictHistory.push(times);
-                window.stats[n].encounters[partner] = times + 1;
-            });
-            if (conflictHistory.length > 1) {
-                conflictHistory.sort((a, b) => b - a);
-                conflictHistory.shift(); 
-                window.stats[n].mixScore -= conflictHistory.reduce((a, b) => a + b, 0);
-            }
-            window.stats[n].games++;
-        });
-        
-        window.renderDisplay();
-        saveToFirebase();
     };
 
     window.renderDisplay = function() {
@@ -339,9 +241,13 @@
         if(id === 'modal-s') window.renderStats();
         if(id === 'modal-p') window.updateUI();
     };
-    window.closeM = function(id) { document.getElementById(id).style.display = 'none'; };
+
+    window.closeM = function(id) { 
+        document.getElementById(id).style.display = 'none'; 
+    };
 
 </script>
 </body>
 </html>
+
 
