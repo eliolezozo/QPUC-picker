@@ -11,6 +11,7 @@
             --secondary: #2196d3; 
             --bg: #1e1e1e; 
             --btn-gray: #333333;
+            --danger: #e74c3c;
         }
 
         body, html {
@@ -24,14 +25,24 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
+        /* --- NAVIGATION --- */
         .nav-top {
-            width: 90%; display: flex; gap: 12px; margin-top: 15px;
+            width: 90%; display: flex; align-items: center; gap: 12px; margin-top: 15px;
         }
 
         .btn-grey {
             flex: 1; padding: 14px; border-radius: 12px;
             border: none; background: var(--btn-gray); color: white;
             font-weight: bold; font-size: 0.85rem; cursor: pointer;
+        }
+
+        .btn-reset {
+            width: 50px; height: 50px; border-radius: 50%;
+            border: none; background: var(--danger); color: white;
+            font-size: 0.65rem; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            flex-shrink: 0;
         }
 
         #count-info {
@@ -67,6 +78,7 @@
             box-shadow: 0 0 25px rgba(0, 206, 122, 0.4);
         }
 
+        /* --- MODALES --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; z-index: 1000;
@@ -94,6 +106,7 @@
     <div class="container">
         <div class="nav-top">
             <button class="btn-grey" onclick="window.openM('modal-p')">Participants</button>
+            <button class="btn-reset" onclick="window.resetSession()">RESET</button>
             <button class="btn-grey" onclick="window.openM('modal-s')">Stats</button>
         </div>
 
@@ -142,9 +155,6 @@
     const db = getFirestore(app);
     const docRef = doc(db, "projets", "picker_equite");
 
-    const initialNames = ["Eric", "Danièle", "René", "Louis", "Madeleine", "Antoine", "Patrice", "Eliott", "Henrick", "Yann", "Philippe O", "Philippe M", "Damien", "Patricia L", "Valérie", "Geoffrey", "Michèle", "Patricia C", "Sébastien", "Lysiane", "Rolande", "Jean-Pierre", "Jean-Marie"];
-    const excluded = ["Philippe M", "Michèle", "Rolande", "Jean-Pierre", "Jean-Marie"];
-
     window.players = [];
     window.stats = {};
     window.totalGames = 0;
@@ -169,16 +179,23 @@
             window.stats = data.stats;
             window.totalGames = data.totalGames;
             window.poolEnJeu = data.poolEnJeu || [];
-        } else {
-            window.players = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 5), name: n, active: !excluded.includes(n) }));
-            initialNames.forEach(n => {
-                window.stats[n] = { games: 0, mixScore: 0, encounters: {} };
-            });
-            await saveToFirebase();
         }
         window.updateUI();
         window.renderDisplay();
     });
+
+    window.resetSession = function() {
+        if (confirm("Nouvelle session ? Les compteurs de parties reviendront à 0, mais la liste des participants reste identique.")) {
+            window.totalGames = 0;
+            window.poolEnJeu = [];
+            window.players.forEach(p => {
+                window.stats[p.name] = { games: 0, mixScore: 0, encounters: {} };
+            });
+            window.updateUI();
+            window.renderDisplay();
+            saveToFirebase();
+        }
+    };
 
     window.getMinScore = function(excludeName = "") {
         const active = window.players.filter(p => p.active && p.name !== excludeName);
@@ -213,7 +230,10 @@
 
     window.tirage = function() {
         const activeNames = window.players.filter(p => p.active).map(p => p.name);
-        if(activeNames.length < 5) return;
+        if(activeNames.length < 5) {
+            alert("Il faut au moins 5 participants actifs !");
+            return;
+        }
 
         const minGamesGlobal = Math.min(...activeNames.map(n => window.stats[n].games));
         let prioritaires = activeNames.filter(n => window.stats[n].games === minGamesGlobal && !window.poolEnJeu.includes(n));
@@ -241,16 +261,9 @@
 
             let totalGroupConflict = 0;
             testGroup.forEach(player => {
-                let encounteredHistory = [];
                 testGroup.filter(o => o !== player).forEach(partner => {
-                    const times = window.stats[player].encounters[partner] || 0;
-                    if (times > 0) encounteredHistory.push(times);
+                    totalGroupConflict += (window.stats[player].encounters[partner] || 0);
                 });
-                if (encounteredHistory.length > 1) {
-                    encounteredHistory.sort((a, b) => b - a);
-                    encounteredHistory.shift(); 
-                    totalGroupConflict += encounteredHistory.reduce((a, b) => a + b, 0);
-                }
             });
 
             if (totalGroupConflict < lowestConflict) {
