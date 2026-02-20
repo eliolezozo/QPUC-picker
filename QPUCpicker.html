@@ -24,7 +24,6 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- NAVIGATION EN HAUT --- */
         .nav-top {
             width: 90%; display: flex; gap: 12px; margin-top: 15px;
         }
@@ -35,7 +34,6 @@
             font-weight: bold; font-size: 0.85rem; cursor: pointer;
         }
 
-        /* --- AFFICHAGE CENTRAL --- */
         #count-info {
             background: rgba(33, 150, 211, 0.2); color: #3498db;
             padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 20px; font-size: 0.9rem;
@@ -57,7 +55,6 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        /* --- BOUTON VERT --- */
         .btn-center-wrapper {
             position: absolute; bottom: 15%; left: 50%;
             transform: translateX(-50%);
@@ -70,7 +67,6 @@
             box-shadow: 0 0 25px rgba(0, 206, 122, 0.4);
         }
 
-        /* --- MODALES --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; z-index: 1000;
@@ -83,15 +79,12 @@
         }
 
         #list-p, #list-stats { flex: 1; overflow-y: auto; margin-top: 15px; }
-
         #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .p-card { display: flex; align-items: center; background: #f2f2f2; padding: 10px; border-radius: 10px; color: #333; }
-
         .stat-row { display: flex; align-items: center; padding: 12px 5px; border-bottom: 1px solid #eee; color: #000; }
         .stat-name { flex: 1; font-weight: 600; }
         .stat-games { font-weight: bold; margin-right: 15px; }
         .stat-mix { color: #666; font-size: 0.9rem; width: 35px; text-align: right; font-weight: bold; }
-
         .close-x { align-self: flex-end; font-size: 28px; border: none; background: none; color: #333; font-weight: bold; padding: 5px; cursor: pointer; }
         h2 { margin: 0; color: #000; font-size: 1.3rem; }
     </style>
@@ -100,8 +93,8 @@
 
     <div class="container">
         <div class="nav-top">
-            <button class="btn-grey" onclick="openM('modal-p')">Participants</button>
-            <button class="btn-grey" onclick="openM('modal-s')">Stats</button>
+            <button class="btn-grey" onclick="window.openM('modal-p')">Participants</button>
+            <button class="btn-grey" onclick="window.openM('modal-s')">Stats</button>
         </div>
 
         <div id="count-info">Nous sommes : 0</div>
@@ -109,16 +102,16 @@
         <div id="current-players"></div>
 
         <div class="btn-center-wrapper">
-            <button class="roll-btn" onclick="tirage()">PROCHAINE<br>PARTIE</button>
+            <button class="roll-btn" onclick="window.tirage()">PROCHAINE<br>PARTIE</button>
         </div>
     </div>
 
     <div id="modal-p" class="overlay">
         <div class="modal">
-            <button class="close-x" onclick="closeM('modal-p')">✕</button>
+            <button class="close-x" onclick="window.closeM('modal-p')">✕</button>
             <div style="display:flex; gap:8px;">
                 <input type="text" id="add-input" placeholder="Ajouter..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc; font-size: 16px;">
-                <button onclick="addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold; font-size:20px;">+</button>
+                <button onclick="window.addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold; font-size:20px;">+</button>
             </div>
             <div id="list-p"></div>
         </div>
@@ -126,41 +119,29 @@
 
     <div id="modal-s" class="overlay">
         <div class="modal">
-            <button class="close-x" onclick="closeM('modal-s')">✕</button>
+            <button class="close-x" onclick="window.closeM('modal-s')">✕</button>
             <h2 id="total-title">Total parties : 0</h2>
             <div id="list-stats"></div>
         </div>
     </div>
 
-  <script type="module">
-    // 1. IMPORTATION DES MODULES FIREBASE
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 2. TA CONFIGURATION FIREBASE (À REMPLACER)
-  const firebaseConfig = {
+    const firebaseConfig = {
+        apiKey: "AIzaSyCJnSe8Z2vhLAzoKL4Awr94TD0y2ncSZwA",
+        authDomain: "arizozo01.firebaseapp.com",
+        projectId: "arizozo01",
+        storageBucket: "arizozo01.firebasestorage.app",
+        messagingSenderId: "983197543312",
+        appId: "1:983197543312:web:6f585242e9c0268fd82115"
+    };
 
-  apiKey: "AIzaSyCJnSe8Z2vhLAzoKL4Awr94TD0y2ncSZwA",
-
-  authDomain: "arizozo01.firebaseapp.com",
-
-  projectId: "arizozo01",
-
-  storageBucket: "arizozo01.firebasestorage.app",
-
-  messagingSenderId: "983197543312",
-
-  appId: "1:983197543312:web:6f585242e9c0268fd82115"
-
-};
-
-
-    // 3. INITIALISATION
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const docRef = doc(db, "projets", "picker_equite");
 
-    // --- VARIABLES ET DONNÉES PAR DÉFAUT ---
     const initialNames = ["Eric", "Danièle", "René", "Louis", "Madeleine", "Antoine", "Patrice", "Eliott", "Henrick", "Yann", "Philippe O", "Philippe M", "Damien", "Patricia L", "Valérie", "Geoffrey", "Michèle", "Patricia C", "Sébastien", "Lysiane", "Rolande", "Jean-Pierre", "Jean-Marie"];
     const excluded = ["Philippe M", "Michèle", "Rolande", "Jean-Pierre", "Jean-Marie"];
 
@@ -168,9 +149,7 @@
     window.stats = {};
     window.totalGames = 0;
     window.poolEnJeu = [];
-    window.poolIndispo = [];
 
-    // --- SAUVEGARDE ET CHARGEMENT ---
     async function saveToFirebase() {
         try {
             await setDoc(docRef, {
@@ -201,14 +180,102 @@
         window.renderDisplay();
     });
 
-    // --- FONCTIONS GLOBALES (ATTACHÉES À WINDOW) ---
-
     window.getMinScore = function(excludeName = "") {
         const active = window.players.filter(p => p.active && p.name !== excludeName);
         return active.length ? Math.min(...active.map(p => window.stats[p.name].games)) : 0;
     };
 
-   window.updateUI = function() {
+    window.toggleP = function(id) {
+        const p = window.players.find(x => x.id === id);
+        if(p) {
+            p.active = !p.active;
+            if(p.active) {
+                window.stats[p.name].games = window.getMinScore(p.name);
+                window.stats[p.name].mixScore = 0;
+            }
+            window.updateUI();
+            saveToFirebase();
+        }
+    };
+
+    window.addPlayer = function() {
+        const input = document.getElementById('add-input');
+        const name = input.value.trim();
+        if(name) {
+            const min = window.getMinScore();
+            window.players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
+            window.stats[name] = { games: min, mixScore: 0, encounters: {} };
+            input.value = '';
+            window.updateUI();
+            saveToFirebase();
+        }
+    };
+
+    window.tirage = function() {
+        const activeNames = window.players.filter(p => p.active).map(p => p.name);
+        if(activeNames.length < 5) return;
+
+        const minGamesGlobal = Math.min(...activeNames.map(n => window.stats[n].games));
+        let prioritaires = activeNames.filter(n => window.stats[n].games === minGamesGlobal && !window.poolEnJeu.includes(n));
+        let secondaires = activeNames.filter(n => (window.stats[n].games > minGamesGlobal || window.poolEnJeu.includes(n)) && !window.poolEnJeu.includes(n));
+
+        if((prioritaires.length + secondaires.length) < 5) {
+            secondaires = activeNames.filter(n => !window.poolEnJeu.includes(n) || true);
+        }
+
+        let bestGroup = [];
+        let lowestConflict = Infinity;
+
+        for (let i = 0; i < 100; i++) {
+            let testGroup = [];
+            let pPool = [...prioritaires];
+            let sPool = [...secondaires].filter(n => !pPool.includes(n));
+            
+            for (let j = 0; j < 5; j++) {
+                if (pPool.length > 0) {
+                    testGroup.push(pPool.splice(Math.floor(Math.random() * pPool.length), 1)[0]);
+                } else if (sPool.length > 0) {
+                    testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
+                }
+            }
+
+            let totalGroupConflict = 0;
+            testGroup.forEach(player => {
+                let encounteredHistory = [];
+                testGroup.filter(o => o !== player).forEach(partner => {
+                    const times = window.stats[player].encounters[partner] || 0;
+                    if (times > 0) encounteredHistory.push(times);
+                });
+                if (encounteredHistory.length > 1) {
+                    encounteredHistory.sort((a, b) => b - a);
+                    encounteredHistory.shift(); 
+                    totalGroupConflict += encounteredHistory.reduce((a, b) => a + b, 0);
+                }
+            });
+
+            if (totalGroupConflict < lowestConflict) {
+                lowestConflict = totalGroupConflict;
+                bestGroup = testGroup;
+            }
+            if (lowestConflict === 0) break; 
+        }
+
+        window.poolEnJeu = [...bestGroup];
+        window.totalGames++;
+
+        bestGroup.forEach(n => {
+            bestGroup.filter(other => other !== n).forEach(partner => {
+                const times = window.stats[n].encounters[partner] || 0;
+                window.stats[n].encounters[partner] = times + 1;
+            });
+            window.stats[n].games++;
+        });
+        
+        window.renderDisplay();
+        saveToFirebase();
+    };
+
+    window.updateUI = function() {
         const container = document.getElementById('list-p');
         container.innerHTML = '';
         let count = 0;
@@ -254,11 +321,6 @@
     window.closeM = function(id) { 
         document.getElementById(id).style.display = 'none'; 
     };
-
 </script>
 </body>
 </html>
-
-
-
-
