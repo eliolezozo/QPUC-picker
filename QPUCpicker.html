@@ -27,14 +27,14 @@
             padding: 15px; box-sizing: border-box; justify-content: space-between;
         }
 
-        /* --- BOUTONS HAUT --- */
         .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
         .btn-top-reset {
             background: none; border: 1.5px solid var(--btn-border);
             color: white; border-radius: 30px; padding: 6px 15px;
             font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
         }
-        .btn-super-reset { background: #d00; border: none; color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.6rem; cursor: pointer; font-weight: bold; }
+        .btn-super-reset { background: #d00; border: none; color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.6rem; cursor: pointer; font-weight: bold; opacity: 0.5; }
+        .btn-super-reset:hover { opacity: 1; }
 
         .btn-prochaine-partie {
             background-color: var(--blue-main); color: white;
@@ -52,6 +52,7 @@
             background: white; color: black; border-radius: 25px;
             padding: 8px 15px; font-size: 1rem; min-width: 85px;
             text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
         .legend-area { width: 100%; text-align: center; margin-bottom: 5px; }
@@ -65,7 +66,6 @@
             font-size: 0.85rem; cursor: pointer; text-transform: uppercase; width: 100%; font-weight: 600;
         }
 
-        /* --- MODALES --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; z-index: 1000; padding: 10px; box-sizing: border-box;
@@ -86,7 +86,6 @@
             font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
-        /* SCROLL INTERNE */
         .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
         #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .p-pill { border: 1.5px solid #ddd; border-radius: 20px; padding: 8px; text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; font-weight: 600; }
@@ -104,7 +103,7 @@
     <div class="main-container">
         <div class="top-bar">
             <button class="btn-top-reset" onclick="window.resetSession()">Nouvelle séance</button>
-            <button class="btn-super-reset" onclick="window.fullReset()">RESET TOTAL DATA</button>
+            <button class="btn-super-reset" onclick="window.fullReset()">RESET DATA</button>
         </div>
         
         <button class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
@@ -137,7 +136,7 @@
             <div class="modal-header" id="header-p-count">Participants (0)</div>
             <div style="display:flex; gap:8px; margin-bottom:10px;">
                 <input type="text" id="add-input" placeholder="Nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px;">
-                <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%;">+</button>
+                <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button>
             </div>
             <div class="scroll-content"><div id="list-p"></div></div>
         </div>
@@ -187,7 +186,8 @@
         const snap = await getDoc(docRef);
         if (snap.exists()) {
             const d = snap.data();
-            window.players = (d.players || []).filter(p => p.name !== "dzd"); // Suppression "dzd"
+            // On charge les joueurs et on filtre dzd s'il existe encore
+            window.players = (d.players || []).filter(p => p.name.toLowerCase() !== "dzd");
             window.stats = d.stats || {};
             window.permStats = d.permStats || {};
             window.poolEnJeu = d.poolEnJeu || [];
@@ -218,7 +218,6 @@
     };
 
     window.tirage = async () => {
-        // Enregistrement des stats de la partie FINIE avant le nouveau tirage
         if(window.poolEnJeu.length === 5) {
             window.poolEnJeu.forEach(n => {
                 const s = window.playerStates[n] || 0;
@@ -231,7 +230,7 @@
         }
 
         const active = window.players.filter(p => p.active).map(p => p.name);
-        if(active.length < 5) return alert("Besoin de 5 actifs");
+        if(active.length < 5) return alert("Besoin de 5 participants actifs !");
         
         const sorted = [...active].sort((a,b) => (window.stats[a]?.games || 0) - (window.stats[b]?.games || 0));
         window.poolEnJeu = sorted.slice(0, 5);
@@ -264,7 +263,7 @@
 
     window.addPlayer = async () => {
         const n = document.getElementById('add-input').value.trim();
-        if(n && !window.players.find(p=>p.name === n)) {
+        if(n && !window.players.find(p => p.name.toLowerCase() === n.toLowerCase())) {
             window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true});
             document.getElementById('add-input').value = '';
             window.updateUI(); await save();
@@ -295,7 +294,7 @@
 
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
     window.resetSession = async () => { if(confirm("Nouvelle séance ?")) { window.poolEnJeu = []; window.players.forEach(p => window.stats[p.name] = {games:0}); window.renderDisplay(); await save(); }};
-    window.fullReset = async () => { if(confirm("ATTENTION: RESET TOTAL DES DATA ?")) { window.players = []; window.stats = {}; window.permStats = {}; window.poolEnJeu = []; await save(); location.reload(); }};
+    window.fullReset = async () => { if(confirm("RESET TOTAL ?")) { window.players = []; window.stats = {}; window.permStats = {}; window.poolEnJeu = []; await save(); location.reload(); }};
 </script>
 </body>
 </html>
