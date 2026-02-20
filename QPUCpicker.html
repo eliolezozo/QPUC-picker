@@ -33,8 +33,7 @@
             color: white; border-radius: 30px; padding: 6px 15px;
             font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
         }
-        .btn-super-reset { background: #d00; border: none; color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.6rem; cursor: pointer; font-weight: bold; opacity: 0.5; }
-        .btn-super-reset:hover { opacity: 1; }
+        .btn-super-reset { background: #d00; border: none; color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.6rem; cursor: pointer; font-weight: bold; opacity: 0.6; }
 
         .btn-prochaine-partie {
             background-color: var(--blue-main); color: white;
@@ -103,7 +102,7 @@
     <div class="main-container">
         <div class="top-bar">
             <button class="btn-top-reset" onclick="window.resetSession()">Nouvelle séance</button>
-            <button class="btn-super-reset" onclick="window.fullReset()">RESET DATA</button>
+            <button class="btn-super-reset" onclick="window.fullReset()">RESET STATS (TEST)</button>
         </div>
         
         <button class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
@@ -130,43 +129,9 @@
         </div>
     </div>
 
-    <div id="modal-p" class="overlay">
-        <div class="modal">
-            <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
-            <div class="modal-header" id="header-p-count">Participants (0)</div>
-            <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <input type="text" id="add-input" placeholder="Nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px;">
-                <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button>
-            </div>
-            <div class="scroll-content"><div id="list-p"></div></div>
-        </div>
-    </div>
-
-    <div id="modal-sj" class="overlay">
-        <div class="modal">
-            <div class="close-btn" onclick="window.closeM('modal-sj')">✕</div>
-            <div class="modal-header">Parties aujourd'hui</div>
-            <div class="scroll-content">
-                <table class="stats-table">
-                    <thead><tr><th style="text-align:left">NOM</th><th>PARTIES</th><th>MIXAGE</th></tr></thead>
-                    <tbody id="list-stats-jour"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-sp" class="overlay">
-        <div class="modal">
-            <div class="close-btn" onclick="window.closeM('modal-sp')">✕</div>
-            <div class="modal-header">Statistiques</div>
-            <div class="scroll-content">
-                <table class="stats-table">
-                    <thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead>
-                    <tbody id="list-stats-perm"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <div id="modal-p" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-p')">✕</div><div class="modal-header" id="header-p-count">Participants (0)</div><div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="add-input" placeholder="Nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px;"><button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%;">+</button></div><div class="scroll-content"><div id="list-p"></div></div></div></div>
+    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Parties aujourd'hui</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PARTIES</th><th>MIXAGE</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
+    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -177,6 +142,10 @@
     const db = getFirestore(app);
     const docRef = doc(db, "projets", "picker_equite");
 
+    const ORIGINAL_PLAYERS = [
+        "SABER", "SESTIME", "SEGCANE", "4 À LA SUITE", "ACTIVE", "FAF", "SALCANCE", "&B5ASB", "OBDE"
+    ].map(name => ({id: Math.random().toString(36).substr(2,5), name, active: true}));
+
     window.players = []; window.stats = {}; window.permStats = {};
     window.poolEnJeu = []; window.playerStates = {};
 
@@ -186,11 +155,12 @@
         const snap = await getDoc(docRef);
         if (snap.exists()) {
             const d = snap.data();
-            // On charge les joueurs et on filtre dzd s'il existe encore
-            window.players = (d.players || []).filter(p => p.name.toLowerCase() !== "dzd");
+            window.players = d.players || ORIGINAL_PLAYERS;
             window.stats = d.stats || {};
             window.permStats = d.permStats || {};
             window.poolEnJeu = d.poolEnJeu || [];
+        } else {
+            window.players = ORIGINAL_PLAYERS;
         }
         window.updateUI(); window.renderDisplay();
     });
@@ -228,21 +198,13 @@
                 if(s === 3) window.permStats[n].v++;
             });
         }
-
         const active = window.players.filter(p => p.active).map(p => p.name);
-        if(active.length < 5) return alert("Besoin de 5 participants actifs !");
-        
+        if(active.length < 5) return alert("Besoin de 5 actifs");
         const sorted = [...active].sort((a,b) => (window.stats[a]?.games || 0) - (window.stats[b]?.games || 0));
         window.poolEnJeu = sorted.slice(0, 5);
         window.playerStates = {};
-        
-        window.poolEnJeu.forEach(n => {
-            if(!window.stats[n]) window.stats[n] = {games:0};
-            window.stats[n].games++;
-        });
-        
-        window.renderDisplay();
-        await save();
+        window.poolEnJeu.forEach(n => { if(!window.stats[n]) window.stats[n] = {games:0}; window.stats[n].games++; });
+        window.renderDisplay(); await save();
     };
 
     window.updateUI = () => {
@@ -263,11 +225,7 @@
 
     window.addPlayer = async () => {
         const n = document.getElementById('add-input').value.trim();
-        if(n && !window.players.find(p => p.name.toLowerCase() === n.toLowerCase())) {
-            window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true});
-            document.getElementById('add-input').value = '';
-            window.updateUI(); await save();
-        }
+        if(n) { window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true}); document.getElementById('add-input').value = ''; window.updateUI(); await save(); }
     };
 
     window.openM = (id) => {
@@ -284,17 +242,19 @@
             window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
                 const s = window.permStats[p.name] || {pj:0, v:0, q4als:0, qfaf:0};
                 const pj = s.pj || 0;
-                b.innerHTML += `<tr><td class="name-col ${p.active?'active':''}">${p.name}</td><td>${pj}</td>
-                    <td style="color:var(--yellow-4als)">${pj?Math.round(s.q4als/pj*100):0}%</td>
-                    <td style="color:var(--orange-faf)">${pj?Math.round(s.qfaf/pj*100):0}%</td>
-                    <td style="color:var(--red-win)">${pj?Math.round(s.v/pj*100):0}%</td><td>${s.v}</td></tr>`;
+                b.innerHTML += `<tr><td class="name-col ${p.active?'active':''}">${p.name}</td><td>${pj}</td><td style="color:var(--yellow-4als)">${pj?Math.round(s.q4als/pj*100):0}%</td><td style="color:var(--orange-faf)">${pj?Math.round(s.qfaf/pj*100):0}%</td><td style="color:var(--red-win)">${pj?Math.round(s.v/pj*100):0}%</td><td>${s.v}</td></tr>`;
             });
         }
     };
 
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
     window.resetSession = async () => { if(confirm("Nouvelle séance ?")) { window.poolEnJeu = []; window.players.forEach(p => window.stats[p.name] = {games:0}); window.renderDisplay(); await save(); }};
-    window.fullReset = async () => { if(confirm("RESET TOTAL ?")) { window.players = []; window.stats = {}; window.permStats = {}; window.poolEnJeu = []; await save(); location.reload(); }};
+    
+    // Le bouton RESET n'efface plus window.players
+    window.fullReset = async () => { if(confirm("Effacer toutes les statistiques mais GARDER les participants ?")) { 
+        window.stats = {}; window.permStats = {}; window.poolEnJeu = []; 
+        await save(); location.reload(); 
+    }};
 </script>
 </body>
 </html>
