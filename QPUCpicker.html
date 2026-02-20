@@ -4,7 +4,7 @@
     <link rel="icon" href="data:,">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Picker Equité & Mixage</title>
+    <title>Picker Equité & Mixage - Pro</title>
     <style>
         :root {
             --primary: #00ce7a; 
@@ -12,6 +12,10 @@
             --bg: #1e1e1e; 
             --btn-gray: #333333;
             --danger: #e74c3c;
+            --step-qualif: #3498db; /* Bleu */
+            --step-faf: #9b59b6;    /* Violet */
+            --step-win: #e67e22;    /* Orange */
+            --step-win-dark: #d35400; /* Orange foncé */
         }
 
         body, html {
@@ -25,34 +29,32 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- NAVIGATION --- */
         .nav-top {
-            width: 90%; display: flex; align-items: center; gap: 12px; margin-top: 15px;
+            width: 95%; display: flex; align-items: center; gap: 8px; margin-top: 15px;
         }
 
         .btn-grey {
-            flex: 1; padding: 14px; border-radius: 12px;
+            flex: 1; padding: 12px 5px; border-radius: 10px;
             border: none; background: var(--btn-gray); color: white;
-            font-weight: bold; font-size: 0.85rem; cursor: pointer;
+            font-weight: bold; font-size: 0.75rem; cursor: pointer;
         }
 
         .btn-reset {
-            width: 50px; height: 50px; border-radius: 50%;
+            width: 45px; height: 45px; border-radius: 50%;
             border: none; background: var(--danger); color: white;
-            font-size: 0.65rem; font-weight: bold; cursor: pointer;
+            font-size: 0.6rem; font-weight: bold; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            flex-shrink: 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); flex-shrink: 0;
         }
 
         #count-info {
             background: rgba(33, 150, 211, 0.2); color: #3498db;
-            padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 20px; font-size: 0.9rem;
+            padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 15px; font-size: 0.85rem;
         }
 
         .title-session {
-            color: #3498db; font-weight: bold; font-size: 0.75rem;
-            margin: 15px 0; text-transform: uppercase; letter-spacing: 1px;
+            color: #3498db; font-weight: bold; font-size: 0.7rem;
+            margin: 10px 0; text-transform: uppercase; letter-spacing: 1px;
         }
 
         #current-players {
@@ -60,22 +62,23 @@
             gap: 10px; padding: 0 10px; width: 100%;
         }
 
+        /* --- ÉTATS DES BADGES --- */
         .badge {
-            background: var(--secondary); padding: 10px 20px;
-            border-radius: 40px; font-weight: bold; font-size: 1rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            padding: 12px 18px; border-radius: 40px; font-weight: bold; font-size: 0.95rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer; transition: 0.2s;
+            border: 2px solid transparent; text-align: center; min-width: 80px;
         }
+        .status-0 { background: white; color: black; }
+        .status-1 { background: var(--step-qualif); color: white; }
+        .status-2 { background: var(--step-faf); color: white; }
+        .status-3 { background: var(--step-win); color: white; }
 
-        .btn-center-wrapper {
-            position: absolute; bottom: 15%; left: 50%;
-            transform: translateX(-50%);
-        }
-        
+        .btn-center-wrapper { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); }
         .roll-btn {
-            width: 140px; height: 140px; border-radius: 50%;
+            width: 130px; height: 130px; border-radius: 50%;
             border: none; background: var(--primary); color: white;
-            font-weight: 800; font-size: 0.95rem; cursor: pointer;
-            box-shadow: 0 0 25px rgba(0, 206, 122, 0.4);
+            font-weight: 800; font-size: 0.9rem; cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 206, 122, 0.4);
         }
 
         /* --- MODALES --- */
@@ -83,22 +86,28 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; z-index: 1000;
         }
-
         .modal {
-            position: absolute; bottom: 0; width: 100%; height: 85vh;
+            position: absolute; bottom: 0; width: 100%; height: 90vh;
             background: #ffffff; border-radius: 25px 25px 0 0;
             padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
         }
-
-        #list-p, #list-stats { flex: 1; overflow-y: auto; margin-top: 15px; }
-        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .p-card { display: flex; align-items: center; background: #f2f2f2; padding: 10px; border-radius: 10px; color: #333; }
-        .stat-row { display: flex; align-items: center; padding: 12px 5px; border-bottom: 1px solid #eee; color: #000; }
-        .stat-name { flex: 1; font-weight: 600; }
-        .stat-games { font-weight: bold; margin-right: 15px; }
-        .stat-mix { color: #666; font-size: 0.9rem; width: 35px; text-align: right; font-weight: bold; }
         .close-x { align-self: flex-end; font-size: 28px; border: none; background: none; color: #333; font-weight: bold; padding: 5px; cursor: pointer; }
-        h2 { margin: 0; color: #000; font-size: 1.3rem; }
+        h2 { margin: 0 0 10px 0; color: #000; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        
+        #list-p, .stats-container { flex: 1; overflow-y: auto; }
+        
+        /* Tableaux de stats */
+        .stat-header { display: flex; font-size: 0.65rem; font-weight: bold; color: #666; padding: 5px 0; border-bottom: 1px solid #ddd; text-transform: uppercase; }
+        .stat-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; color: #000; font-size: 0.85rem; }
+        
+        .col-name { flex: 2; font-weight: bold; }
+        .col-val { flex: 1; text-align: center; }
+        .txt-orange { color: var(--step-win); font-weight: bold; }
+        .txt-blue { color: var(--step-qualif); font-weight: bold; }
+        .txt-purple { color: var(--step-faf); font-weight: bold; }
+        .txt-dark-orange { color: var(--step-win-dark); font-weight: bold; }
+
+        .btn-danger-small { background: var(--danger); color: white; border: none; padding: 8px; border-radius: 5px; font-size: 0.7rem; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -106,8 +115,9 @@
     <div class="container">
         <div class="nav-top">
             <button class="btn-grey" onclick="window.openM('modal-p')">Participants</button>
+            <button class="btn-grey" onclick="window.openM('modal-s-jour')">Stats Jour</button>
             <button class="btn-reset" onclick="window.resetSession()">RESET</button>
-            <button class="btn-grey" onclick="window.openM('modal-s')">Stats</button>
+            <button class="btn-grey" onclick="window.openM('modal-s-perm')">Stats Perm</button>
         </div>
 
         <div id="count-info">Nous sommes : 0</div>
@@ -122,19 +132,41 @@
     <div id="modal-p" class="overlay">
         <div class="modal">
             <button class="close-x" onclick="window.closeM('modal-p')">✕</button>
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="add-input" placeholder="Ajouter..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc; font-size: 16px;">
-                <button onclick="window.addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold; font-size:20px;">+</button>
+            <div style="display:flex; gap:8px; margin-bottom: 15px;">
+                <input type="text" id="add-input" placeholder="Ajouter..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
+                <button onclick="window.addPlayer()" style="background:var(--primary); color:white; border:none; padding:0 18px; border-radius:10px; font-weight:bold;">+</button>
             </div>
             <div id="list-p"></div>
         </div>
     </div>
 
-    <div id="modal-s" class="overlay">
+    <div id="modal-s-jour" class="overlay">
         <div class="modal">
-            <button class="close-x" onclick="window.closeM('modal-s')">✕</button>
-            <h2 id="total-title">Total parties : 0</h2>
-            <div id="list-stats"></div>
+            <button class="close-x" onclick="window.closeM('modal-s-jour')">✕</button>
+            <h2 id="total-title-jour">Stats de la session</h2>
+            <div class="stat-header">
+                <span class="col-name">Nom</span>
+                <span class="col-val">Parties</span>
+                <span class="col-val">Mixage</span>
+            </div>
+            <div id="list-stats-jour" class="stats-container"></div>
+        </div>
+    </div>
+
+    <div id="modal-s-perm" class="overlay">
+        <div class="modal">
+            <button class="close-x" onclick="window.closeM('modal-s-perm')">✕</button>
+            <h2>Stats Permanentes</h2>
+            <div class="stat-header">
+                <span class="col-name">Nom</span>
+                <span class="col-val">PJ</span>
+                <span class="col-val">% V</span>
+                <span class="col-val">% 4ALS</span>
+                <span class="col-val">% FAF</span>
+                <span class="col-val">Vic.</span>
+            </div>
+            <div id="list-stats-perm" class="stats-container"></div>
+            <button class="btn-danger-small" onclick="window.resetPermStats()">Réinitialiser TOUTES les stats permanentes</button>
         </div>
     </div>
 
@@ -156,15 +188,18 @@
     const docRef = doc(db, "projets", "picker_equite");
 
     window.players = [];
-    window.stats = {};
+    window.stats = {};      // Stats du jour
+    window.permStats = {};  // Stats permanentes
     window.totalGames = 0;
     window.poolEnJeu = [];
+    window.playerStates = {}; // État local des badges (0:noir, 1:bleu, 2:violet, 3:orange)
 
     async function saveToFirebase() {
         try {
             await setDoc(docRef, {
                 players: window.players,
                 stats: window.stats,
+                permStats: window.permStats,
                 totalGames: window.totalGames,
                 poolEnJeu: window.poolEnJeu
             });
@@ -175,111 +210,70 @@
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
-            window.players = data.players;
-            window.stats = data.stats;
-            window.totalGames = data.totalGames;
+            window.players = data.players || [];
+            window.stats = data.stats || {};
+            window.permStats = data.permStats || {};
+            window.totalGames = data.totalGames || 0;
             window.poolEnJeu = data.poolEnJeu || [];
+            
+            // Initialisation des stats perm si nouveaux joueurs
+            window.players.forEach(p => {
+                if(!window.permStats[p.name]) window.permStats[p.name] = { pj:0, v:0, q4als:0, qfaf:0 };
+            });
         }
         window.updateUI();
         window.renderDisplay();
     });
 
-    window.resetSession = function() {
-        if (confirm("Nouvelle session ? Les compteurs de parties reviendront à 0, mais la liste des participants reste identique.")) {
-            window.totalGames = 0;
-            window.poolEnJeu = [];
-            window.players.forEach(p => {
-                window.stats[p.name] = { games: 0, mixScore: 0, encounters: {} };
-            });
-            window.updateUI();
-            window.renderDisplay();
-            saveToFirebase();
-        }
-    };
-
-    window.getMinScore = function(excludeName = "") {
-        const active = window.players.filter(p => p.active && p.name !== excludeName);
-        return active.length ? Math.min(...active.map(p => window.stats[p.name].games)) : 0;
-    };
-
-    window.toggleP = function(id) {
-        const p = window.players.find(x => x.id === id);
-        if(p) {
-            p.active = !p.active;
-            if(p.active) {
-                window.stats[p.name].games = window.getMinScore(p.name);
-                window.stats[p.name].mixScore = 0;
-            }
-            window.updateUI();
-            saveToFirebase();
-        }
-    };
-
-    window.addPlayer = function() {
-        const input = document.getElementById('add-input');
-        const name = input.value.trim();
-        if(name) {
-            const min = window.getMinScore();
-            window.players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
-            window.stats[name] = { games: min, mixScore: 0, encounters: {} };
-            input.value = '';
-            window.updateUI();
-            saveToFirebase();
-        }
+    window.cycleStatus = function(name) {
+        let current = window.playerStates[name] || 0;
+        window.playerStates[name] = (current + 1) % 4;
+        window.renderDisplay();
     };
 
     window.tirage = function() {
-        const activeNames = window.players.filter(p => p.active).map(p => p.name);
-        if(activeNames.length < 5) {
-            alert("Il faut au moins 5 participants actifs !");
-            return;
+        // Avant de changer, on enregistre les perfs de la partie qui vient de se finir
+        if(window.poolEnJeu.length === 5) {
+            window.poolEnJeu.forEach(name => {
+                const state = window.playerStates[name] || 0;
+                const ps = window.permStats[name];
+                ps.pj++;
+                if(state >= 1) ps.q4als++;
+                if(state >= 2) ps.qfaf++;
+                if(state === 3) ps.v++;
+            });
         }
 
+        const activeNames = window.players.filter(p => p.active).map(p => p.name);
+        if(activeNames.length < 5) { alert("Besoin de 5 actifs !"); return; }
+
+        // Logique de tirage identique
         const minGamesGlobal = Math.min(...activeNames.map(n => window.stats[n].games));
         let prioritaires = activeNames.filter(n => window.stats[n].games === minGamesGlobal && !window.poolEnJeu.includes(n));
         let secondaires = activeNames.filter(n => (window.stats[n].games > minGamesGlobal || window.poolEnJeu.includes(n)) && !window.poolEnJeu.includes(n));
-
-        if((prioritaires.length + secondaires.length) < 5) {
-            secondaires = activeNames.filter(n => !window.poolEnJeu.includes(n) || true);
-        }
+        if((prioritaires.length + secondaires.length) < 5) secondaires = activeNames;
 
         let bestGroup = [];
         let lowestConflict = Infinity;
-
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 50; i++) {
             let testGroup = [];
-            let pPool = [...prioritaires];
-            let sPool = [...secondaires].filter(n => !pPool.includes(n));
-            
+            let pPool = [...prioritaires]; let sPool = [...secondaires].filter(n => !pPool.includes(n));
             for (let j = 0; j < 5; j++) {
-                if (pPool.length > 0) {
-                    testGroup.push(pPool.splice(Math.floor(Math.random() * pPool.length), 1)[0]);
-                } else if (sPool.length > 0) {
-                    testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
-                }
+                if (pPool.length > 0) testGroup.push(pPool.splice(Math.floor(Math.random() * pPool.length), 1)[0]);
+                else if (sPool.length > 0) testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
             }
-
-            let totalGroupConflict = 0;
-            testGroup.forEach(player => {
-                testGroup.filter(o => o !== player).forEach(partner => {
-                    totalGroupConflict += (window.stats[player].encounters[partner] || 0);
-                });
-            });
-
-            if (totalGroupConflict < lowestConflict) {
-                lowestConflict = totalGroupConflict;
-                bestGroup = testGroup;
-            }
-            if (lowestConflict === 0) break; 
+            let conflict = 0;
+            testGroup.forEach(p => testGroup.filter(o=>o!==p).forEach(partner => conflict += (window.stats[p].encounters[partner]||0)));
+            if(conflict < lowestConflict) { lowestConflict = conflict; bestGroup = testGroup; }
         }
 
         window.poolEnJeu = [...bestGroup];
+        window.playerStates = {}; // Reset des couleurs pour la nouvelle partie
         window.totalGames++;
 
         bestGroup.forEach(n => {
             bestGroup.filter(other => other !== n).forEach(partner => {
-                const times = window.stats[n].encounters[partner] || 0;
-                window.stats[n].encounters[partner] = times + 1;
+                window.stats[n].encounters[partner] = (window.stats[n].encounters[partner] || 0) + 1;
             });
             window.stats[n].games++;
         });
@@ -288,52 +282,107 @@
         saveToFirebase();
     };
 
-    window.updateUI = function() {
-        const container = document.getElementById('list-p');
+    window.renderDisplay = function() {
+        const display = document.getElementById('current-players');
+        display.innerHTML = '';
+        window.poolEnJeu.forEach(n => {
+            const state = window.playerStates[n] || 0;
+            const b = document.createElement('div');
+            b.className = `badge status-${state}`;
+            b.innerText = n;
+            b.onclick = () => window.cycleStatus(n);
+            display.appendChild(b);
+        });
+    };
+
+    window.renderStatsPerm = function() {
+        const container = document.getElementById('list-stats-perm');
         container.innerHTML = '';
-        let count = 0;
         window.players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+            const ps = window.permStats[p.name] || { pj:0, v:0, q4als:0, qfaf:0 };
+            const pj = ps.pj || 1; // Eviter div par 0
+            const row = document.createElement('div');
+            row.className = 'stat-row';
+            row.innerHTML = `
+                <span class="col-name">${p.name}</span>
+                <span class="col-val">${ps.pj}</span>
+                <span class="col-val txt-orange">${Math.round(ps.v/pj*100)}%</span>
+                <span class="col-val txt-blue">${Math.round(ps.q4als/pj*100)}%</span>
+                <span class="col-val txt-purple">${Math.round(ps.qfaf/pj*100)}%</span>
+                <span class="col-val txt-dark-orange">${ps.v}</span>
+            `;
+            container.appendChild(row);
+        });
+    };
+
+    window.renderStatsJour = function() {
+        const container = document.getElementById('list-stats-jour');
+        container.innerHTML = '';
+        window.players.filter(p=>p.active).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const s = window.stats[p.name];
+            const row = document.createElement('div');
+            row.className = 'stat-row';
+            row.innerHTML = `<span class="col-name">${p.name}</span><span class="col-val">${s.games}</span><span class="col-val">${s.mixScore || 0}</span>`;
+            container.appendChild(row);
+        });
+    };
+
+    window.resetPermStats = function() {
+        if(confirm("Action IRREVERSIBLE : Effacer tout l'historique permanent ?")) {
+            window.players.forEach(p => window.permStats[p.name] = { pj:0, v:0, q4als:0, qfaf:0 });
+            window.renderStatsPerm();
+            saveToFirebase();
+        }
+    };
+
+    window.resetSession = function() {
+        if (confirm("Reset de la session du jour ?")) {
+            window.totalGames = 0; window.poolEnJeu = [];
+            window.players.forEach(p => window.stats[p.name] = { games: 0, mixScore: 0, encounters: {} });
+            window.updateUI(); window.renderDisplay(); saveToFirebase();
+        }
+    };
+
+    window.addPlayer = function() {
+        const input = document.getElementById('add-input');
+        const name = input.value.trim();
+        if(name) {
+            window.players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
+            window.stats[name] = { games: window.getMinScore(), encounters: {} };
+            window.permStats[name] = { pj:0, v:0, q4als:0, qfaf:0 };
+            input.value = ''; window.updateUI(); saveToFirebase();
+        }
+    };
+
+    window.toggleP = function(id) {
+        const p = window.players.find(x => x.id === id);
+        if(p) { p.active = !p.active; window.updateUI(); saveToFirebase(); }
+    };
+
+    window.updateUI = function() {
+        const container = document.getElementById('list-p'); container.innerHTML = '';
+        let count = 0;
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
             if(p.active) count++;
-            const d = document.createElement('div');
-            d.className = 'p-card';
-            d.innerHTML = `<input type="checkbox" ${p.active?'checked':''} onchange="window.toggleP('${p.id}')"> <span style="flex:1; overflow:hidden; text-overflow:ellipsis; font-size:0.85rem;">${p.name}</span>`;
+            const d = document.createElement('div'); d.className = 'p-card';
+            d.innerHTML = `<input type="checkbox" ${p.active?'checked':''} onchange="window.toggleP('${p.id}')"> <span style="flex:1; margin-left:10px;">${p.name}</span>`;
             container.appendChild(d);
         });
         document.getElementById('count-info').innerText = `Nous sommes : ${count}`;
     };
 
-    window.renderDisplay = function() {
-        const display = document.getElementById('current-players');
-        display.innerHTML = '';
-        window.poolEnJeu.forEach(n => {
-            const b = document.createElement('div');
-            b.className = 'badge'; b.innerText = n;
-            display.appendChild(b);
-        });
-    };
-
-    window.renderStats = function() {
-        document.getElementById('total-title').innerText = `Total parties : ${window.totalGames}`;
-        const container = document.getElementById('list-stats');
-        container.innerHTML = '';
-        window.players.filter(p => p.active).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-            const s = window.stats[p.name];
-            const row = document.createElement('div');
-            row.className = 'stat-row';
-            row.innerHTML = `<span class="stat-name">${p.name}</span><span class="stat-games">${s.games}</span><span class="stat-mix">${s.mixScore}</span>`;
-            container.appendChild(row);
-        });
+    window.getMinScore = function() {
+        const active = window.players.filter(p => p.active);
+        return active.length ? Math.min(...active.map(p => window.stats[p.name].games)) : 0;
     };
 
     window.openM = function(id) { 
         document.getElementById(id).style.display = 'block'; 
-        if(id === 'modal-s') window.renderStats();
+        if(id === 'modal-s-jour') window.renderStatsJour();
+        if(id === 'modal-s-perm') window.renderStatsPerm();
         if(id === 'modal-p') window.updateUI();
     };
-
-    window.closeM = function(id) { 
-        document.getElementById(id).style.display = 'none'; 
-    };
+    window.closeM = function(id) { document.getElementById(id).style.display = 'none'; };
 </script>
 </body>
 </html>
