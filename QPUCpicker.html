@@ -11,11 +11,10 @@
             --secondary: #2196d3; 
             --bg: #1e1e1e; 
             --btn-gray: #333333;
-            --danger: #e74c3c;
+            --danger-dark: #8b0000;
             --step-qualif: #3498db; 
             --step-faf: #9b59b6;    
             --step-win: #e67e22;    
-            --step-win-dark: #d35400; 
         }
 
         body, html {
@@ -29,102 +28,113 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .nav-top {
-            width: 95%; display: flex; align-items: center; gap: 8px; margin-top: 15px;
-        }
-
-        .btn-grey {
-            flex: 1; padding: 12px 5px; border-radius: 10px;
-            border: none; background: var(--btn-gray); color: white;
-            font-weight: bold; font-size: 0.75rem; cursor: pointer;
-        }
-
-        .btn-reset {
-            width: 45px; height: 45px; border-radius: 50%;
-            border: none; background: var(--danger); color: white;
-            font-size: 0.6rem; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); flex-shrink: 0;
-        }
-
         #count-info {
             background: rgba(33, 150, 211, 0.2); color: #3498db;
-            padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 15px; font-size: 0.85rem;
+            padding: 8px 20px; border-radius: 20px; font-weight: bold; margin-top: 20px; font-size: 0.9rem;
         }
 
         .title-session {
-            color: #3498db; font-weight: bold; font-size: 0.7rem;
-            margin: 10px 0; text-transform: uppercase; letter-spacing: 1px;
+            color: #3498db; font-weight: bold; font-size: 0.8rem;
+            margin: 15px 0; text-transform: uppercase; letter-spacing: 1px;
         }
 
         #current-players {
             display: flex; flex-wrap: wrap; justify-content: center;
-            gap: 10px; padding: 0 10px; width: 100%;
+            gap: 10px; padding: 0 10px; width: 100%; flex: 1;
         }
 
+        /* --- LEGENDE --- */
+        .legend-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            width: 90%; margin-bottom: 20px;
+        }
+        .leg-item {
+            padding: 6px; border-radius: 5px; font-size: 0.65rem;
+            font-weight: bold; text-align: center; text-transform: uppercase;
+        }
+
+        /* --- NAVIGATION BASSE (Selon ton schéma) --- */
+        .bottom-nav {
+            position: relative; width: 100%; height: 220px;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .btn-nav {
+            position: absolute; padding: 12px 10px; border-radius: 10px;
+            border: none; background: var(--btn-gray); color: white;
+            font-weight: bold; font-size: 0.7rem; cursor: pointer; width: 100px;
+        }
+
+        .pos-participants { left: 5%; top: 20%; }
+        .pos-stats-jour { right: 5%; top: 25%; }
+        .pos-stats-perm { right: 5%; top: 60%; }
+        .pos-reset { left: 10%; top: 60%; background: var(--danger-dark); }
+
+        .roll-btn {
+            width: 140px; height: 140px; border-radius: 50%;
+            border: none; background: var(--primary); color: white;
+            font-weight: 800; font-size: 0.9rem; cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 206, 122, 0.4);
+            z-index: 10;
+        }
+
+        /* --- BADGES --- */
         .badge {
-            padding: 12px 18px; border-radius: 40px; font-weight: bold; font-size: 0.95rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer; transition: 0.2s;
-            border: 2px solid transparent; text-align: center; min-width: 80px;
+            padding: 12px 18px; border-radius: 40px; font-weight: bold; font-size: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer;
         }
         .status-0 { background: white; color: black; }
         .status-1 { background: var(--step-qualif); color: white; }
         .status-2 { background: var(--step-faf); color: white; }
         .status-3 { background: var(--step-win); color: white; }
 
-        .btn-center-wrapper { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); }
-        .roll-btn {
-            width: 130px; height: 130px; border-radius: 50%;
-            border: none; background: var(--primary); color: white;
-            font-weight: 800; font-size: 0.9rem; cursor: pointer;
-            box-shadow: 0 0 20px rgba(0, 206, 122, 0.4);
-        }
-
+        /* --- MODALES --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; z-index: 1000;
         }
         .modal {
-            position: absolute; bottom: 0; width: 100%; height: 90vh;
+            position: absolute; bottom: 0; width: 100%; height: 85vh;
             background: #ffffff; border-radius: 25px 25px 0 0;
             padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
         }
         .close-x { align-self: flex-end; font-size: 28px; border: none; background: none; color: #333; font-weight: bold; padding: 5px; cursor: pointer; }
-        h2 { margin: 0 0 10px 0; color: #000; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        h2 { margin: 0 0 10px 0; color: #000; font-size: 1.2rem; border-bottom: 2px solid #eee; }
         
-        #list-p, .stats-container { flex: 1; overflow-y: auto; }
-        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
+        .p-card { display: flex; align-items: center; background: #eee; padding: 10px; border-radius: 10px; color: #000 !important; font-weight: bold; }
         
-        .p-card { display: flex; align-items: center; background: #f2f2f2; padding: 10px; border-radius: 10px; color: #333; }
-        .stat-header { display: flex; font-size: 0.65rem; font-weight: bold; color: #666; padding: 5px 0; border-bottom: 1px solid #ddd; text-transform: uppercase; }
-        .stat-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; color: #000; font-size: 0.85rem; }
-        
-        .col-name { flex: 2; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .stats-container { flex: 1; overflow-y: auto; color: #000; }
+        .stat-header { display: flex; font-size: 0.6rem; font-weight: bold; color: #666; border-bottom: 1px solid #ddd; padding: 5px 0; }
+        .stat-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.8rem; }
+        .col-name { flex: 2; font-weight: bold; }
         .col-val { flex: 1; text-align: center; }
-        .txt-orange { color: var(--step-win); font-weight: bold; }
-        .txt-blue { color: var(--step-qualif); font-weight: bold; }
-        .txt-purple { color: var(--step-faf); font-weight: bold; }
-        .txt-dark-orange { color: var(--step-win-dark); font-weight: bold; }
-
-        .btn-danger-small { background: var(--danger); color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.8rem; margin-top: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="nav-top">
-            <button class="btn-grey" onclick="window.openM('modal-p')">Participants</button>
-            <button class="btn-grey" onclick="window.openM('modal-s-jour')">Stats Jour</button>
-            <button class="btn-reset" onclick="window.resetSession()">RESET</button>
-            <button class="btn-grey" onclick="window.openM('modal-s-perm')">Stats Perm</button>
-        </div>
-
         <div id="count-info">Nous sommes : 0</div>
         <div class="title-session">PARTIE EN COURS</div>
+        
         <div id="current-players"></div>
 
-        <div class="btn-center-wrapper">
+        <div class="legend-container">
+            <div class="leg-item" style="background: white; color: black;">Non qualifié</div>
+            <div class="leg-item" style="background: var(--step-qualif); color: white;">Qualifié 4ALS</div>
+            <div class="leg-item" style="background: var(--step-faf); color: white;">Qualifié FAF</div>
+            <div class="leg-item" style="background: var(--step-win); color: white;">Victoire</div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="btn-nav pos-participants" onclick="window.openM('modal-p')">Participants</button>
+            <button class="btn-nav pos-reset" onclick="window.resetSession()">NOUVELLE<br>SÉANCE</button>
+            
             <button class="roll-btn" onclick="window.tirage()">PROCHAINE<br>PARTIE</button>
+            
+            <button class="btn-nav pos-stats-jour" onclick="window.openM('modal-s-jour')">STATS<br>AUJOURD'HUI</button>
+            <button class="btn-nav pos-stats-perm" onclick="window.openM('modal-s-perm')">STATS<br>PERMANENTES</button>
         </div>
     </div>
 
@@ -142,11 +152,11 @@
     <div id="modal-s-jour" class="overlay">
         <div class="modal">
             <button class="close-x" onclick="window.closeM('modal-s-jour')">✕</button>
-            <h2 id="total-title-jour">Stats de la session</h2>
+            <h2>Stats du jour</h2>
             <div class="stat-header">
-                <span class="col-name">Nom</span>
-                <span class="col-val">Parties</span>
-                <span class="col-val">Mixage</span>
+                <span class="col-name">NOM</span>
+                <span class="col-val">PARTIES JOUÉES</span>
+                <span class="col-val">SCORE MIXAGE</span>
             </div>
             <div id="list-stats-jour" class="stats-container"></div>
         </div>
@@ -157,15 +167,15 @@
             <button class="close-x" onclick="window.closeM('modal-s-perm')">✕</button>
             <h2>Stats Permanentes</h2>
             <div class="stat-header">
-                <span class="col-name">Nom</span>
+                <span class="col-name">NOM</span>
                 <span class="col-val">PJ</span>
-                <span class="col-val">% V</span>
+                <span class="col-val">% VIC</span>
                 <span class="col-val">% 4ALS</span>
                 <span class="col-val">% FAF</span>
-                <span class="col-val">Vic.</span>
+                <span class="col-val">VIC.</span>
             </div>
             <div id="list-stats-perm" class="stats-container"></div>
-            <button class="btn-danger-small" onclick="window.resetPermStats()">Réinitialiser TOUTES les stats permanentes</button>
+            <button style="background:#ddd; border:none; padding:10px; margin-top:10px; border-radius:5px;" onclick="window.resetPermStats()">Reset Stats Permanentes (Test)</button>
         </div>
     </div>
 
@@ -186,193 +196,84 @@
     const db = getFirestore(app);
     const docRef = doc(db, "projets", "picker_equite");
 
-    window.players = [];
-    window.stats = {};      
-    window.permStats = {};  
-    window.totalGames = 0;
-    window.poolEnJeu = [];
-    window.playerStates = {}; 
+    window.players = []; window.stats = {}; window.permStats = {};
+    window.poolEnJeu = []; window.playerStates = {};
 
     async function saveToFirebase() {
-        try {
-            await setDoc(docRef, {
-                players: window.players,
-                stats: window.stats,
-                permStats: window.permStats,
-                totalGames: window.totalGames,
-                poolEnJeu: window.poolEnJeu
-            });
-        } catch (e) { console.error("Erreur sauvegarde:", e); }
+        await setDoc(docRef, { players: window.players, stats: window.stats, permStats: window.permStats, poolEnJeu: window.poolEnJeu });
     }
 
     window.addEventListener('load', async () => {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            window.players = data.players || [];
-            window.stats = data.stats || {};
-            window.permStats = data.permStats || {};
-            window.totalGames = data.totalGames || 0;
-            window.poolEnJeu = data.poolEnJeu || [];
-            
-            // Sécurité : Initialisation si données manquantes
-            window.players.forEach(p => {
-                if(!window.stats[p.name]) window.stats[p.name] = { games: 0, encounters: {} };
-                if(!window.permStats[p.name]) window.permStats[p.name] = { pj:0, v:0, q4als:0, qfaf:0 };
-            });
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+            const d = snap.data();
+            window.players = d.players || [];
+            window.stats = d.stats || {};
+            window.permStats = d.permStats || {};
+            window.poolEnJeu = d.poolEnJeu || [];
         }
-        window.updateUI();
-        window.renderDisplay();
+        window.updateUI(); window.renderDisplay();
     });
 
     window.cycleStatus = function(name) {
-        let current = window.playerStates[name] || 0;
-        window.playerStates[name] = (current + 1) % 4;
+        window.playerStates[name] = ((window.playerStates[name] || 0) + 1) % 4;
         window.renderDisplay();
     };
 
     window.tirage = function() {
         if(window.poolEnJeu.length === 5) {
-            window.poolEnJeu.forEach(name => {
-                const state = window.playerStates[name] || 0;
-                if(!window.permStats[name]) window.permStats[name] = { pj:0, v:0, q4als:0, qfaf:0 };
-                const ps = window.permStats[name];
-                ps.pj++;
-                if(state >= 1) ps.q4als++;
-                if(state >= 2) ps.qfaf++;
-                if(state === 3) ps.v++;
+            window.poolEnJeu.forEach(n => {
+                const s = window.playerStates[n] || 0;
+                if(!window.permStats[n]) window.permStats[n] = {pj:0, v:0, q4als:0, qfaf:0};
+                window.permStats[n].pj++;
+                if(s >= 1) window.permStats[n].q4als++;
+                if(s >= 2) window.permStats[n].qfaf++;
+                if(s === 3) window.permStats[n].v++;
             });
         }
 
-        const activeNames = window.players.filter(p => p.active).map(p => p.name);
-        if(activeNames.length < 5) { alert("Besoin de 5 actifs !"); return; }
+        const active = window.players.filter(p => p.active).map(p => p.name);
+        if(active.length < 5) return alert("Besoin de 5 actifs");
 
-        const minGamesGlobal = Math.min(...activeNames.map(n => window.stats[n].games || 0));
-        let prioritaires = activeNames.filter(n => (window.stats[n].games || 0) === minGamesGlobal && !window.poolEnJeu.includes(n));
-        let secondaires = activeNames.filter(n => ((window.stats[n].games || 0) > minGamesGlobal || window.poolEnJeu.includes(n)) && !window.poolEnJeu.includes(n));
-        if((prioritaires.length + secondaires.length) < 5) secondaires = activeNames;
+        // Tirage simplifié équitable
+        const sorted = [...active].sort((a,b) => (window.stats[a]?.games || 0) - (window.stats[b]?.games || 0));
+        window.poolEnJeu = sorted.slice(0, 5);
+        window.playerStates = {};
 
-        let bestGroup = [];
-        let lowestConflict = Infinity;
-        for (let i = 0; i < 50; i++) {
-            let testGroup = [];
-            let pPool = [...prioritaires]; let sPool = [...secondaires].filter(n => !pPool.includes(n));
-            for (let j = 0; j < 5; j++) {
-                if (pPool.length > 0) testGroup.push(pPool.splice(Math.floor(Math.random() * pPool.length), 1)[0]);
-                else if (sPool.length > 0) testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
-            }
-            let conflict = 0;
-            testGroup.forEach(p => testGroup.filter(o=>o!==p).forEach(partner => {
-                if(window.stats[p] && window.stats[p].encounters) conflict += (window.stats[p].encounters[partner]||0);
-            }));
-            if(conflict < lowestConflict) { lowestConflict = conflict; bestGroup = testGroup; }
-        }
-
-        window.poolEnJeu = [...bestGroup];
-        window.playerStates = {}; 
-        window.totalGames++;
-
-        bestGroup.forEach(n => {
-            if(!window.stats[n]) window.stats[n] = { games: 0, encounters: {} };
-            bestGroup.filter(other => other !== n).forEach(partner => {
-                window.stats[n].encounters[partner] = (window.stats[n].encounters[partner] || 0) + 1;
-            });
+        window.poolEnJeu.forEach(n => {
+            if(!window.stats[n]) window.stats[n] = {games:0, encounters:{}};
             window.stats[n].games++;
         });
-        
+
         window.renderDisplay();
         saveToFirebase();
     };
 
     window.renderDisplay = function() {
-        const display = document.getElementById('current-players');
-        display.innerHTML = '';
+        const div = document.getElementById('current-players');
+        div.innerHTML = '';
         window.poolEnJeu.forEach(n => {
-            const state = window.playerStates[n] || 0;
+            const s = window.playerStates[n] || 0;
             const b = document.createElement('div');
-            b.className = `badge status-${state}`;
+            b.className = `badge status-${s}`;
             b.innerText = n;
             b.onclick = () => window.cycleStatus(n);
-            display.appendChild(b);
+            div.appendChild(b);
         });
     };
 
     window.updateUI = function() {
-        const container = document.getElementById('list-p'); 
-        if(!container) return;
-        container.innerHTML = '';
+        const cont = document.getElementById('list-p');
+        cont.innerHTML = '';
         let count = 0;
         window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
             if(p.active) count++;
-            const d = document.createElement('div'); 
+            const d = document.createElement('div');
             d.className = 'p-card';
-            d.innerHTML = `
-                <input type="checkbox" ${p.active?'checked':''} onchange="window.toggleP('${p.id}')"> 
-                <span style="flex:1; margin-left:10px; overflow:hidden; text-overflow:ellipsis;">${p.name}</span>
-            `;
-            container.appendChild(d);
+            d.innerHTML = `<input type="checkbox" ${p.active?'checked':''} onchange="window.toggleP('${p.id}')"> <span style="margin-left:8px">${p.name}</span>`;
+            cont.appendChild(d);
         });
         document.getElementById('count-info').innerText = `Nous sommes : ${count}`;
-    };
-
-    window.renderStatsPerm = function() {
-        const container = document.getElementById('list-stats-perm');
-        container.innerHTML = '';
-        window.players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-            const ps = window.permStats[p.name] || { pj:0, v:0, q4als:0, qfaf:0 };
-            const pj = ps.pj || 0;
-            const row = document.createElement('div');
-            row.className = 'stat-row';
-            row.innerHTML = `
-                <span class="col-name">${p.name}</span>
-                <span class="col-val">${pj}</span>
-                <span class="col-val txt-orange">${pj > 0 ? Math.round(ps.v/pj*100) : 0}%</span>
-                <span class="col-val txt-blue">${pj > 0 ? Math.round(ps.q4als/pj*100) : 0}%</span>
-                <span class="col-val txt-purple">${pj > 0 ? Math.round(ps.qfaf/pj*100) : 0}%</span>
-                <span class="col-val txt-dark-orange">${ps.v}</span>
-            `;
-            container.appendChild(row);
-        });
-    };
-
-    window.renderStatsJour = function() {
-        const container = document.getElementById('list-stats-jour');
-        container.innerHTML = '';
-        window.players.filter(p=>p.active).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const s = window.stats[p.name] || { games:0 };
-            const row = document.createElement('div');
-            row.className = 'stat-row';
-            row.innerHTML = `<span class="col-name">${p.name}</span><span class="col-val">${s.games}</span><span class="col-val">${s.mixScore || 0}</span>`;
-            container.appendChild(row);
-        });
-    };
-
-    window.resetPermStats = function() {
-        if(confirm("Action IRREVERSIBLE : Effacer tout l'historique permanent ?")) {
-            window.players.forEach(p => window.permStats[p.name] = { pj:0, v:0, q4als:0, qfaf:0 });
-            window.renderStatsPerm();
-            saveToFirebase();
-        }
-    };
-
-    window.resetSession = function() {
-        if (confirm("Reset de la session du jour ?")) {
-            window.totalGames = 0; window.poolEnJeu = [];
-            window.players.forEach(p => window.stats[p.name] = { games: 0, mixScore: 0, encounters: {} });
-            window.updateUI(); window.renderDisplay(); saveToFirebase();
-        }
-    };
-
-    window.addPlayer = function() {
-        const input = document.getElementById('add-input');
-        const name = input.value.trim();
-        if(name) {
-            const id = Math.random().toString(36).substr(2,5);
-            window.players.push({ id: id, name: name, active: true });
-            window.stats[name] = { games: window.getMinScore(), encounters: {} };
-            window.permStats[name] = { pj:0, v:0, q4als:0, qfaf:0 };
-            input.value = ''; window.updateUI(); saveToFirebase();
-        }
     };
 
     window.toggleP = function(id) {
@@ -380,18 +281,59 @@
         if(p) { p.active = !p.active; window.updateUI(); saveToFirebase(); }
     };
 
-    window.getMinScore = function() {
-        const active = window.players.filter(p => p.active);
-        return active.length ? Math.min(...active.map(p => (window.stats[p.name]?.games || 0))) : 0;
+    window.addPlayer = function() {
+        const n = document.getElementById('add-input').value.trim();
+        if(n) {
+            window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true});
+            window.stats[n] = {games: 0, encounters: {}};
+            window.permStats[n] = {pj:0, v:0, q4als:0, qfaf:0};
+            document.getElementById('add-input').value = '';
+            window.updateUI(); saveToFirebase();
+        }
+    };
+
+    window.resetSession = function() {
+        if(confirm("Nouvelle séance ? Les scores du jour seront remis à zéro.")) {
+            window.poolEnJeu = [];
+            window.players.forEach(p => window.stats[p.name] = {games:0, encounters:{}});
+            window.renderDisplay(); saveToFirebase();
+        }
+    };
+
+    window.renderStatsJour = function() {
+        const cont = document.getElementById('list-stats-jour');
+        cont.innerHTML = '';
+        window.players.filter(p=>p.active).forEach(p => {
+            const s = window.stats[p.name] || {games:0};
+            cont.innerHTML += `<div class="stat-row"><span class="col-name">${p.name}</span><span class="col-val">${s.games}</span><span class="col-val">0</span></div>`;
+        });
+    };
+
+    window.renderStatsPerm = function() {
+        const cont = document.getElementById('list-stats-perm');
+        cont.innerHTML = '';
+        window.players.forEach(p => {
+            const s = window.permStats[p.name] || {pj:0, v:0, q4als:0, qfaf:0};
+            const pj = s.pj || 1;
+            cont.innerHTML += `
+                <div class="stat-row">
+                    <span class="col-name">${p.name}</span>
+                    <span class="col-val">${s.pj}</span>
+                    <span class="col-val" style="color:var(--step-win)">${Math.round(s.v/pj*100)}%</span>
+                    <span class="col-val" style="color:var(--step-qualif)">${Math.round(s.q4als/pj*100)}%</span>
+                    <span class="col-val" style="color:var(--step-faf)">${Math.round(s.qfaf/pj*100)}%</span>
+                    <span class="col-val" style="font-weight:bold; color:#d35400;">${s.v}</span>
+                </div>`;
+        });
     };
 
     window.openM = function(id) { 
         document.getElementById(id).style.display = 'block'; 
         if(id === 'modal-s-jour') window.renderStatsJour();
         if(id === 'modal-s-perm') window.renderStatsPerm();
-        if(id === 'modal-p') window.updateUI();
     };
     window.closeM = function(id) { document.getElementById(id).style.display = 'none'; };
+    window.resetPermStats = function() { if(confirm("Effacer l'historique permanent ?")) { window.players.forEach(p=>window.permStats[p.name]={pj:0,v:0,q4als:0,qfaf:0}); saveToFirebase(); } };
 </script>
 </body>
 </html>
