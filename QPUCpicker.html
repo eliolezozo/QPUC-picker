@@ -131,170 +131,127 @@
         </div>
     </div>
 
-    <script>
-        const initialNames = ["Eric", "Danièle", "René", "Louis", "Madeleine", "Antoine", "Patrice", "Eliott", "Henrick", "Yann", "Philippe O", "Philippe M", "Damien", "Patricia L", "Valérie", "Geoffrey", "Michèle", "Patricia C", "Sébastien", "Lysiane", "Rolande", "Jean-Pierre", "Jean-Marie"];
-        const excluded = ["Philippe M", "Michèle", "Rolande", "Jean-Pierre", "Jean-Marie"];
+    <script type="module">
+    // 1. IMPORTATION DES MODULES FIREBASE
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        let players = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 5), name: n, active: !excluded.includes(n) }));
-        let stats = {};
-        let totalGames = 0;
-        let poolEnJeu = [], poolIndispo = [];
+    // 2. TA CONFIGURATION (À REMPLACER PAR LA TIENNE)
+    const firebaseConfig = {
 
-        initialNames.forEach(n => {
-            stats[n] = { games: 0, mixScore: 0, encounters: {} };
-        });
+  apiKey: "AIzaSyCJnSe8Z2vhLAzoKL4Awr94TD0y2ncSZwA",
 
-        function getMinScore(excludeName = "") {
-            const active = players.filter(p => p.active && p.name !== excludeName);
-            return active.length ? Math.min(...active.map(p => stats[p.name].games)) : 0;
-        }
+  authDomain: "arizozo01.firebaseapp.com",
 
-        function updateUI() {
-            const container = document.getElementById('list-p');
-            container.innerHTML = '';
-            let count = 0;
-            players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-                if(p.active) count++;
-                const d = document.createElement('div');
-                d.className = 'p-card';
-                d.innerHTML = `<input type="checkbox" ${p.active?'checked':''} onchange="toggleP('${p.id}')"> <span style="flex:1; overflow:hidden; text-overflow:ellipsis; font-size:0.85rem;">${p.name}</span>`;
-                container.appendChild(d);
+  projectId: "arizozo01",
+
+  storageBucket: "arizozo01.firebasestorage.app",
+
+  messagingSenderId: "983197543312",
+
+  appId: "1:983197543312:web:6f585242e9c0268fd82115"
+
+};
+
+
+    // 3. INITIALISATION
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    // On utilise un document différent ("picker_equite") pour ne pas écraser l'autre projet
+    const docRef = doc(db, "projets", "picker_equite");
+
+    // --- TES VARIABLES GLOBALES ---
+    const initialNames = ["Eric", "Danièle", "René", "Louis", "Madeleine", "Antoine", "Patrice", "Eliott", "Henrick", "Yann", "Philippe O", "Philippe M", "Damien", "Patricia L", "Valérie", "Geoffrey", "Michèle", "Patricia C", "Sébastien", "Lysiane", "Rolande", "Jean-Pierre", "Jean-Marie"];
+    const excluded = ["Philippe M", "Michèle", "Rolande", "Jean-Pierre", "Jean-Marie"];
+
+    window.players = [];
+    window.stats = {};
+    window.totalGames = 0;
+    window.poolEnJeu = [];
+    window.poolIndispo = [];
+
+    // --- FONCTION DE SAUVEGARDE ---
+    async function saveToFirebase() {
+        try {
+            await setDoc(docRef, {
+                players: window.players,
+                stats: window.stats,
+                totalGames: window.totalGames,
+                poolEnJeu: window.poolEnJeu
             });
-            document.getElementById('count-info').innerText = `Nous sommes : ${count}`;
-        }
+        } catch (e) { console.error("Erreur sauvegarde:", e); }
+    }
 
-        function toggleP(id) {
-            const p = players.find(x => x.id === id);
-            if(p) {
-                p.active = !p.active;
-                if(p.active) {
-                    stats[p.name].games = getMinScore(p.name);
-                    stats[p.name].mixScore = 0;
-                }
-                updateUI();
-            }
-        }
-
-        function addPlayer() {
-            const input = document.getElementById('add-input');
-            const name = input.value.trim();
-            if(name) {
-                const min = getMinScore();
-                players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
-                stats[name] = { games: min, mixScore: 0, encounters: {} };
-                input.value = '';
-                updateUI();
-            }
-        }
-
-        function tirage() {
-            const activeNames = players.filter(p => p.active).map(p => p.name);
-            if(activeNames.length < 5) return;
-
-            const minGamesGlobal = Math.min(...activeNames.map(n => stats[n].games));
-            let prioritaires = activeNames.filter(n => stats[n].games === minGamesGlobal && !poolEnJeu.includes(n));
-            let secondaires = activeNames.filter(n => (stats[n].games > minGamesGlobal || poolEnJeu.includes(n)) && !poolEnJeu.includes(n));
-
-            // Si on n'a pas assez de monde hors du terrain actuel, on pioche dans ceux qui jouent
-            if((prioritaires.length + secondaires.length) < 5) {
-                secondaires = activeNames.filter(n => !poolEnJeu.includes(n) || true);
-            }
-
-            let bestGroup = [];
-            let lowestConflict = Infinity;
-
-            for (let i = 0; i < 100; i++) {
-                let testGroup = [];
-                let pPool = [...prioritaires];
-                let sPool = [...secondaires].filter(n => !pPool.includes(n));
-                
-                for (let j = 0; j < 5; j++) {
-                    if (pPool.length > 0) {
-                        testGroup.push(pPool.splice(Math.floor(Math.random() * pPool.length), 1)[0]);
-                    } else if (sPool.length > 0) {
-                        testGroup.push(sPool.splice(Math.floor(Math.random() * sPool.length), 1)[0]);
-                    }
-                }
-
-                let totalGroupConflict = 0;
-                testGroup.forEach(player => {
-                    let encounteredHistory = [];
-                    testGroup.filter(o => o !== player).forEach(partner => {
-                        const times = stats[player].encounters[partner] || 0;
-                        if (times > 0) encounteredHistory.push(times);
-                    });
-                    if (encounteredHistory.length > 1) {
-                        encounteredHistory.sort((a, b) => b - a);
-                        encounteredHistory.shift(); 
-                        totalGroupConflict += encounteredHistory.reduce((a, b) => a + b, 0);
-                    }
-                });
-
-                if (totalGroupConflict < lowestConflict) {
-                    lowestConflict = totalGroupConflict;
-                    bestGroup = testGroup;
-                }
-                if (lowestConflict === 0) break; 
-            }
-
-            poolIndispo = [...poolEnJeu];
-            poolEnJeu = [...bestGroup];
-            totalGames++;
-
-            bestGroup.forEach(n => {
-                let conflictHistory = [];
-                bestGroup.filter(other => other !== n).forEach(partner => {
-                    const times = stats[n].encounters[partner] || 0;
-                    if (times > 0) conflictHistory.push(times);
-                    stats[n].encounters[partner] = times + 1;
-                });
-
-                if (conflictHistory.length > 1) {
-                    conflictHistory.sort((a, b) => b - a);
-                    conflictHistory.shift(); 
-                    stats[n].mixScore -= conflictHistory.reduce((a, b) => a + b, 0);
-                }
-                stats[n].games++;
+    // --- CHARGEMENT INITIAL ---
+    window.addEventListener('load', async () => {
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            // On récupère les données du Cloud
+            const data = docSnap.data();
+            window.players = data.players;
+            window.stats = data.stats;
+            window.totalGames = data.totalGames;
+            window.poolEnJeu = data.poolEnJeu || [];
+        } else {
+            // Premier lancement : on initialise avec tes données par défaut
+            window.players = initialNames.map(n => ({ id: Math.random().toString(36).substr(2, 5), name: n, active: !excluded.includes(n) }));
+            initialNames.forEach(n => {
+                window.stats[n] = { games: 0, mixScore: 0, encounters: {} };
             });
-            
-            renderDisplay();
+            await saveToFirebase();
         }
-
-        function renderDisplay() {
-            const display = document.getElementById('current-players');
-            display.innerHTML = '';
-            poolEnJeu.forEach(n => {
-                const b = document.createElement('div');
-                b.className = 'badge'; b.innerText = n;
-                display.appendChild(b);
-            });
-        }
-
-        function renderStats() {
-            document.getElementById('total-title').innerText = `Total parties : ${totalGames}`;
-            const container = document.getElementById('list-stats');
-            container.innerHTML = '';
-            players.filter(p => p.active).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-                const s = stats[p.name];
-                const row = document.createElement('div');
-                row.className = 'stat-row';
-                row.innerHTML = `
-                    <span class="stat-name">${p.name}</span>
-                    <span class="stat-games">${s.games}</span>
-                    <span class="stat-mix">${s.mixScore}</span>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        function openM(id) { 
-            document.getElementById(id).style.display = 'block'; 
-            if(id === 'modal-s') renderStats();
-            if(id === 'modal-p') updateUI();
-        }
-        function closeM(id) { document.getElementById(id).style.display = 'none'; }
-
         updateUI();
-    </script>
+        renderDisplay();
+    });
+
+    // --- TES FONCTIONS DE LOGIQUE (ADAPTÉES POUR SAUVEGARDER) ---
+    window.toggleP = function(id) {
+        const p = window.players.find(x => x.id === id);
+        if(p) {
+            p.active = !p.active;
+            if(p.active) {
+                window.stats[p.name].games = getMinScore(p.name);
+                window.stats[p.name].mixScore = 0;
+            }
+            updateUI();
+            saveToFirebase(); // <--- SAUVEGARDE
+        }
+    }
+
+    window.addPlayer = function() {
+        const input = document.getElementById('add-input');
+        const name = input.value.trim();
+        if(name) {
+            const min = getMinScore();
+            window.players.push({ id: Math.random().toString(36).substr(2,5), name: name, active: true });
+            window.stats[name] = { games: min, mixScore: 0, encounters: {} };
+            input.value = '';
+            updateUI();
+            saveToFirebase(); // <--- SAUVEGARDE
+        }
+    }
+
+    window.tirage = function() {
+        const activeNames = window.players.filter(p => p.active).map(p => p.name);
+        if(activeNames.length < 5) return;
+
+        // ... (ton code de calcul du tirage reste le même) ...
+        // [Garde ton code actuel de la fonction tirage ici]
+        // À la fin de ta fonction tirage(), ajoute :
+        
+        renderDisplay();
+        saveToFirebase(); // <--- SAUVEGARDE
+    }
+
+    // --- LES FONCTIONS UI (Gardées telles quelles) ---
+    window.updateUI = function() { ... } 
+    window.renderDisplay = function() { ... }
+    window.renderStats = function() { ... }
+    window.openM = function(id) { ... }
+    window.closeM = function(id) { ... }
+    function getMinScore(excludeName = "") { ... }
+
+</script>
 </body>
 </html>
