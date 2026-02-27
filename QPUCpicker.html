@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Équité Corrigée</title>
+    <title>QPUC Picker - Historique</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -94,20 +94,18 @@
             font-weight: 600; display: flex; justify-content: space-between; align-items: center;
         }
         .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
-        .del-x { color: #cc0000; font-weight: bold; padding: 0 5px; font-size: 1rem; }
 
         .stats-table { width: 100%; border-collapse: collapse; }
         .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; text-transform: uppercase; }
         .stats-table td { padding: 8px 4px; text-align: center; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0; }
-        .name-col { text-align: left; color: #bbb; font-weight: 600; }
-        .name-col.active { color: black; }
+        .name-col { text-align: left; color: black; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <div class="top-bar">
-            <button class="btn-top-reset" onclick="window.resetSession()">Nouvelle séance</button>
+            <button class="btn-top-reset" onclick="window.confirmReset()">Nouvelle séance</button>
             <div id="status-sync" style="font-size: 0.5rem; opacity: 0.5;">Sync...</div>
         </div>
         
@@ -118,7 +116,7 @@
 
         <div class="legend-area">
             <div class="legend-flex">
-                <div class="leg-box" style="background:white; color:black; border:1px solid #ddd">Non qualifié</div>
+                <div class="leg-box" style="background:white; color:black; border:1px solid #ddd">Sorti</div>
                 <span style="color:#555">➔</span>
                 <div class="leg-box" style="background:var(--yellow-4als)">4ALS</div>
                 <span style="color:#555">➔</span>
@@ -130,7 +128,7 @@
 
         <div class="nav-buttons">
             <button class="btn-nav" onclick="window.openM('modal-p')">Participants</button>
-            <button class="btn-nav" onclick="window.openM('modal-sj')">Parties du jour</button>
+            <button class="btn-nav" onclick="window.openM('modal-sj')">Séance en cours</button>
             <button class="btn-nav" onclick="window.openM('modal-sp')">Statistiques</button>
         </div>
     </div>
@@ -138,30 +136,49 @@
     <div id="modal-p" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
-            <div class="modal-header" id="header-p-count">Participants (0)</div>
+            <div class="modal-header">Édition Participants</div>
             <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <input type="text" id="add-input" placeholder="Nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;">
+                <input type="text" id="add-input" placeholder="NOM..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;">
                 <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button>
             </div>
             <div class="scroll-content"><div id="list-p"></div></div>
         </div>
     </div>
 
-    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Séance en cours</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>RÉELLES</th><th>SCORE TRI</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
+    <div id="modal-sj" class="overlay">
+        <div class="modal">
+            <div class="close-btn" onclick="window.closeM('modal-sj')">✕</div>
+            <div class="modal-header">Scores de la soirée</div>
+            <div class="scroll-content">
+                <table class="stats-table">
+                    <thead><tr><th style="text-align:left">NOM</th><th>RÉEL</th><th>VIRTUEL</th></tr></thead>
+                    <tbody id="list-stats-jour"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     
-    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Stats Globales (Sheet)</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
+    <div id="modal-sp" class="overlay">
+        <div class="modal">
+            <div class="close-btn" onclick="window.closeM('modal-sp')">✕</div>
+            <div class="modal-header">Global (Google Sheet)</div>
+            <div class="scroll-content"><table class="stats-table" id="list-stats-perm"></table></div>
+        </div>
+    </div>
 
 <script>
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxB38LwC9z7HkZlVDx_cSi5GBS-H0ExxaCfKPRWkzekl_exh6Lf1_xev-ymwqUH1o1f/exec";
-    const OFFICIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
+    const WEB_APP_URL = "TON_URL_WEB_APP_GOOGLE_SCRIPT"; // <--- REMPLACE PAR TON LIEN SCRIPT
 
-    window.players = OFFICIAL_LIST.map(name => ({ id: Math.random().toString(36).substr(2,5), name, active: true }));
-    window.sessionStats = {};   
-    window.sessionBoost = {};   
-    window.sheetData = [];
+    const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
+
+    window.players = INITIAL_LIST.map(n => ({ name: n, active: true }));
+    window.sessionStats = {}; 
+    window.sessionBoost = {}; 
+    window.lastPool = [];
     window.poolEnJeu = [];
     window.playerStates = {};
+    window.sheetData = [];
 
     async function loadData() {
         try {
@@ -169,105 +186,105 @@
             const data = await res.text();
             window.sheetData = data.split('\n').slice(1).map(row => row.split(','));
             document.getElementById('status-sync').innerText = "Sync OK";
-        } catch(e) { document.getElementById('status-sync').innerText = "Offline"; }
+        } catch(e) { document.getElementById('status-sync').innerText = "Erreur Sync"; }
         window.updateUI();
     }
 
-    window.cycleStatus = (n) => {
-        window.playerStates[n] = ((window.playerStates[n] || 0) + 1) % 4;
+    // Fonction pour envoyer les résultats au Sheet
+    async function sendResultsToSheet() {
+        if(window.poolEnJeu.length === 5) {
+            const results = window.poolEnJeu.map(n => ({ 
+                name: n, 
+                status: window.playerStates[n] || 0 
+            }));
+            try {
+                await fetch(WEB_APP_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify(results) 
+                });
+            } catch(e) { console.error("Erreur d'envoi", e); }
+        }
+    }
+
+    window.tirage = async () => {
+        // Envoi du tirage précédent avant d'en générer un nouveau
+        await sendResultsToSheet();
+        window.lastPool = [...window.poolEnJeu];
+
+        const actifs = window.players.filter(p => p.active).map(p => p.name);
+        if(actifs.length < 5) return alert("Besoin de 5 actifs");
+
+        const regScores = actifs.filter(n => (window.sessionBoost[n] || 0) >= 0).map(n => window.sessionStats[n] || 0);
+        const minRef = regScores.length > 0 ? Math.min(...regScores) : 0;
+
+        const candidats = actifs.map(name => {
+            let reel = window.sessionStats[name] || 0;
+            let boost = window.sessionBoost[name] || 0;
+            if(boost === -1 && reel > 0) {
+                window.sessionBoost[name] = minRef - reel;
+                boost = window.sessionBoost[name];
+            }
+            let scoreBase = reel + boost;
+            let penalite = window.lastPool.includes(name) ? 100 : 0;
+            return { name, scoreFinal: scoreBase + penalite + (Math.random() * 0.4) };
+        });
+
+        candidats.sort((a, b) => a.scoreFinal - b.scoreFinal);
+        window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
+        window.playerStates = {};
+        window.poolEnJeu.forEach(n => { window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; });
         window.renderDisplay();
+    };
+
+    window.confirmReset = async () => {
+        if(confirm("Démarrer une nouvelle séance ? (Le dernier tirage sera sauvegardé)")) {
+            await sendResultsToSheet(); // Sauvegarde du dernier tour avant reset
+            window.sessionStats = {}; 
+            window.sessionBoost = {}; 
+            window.lastPool = []; 
+            window.poolEnJeu = []; 
+            window.renderDisplay();
+        }
     };
 
     window.renderDisplay = () => {
         const div = document.getElementById('current-players'); div.innerHTML = '';
-        if(window.poolEnJeu.length === 0) { div.innerHTML = '<div style="opacity:0.3; margin-top:20px;">Appuyez sur "Prochaine Partie"</div>'; return; }
+        if(window.poolEnJeu.length === 0) return;
         const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
         rows.forEach(row => {
-            const rowDiv = document.createElement('div'); rowDiv.className = 'player-row';
+            const rDiv = document.createElement('div'); rDiv.className = 'player-row';
             row.forEach(n => {
-                const s = window.playerStates[n] || 0;
                 const b = document.createElement('div'); b.className = 'player-badge';
-                if(s===1){ b.style.background='var(--yellow-4als)'; b.style.color='black'; }
-                else if(s===2){ b.style.background='var(--orange-faf)'; b.style.color='white'; }
-                else if(s===3){ b.style.background='var(--red-win)'; b.style.color='white'; }
-                b.innerText = n; b.onclick = () => window.cycleStatus(n); rowDiv.appendChild(b);
+                const s = window.playerStates[n] || 0;
+                if(s===1) b.style.background = 'var(--yellow-4als)';
+                if(s===2) b.style.background = 'var(--orange-faf)';
+                if(s===3) b.style.background = 'var(--red-win)';
+                if(s>0) b.style.color = (s===1)?'black':'white';
+                b.innerText = n;
+                b.onclick = () => { window.playerStates[n]=((window.playerStates[n]||0)+1)%4; window.renderDisplay(); };
+                rDiv.appendChild(b);
             });
-            div.appendChild(rowDiv);
+            div.appendChild(rDiv);
         });
-    };
-
-    window.tirage = async () => {
-        if(window.poolEnJeu.length === 5) {
-            const results = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 0 }));
-            fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(results) });
-        }
-
-        const active = window.players.filter(p => p.active).map(p => p.name);
-        if(active.length < 5) return alert("Besoin de 5 participants");
-        
-        // LOGIQUE DE TRI : SCORE VIRTUEL + ALÉATOIRE POUR ÉGALITÉS
-        const playersWithScores = active.map(name => ({
-            name: name,
-            score: (window.sessionStats[name] || 0) + (window.sessionBoost[name] || 0)
-        }));
-
-        playersWithScores.sort((a, b) => {
-            if (a.score !== b.score) return a.score - b.score;
-            return 0.5 - Math.random();
-        });
-
-        window.poolEnJeu = playersWithScores.slice(0, 5).map(p => p.name);
-        window.playerStates = {};
-        
-        window.poolEnJeu.forEach(n => {
-            window.sessionStats[n] = (window.sessionStats[n] || 0) + 1;
-        });
-
-        window.renderDisplay();
-    };
-
-    window.updateUI = () => {
-        const cont = document.getElementById('list-p'); cont.innerHTML = '';
-        let count = 0;
-        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            if(p.active) count++;
-            const d = document.createElement('div'); 
-            d.className = `p-pill ${p.active?'active':''}`;
-            d.innerHTML = `<span style="flex:1" onclick="window.toggleP('${p.id}')">${p.name}</span>
-                           <span class="del-x" onclick="window.removePlayer('${p.id}')">✕</span>`;
-            cont.appendChild(d);
-        });
-        document.getElementById('header-p-count').innerText = `Participants (${count})`;
-    };
-
-    window.toggleP = (id) => {
-        const p = window.players.find(x => x.id === id);
-        if(p) { p.active = !p.active; window.updateUI(); }
-    };
-
-    window.removePlayer = (id) => {
-        if(confirm("Supprimer ce joueur ?")) {
-            window.players = window.players.filter(x => x.id !== id);
-            window.updateUI();
-        }
     };
 
     window.addPlayer = () => {
         const n = document.getElementById('add-input').value.trim().toUpperCase();
-        if(n) { 
-            window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true}); 
-            
-            // CALCUL DU BOOST : BASÉ SUR LE MAXIMUM ACTUEL DE LA SOIRÉE
-            const allScores = window.players.map(p => (window.sessionStats[p.name] || 0) + (window.sessionBoost[p.name] || 0));
-            const maxVirtual = allScores.length > 0 ? Math.max(...allScores) : 0;
-
-            // Il rejoint le groupe au score max, -1 pour passer à la prochaine partie
-            window.sessionBoost[n] = Math.max(0, maxVirtual - 1);
-            window.sessionStats[n] = 0;
-
-            document.getElementById('add-input').value = ''; 
-            window.updateUI(); 
+        if(n) {
+            if(!window.players.find(p => p.name === n)) window.players.push({ name: n, active: true });
+            window.sessionStats[n] = 0; window.sessionBoost[n] = -1;
+            document.getElementById('add-input').value = ''; window.updateUI();
         }
+    };
+
+    window.updateUI = () => {
+        const cont = document.getElementById('list-p'); cont.innerHTML = '';
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
+            d.innerText = p.name; d.onclick = () => { p.active = !p.active; window.updateUI(); };
+            cont.appendChild(d);
+        });
     };
 
     window.openM = (id) => {
@@ -275,35 +292,19 @@
         if(id === 'modal-sj') {
             const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
             window.players.filter(p=>p.active).forEach(p => {
-                const reel = window.sessionStats[p.name] || 0;
-                const boost = window.sessionBoost[p.name] || 0;
-                b.innerHTML += `<tr><td class="name-col active">${p.name}</td><td>${reel}</td><td style="opacity:0.5">${reel + boost}</td></tr>`;
+                let r = window.sessionStats[p.name]||0; let v = r + (window.sessionBoost[p.name]||0);
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${r}</td><td>${v.toFixed(1)}</td></tr>`;
             });
         }
         if(id === 'modal-sp') {
-            const b = document.getElementById('list-stats-perm'); b.innerHTML = '';
-            window.sheetData.forEach(cols => {
-                if(!cols[0]) return;
-                const pj = parseInt(cols[1]) || 0;
-                const q4 = parseInt(cols[2]) || 0;
-                const qf = parseInt(cols[3]) || 0;
-                const win = parseInt(cols[4]) || 0;
-                b.innerHTML += `<tr><td class="name-col active">${cols[0]}</td><td>${pj}</td><td style="color:var(--yellow-4als)">${pj?Math.round(q4/pj*100):0}%</td><td style="color:var(--orange-faf)">${pj?Math.round(qf/pj*100):0}%</td><td style="color:var(--red-win)">${pj?Math.round(win/pj*100):0}%</td><td>${win}</td></tr>`;
-            });
+            const t = document.getElementById('list-stats-perm');
+            t.innerHTML = '<thead><tr><th>NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>W</th></tr></thead><tbody>';
+            window.sheetData.forEach(c => { if(c[0]) t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td>${c[1]}</td><td>${c[1]?Math.round(c[2]/c[1]*100):0}%</td><td>${c[1]?Math.round(c[3]/c[1]*100):0}%</td><td>${c[4]||0}</td></tr>`; });
+            t.innerHTML += '</tbody>';
         }
     };
 
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
-    
-    window.resetSession = () => { 
-        if(confirm("Démarrer une nouvelle séance ? Les scores temporaires seront remis à zéro.")) { 
-            window.poolEnJeu = []; 
-            window.sessionStats = {}; 
-            window.sessionBoost = {}; 
-            window.renderDisplay(); 
-        }
-    };
-
     loadData();
 </script>
 </body>
