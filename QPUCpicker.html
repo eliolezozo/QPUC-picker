@@ -145,7 +145,7 @@
     // ... Garde toute la logique Script (Firebase/Sheet) de la version précédente ...
     // N'oublie pas de mettre ta WEB_APP_URL
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
-    const WEB_APP_URL = "TON_URL_APPS_SCRIPT_ICI";
+    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbxB38LwC9z7HkZlVDx_cSi5GBS-H0ExxaCfKPRWkzekl_exh6Lf1_xev-ymwqUH1o1f/exec`;
 
     window.players = [];
     window.poolEnJeu = [];
@@ -172,7 +172,7 @@
                 status: window.playerStates[n] || 0
             }));
             // Envoi au Sheet (Optionnel selon ton avancée Apps Script)
-            if(WEB_APP_URL !== "TON_URL_APPS_SCRIPT_ICI") {
+            if(WEB_APP_URL !== `https://script.google.com/macros/s/AKfycbxB38LwC9z7HkZlVDx_cSi5GBS-H0ExxaCfKPRWkzekl_exh6Lf1_xev-ymwqUH1o1f/exec`) {
                 fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(results) });
             }
         }
@@ -236,3 +236,4 @@
 </script>
 </body>
 </html>
+
