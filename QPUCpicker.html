@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Google Sheets Sync</title>
+    <title>QPUC Picker - Equité & Sync</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -24,217 +24,280 @@
         .main-container {
             width: 100%; max-width: 400px; height: 100vh; margin: 0 auto;
             display: flex; flex-direction: column; align-items: center;
-            padding: 15px 15px calc(40px + env(safe-area-inset-bottom)) 15px; 
+            /* On garde le padding spécial pour tes boutons du bas */
+            padding: 15px 15px calc(45px + env(safe-area-inset-bottom)) 15px; 
             box-sizing: border-box; justify-content: space-between;
         }
 
         .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-        .sync-indicator { font-size: 0.6rem; opacity: 0.6; text-transform: uppercase; }
+        .btn-top-reset {
+            background: none; border: 1.5px solid var(--btn-border);
+            color: white; border-radius: 30px; padding: 6px 15px;
+            font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
+        }
+        .btn-super-reset { background: #d00; border: none; color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.6rem; cursor: pointer; font-weight: bold; opacity: 0.6; }
 
         .btn-prochaine-partie {
             background-color: var(--blue-main); color: white;
-            width: 100%; border-radius: 50px; padding: 18px 0;
+            width: 100%; border-radius: 50px; padding: 15px 0;
             font-size: 1.4rem; border: none; cursor: pointer;
-            text-transform: uppercase; font-weight: 800; margin-bottom: 10px;
+            text-transform: uppercase; margin-top: 10px; font-weight: 700;
         }
 
-        #current-players { 
-            display: flex; flex-direction: column; align-items: center; 
-            gap: 15px; flex: 1; width: 100%; justify-content: center; 
-        }
+        .section-title { color: var(--blue-main); font-size: 0.8rem; margin-top: 20px; text-transform: uppercase; font-weight: 700; }
 
-        .player-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
+        #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
+        .player-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
 
         .player-badge {
             background: white; color: black; border-radius: 25px;
-            padding: 12px 15px; font-size: 1rem; min-width: 90px;
-            text-align: center; cursor: pointer; font-weight: 700; text-transform: uppercase;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            padding: 8px 15px; font-size: 1rem; min-width: 85px;
+            text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+        .legend-area { width: 100%; text-align: center; margin-bottom: 5px; }
+        .legend-flex { display: flex; justify-content: center; align-items: center; gap: 3px; font-size: 0.55rem; }
+        .leg-box { padding: 3px 6px; border-radius: 10px; font-weight: 700; color: white; text-transform: uppercase; }
 
-        .btn-nav { 
-            background: none; border: 1.5px solid var(--btn-border); 
-            color: white; border-radius: 30px; padding: 12px 0; 
-            font-size: 0.9rem; cursor: pointer; text-transform: uppercase; 
-            width: 100%; font-weight: 600; 
+        .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px; }
+        .btn-nav {
+            background: none; border: 1.5px solid var(--btn-border);
+            color: white; border-radius: 30px; padding: 10px 0;
+            font-size: 0.85rem; cursor: pointer; text-transform: uppercase; width: 100%; font-weight: 600;
         }
 
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 1000; padding: 10px; box-sizing: border-box; }
-        .modal { background: white; border-radius: 25px; width: 100%; max-width: 380px; margin: 20px auto; position: relative; padding: 20px; color: black; display: flex; flex-direction: column; max-height: 80vh; box-sizing: border-box; }
-        .close-btn { position: absolute; top: -10px; right: -5px; width: 35px; height: 35px; background: #d00; border-radius: 50%; color: white; border: 2px solid white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; z-index: 1000; padding: 10px; box-sizing: border-box;
+        }
+        .modal {
+            background: white; border-radius: 25px; width: 95%; max-width: 380px;
+            margin: 20px auto; position: relative; padding: 15px;
+            color: black; display: flex; flex-direction: column; max-height: 80vh;
+        }
+        .modal-header {
+            background: var(--blue-main); color: white; border-radius: 20px;
+            padding: 10px; text-align: center; font-size: 1rem; text-transform: uppercase;
+            margin-bottom: 10px; font-weight: 700;
+        }
+        .close-btn {
+            position: absolute; top: -10px; right: -5px; width: 35px; height: 35px;
+            background: #d00; border-radius: 50%; color: white; border: 2px solid white;
+            font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
+        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
-        .p-pill { border: 1px solid #ddd; padding: 10px; border-radius: 15px; text-align: center; font-size: 0.8rem; font-weight: 600; color: #333; }
-        .p-pill.active { background: #e3f2fd; border-color: var(--blue-main); color: var(--blue-main); }
-        
-        .scroll-content { flex: 1; overflow-y: auto; margin-top: 10px; }
-        .stats-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        .stats-table th { color: #888; padding-bottom: 10px; }
-        .stats-table td { padding: 8px 4px; border-bottom: 1px solid #eee; text-align: center; }
+        .p-pill { 
+            border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
+            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
+            font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+        }
+        .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
+        .del-x { color: #cc0000; font-weight: bold; padding: 0 5px; font-size: 1rem; }
+
+        .stats-table { width: 100%; border-collapse: collapse; }
+        .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; text-transform: uppercase; }
+        .stats-table td { padding: 8px 4px; text-align: center; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0; }
+        .name-col { text-align: left; color: #bbb; font-weight: 600; }
+        .name-col.active { color: black; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <div class="top-bar">
-            <button class="btn-nav" style="width:auto; padding:5px 15px; font-size:0.7rem;" onclick="window.resetSession()">Reset Session</button>
-            <div id="sync-status" class="sync-indicator">Synchronisation prête</div>
-        </div>
-        
-        <div id="current-players">
-            <div style="opacity:0.5; font-size:0.9rem;">Cliquez sur "Prochaine Partie"</div>
+            <button class="btn-top-reset" onclick="window.resetSession()">Nouvelle séance</button>
+            <div id="status-sync" style="font-size: 0.5rem; opacity: 0.5;">Sync...</div>
         </div>
         
         <button class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
         
+        <div class="section-title">Partie en cours :</div>
+        <div id="current-players"></div>
+
+        <div class="legend-area">
+            <div class="legend-flex">
+                <div class="leg-box" style="background:white; color:black; border:1px solid #ddd">Non qualifié</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--yellow-4als)">4ALS</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--orange-faf)">FaF</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--red-win)">Gagnant</div>
+            </div>
+        </div>
+
         <div class="nav-buttons">
             <button class="btn-nav" onclick="window.openM('modal-p')">Participants</button>
-            <button class="btn-nav" onclick="window.openM('modal-sp')">Stats Globales (Sheet)</button>
+            <button class="btn-nav" onclick="window.openM('modal-sj')">Parties jouées aujourd'hui</button>
+            <button class="btn-nav" onclick="window.openM('modal-sp')">Statistiques</button>
         </div>
     </div>
 
     <div id="modal-p" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
-            <h3 style="margin-top:0">Gestion Participants</h3>
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="add-input" placeholder="NOM..." style="flex:1; padding:10px; border-radius:10px; border:1px solid #ccc; text-transform:uppercase;">
-                <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:40px; border-radius:10px; font-weight:bold;">+</button>
+            <div class="modal-header" id="header-p-count">Participants (0)</div>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="add-input" placeholder="Nouveau nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;">
+                <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button>
             </div>
-            <div class="scroll-content">
-                <div id="list-p" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
-            </div>
+            <div class="scroll-content"><div id="list-p"></div></div>
         </div>
     </div>
 
-    <div id="modal-sp" class="overlay">
-        <div class="modal">
-            <div class="close-btn" onclick="window.closeM('modal-sp')">✕</div>
-            <h3 style="margin-top:0">Stats (Sheet)</h3>
-            <div class="scroll-content">
-                <table class="stats-table">
-                    <thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th>4A</th><th>W</th></tr></thead>
-                    <tbody id="list-stats-sheet"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Parties aujourd'hui</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PARTIES</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
+    
+    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques (Sheet)</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
 
 <script>
-    const ORIGINAL_NAMES = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
+    // Configuration
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxB38LwC9z7HkZlVDx_cSi5GBS-H0ExxaCfKPRWkzekl_exh6Lf1_xev-ymwqUH1o1f/exec";
+    const OFFICIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
 
-    window.players = ORIGINAL_NAMES.map(name => ({ name, active: true }));
+    window.players = OFFICIAL_LIST.map(name => ({ id: Math.random().toString(36).substr(2,5), name, active: true }));
+    window.sessionStats = {}; // Pour compter les parties du jour
+    window.sheetData = [];    // Pour les stats globales
     window.poolEnJeu = [];
     window.playerStates = {};
 
-    async function loadFromSheet() {
+    // Charger les stats du Sheet
+    async function loadData() {
         try {
             const res = await fetch(CSV_URL);
-            if (!res.ok) throw new Error();
             const data = await res.text();
-            const rows = data.split('\n').slice(1);
-            if (rows.length > 0) {
-                window.players = rows.map(r => ({ name: r.split(',')[0].trim().toUpperCase(), active: true })).filter(p => p.name !== "");
-                
-                // Remplir le tableau des stats dans la modale
-                const tbody = document.getElementById('list-stats-sheet');
-                tbody.innerHTML = '';
-                rows.forEach(r => {
-                    const cols = r.split(',');
-                    if(cols[0]) {
-                        tbody.innerHTML += `<tr><td style="text-align:left">${cols[0]}</td><td>${cols[1]||0}</td><td>${cols[2]||0}</td><td>${cols[4]||0}</td></tr>`;
-                    }
-                });
-            }
-            document.getElementById('sync-status').innerText = "Sheet Synchronisé";
-        } catch (e) {
-            document.getElementById('sync-status').innerText = "Mode Local";
-        }
+            window.sheetData = data.split('\n').slice(1).map(row => row.split(','));
+            document.getElementById('status-sync').innerText = "Sync OK";
+        } catch(e) { document.getElementById('status-sync').innerText = "Offline"; }
         window.updateUI();
     }
 
-    window.addPlayer = () => {
-        const val = document.getElementById('add-input').value.trim().toUpperCase();
-        if (val) {
-            window.players.push({ name: val, active: true });
-            document.getElementById('add-input').value = "";
-            window.updateUI();
-        }
-    };
-
-    window.updateUI = () => {
-        const cont = document.getElementById('list-p');
-        cont.innerHTML = '';
-        window.players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div');
-            d.className = `p-pill ${p.active ? 'active' : ''}`;
-            d.innerText = p.name;
-            d.onclick = () => { p.active = !p.active; window.updateUI(); };
-            cont.appendChild(d);
-        });
-    };
-
-    window.tirage = () => {
-        // Envoi des résultats de la partie finie au Sheet
-        if(window.poolEnJeu.length === 5) {
-            const results = window.poolEnJeu.map(n => ({ 
-                name: n, 
-                status: window.playerStates[n] || 0 
-            }));
-            
-            document.getElementById('sync-status').innerText = "Envoi...";
-            fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify(results) 
-            }).then(() => {
-                document.getElementById('sync-status').innerText = "Sheet mis à jour";
-                // On recharge les stats après quelques secondes pour voir le changement
-                setTimeout(loadFromSheet, 3000);
-            });
-        }
-
-        const active = window.players.filter(p => p.active).map(p => p.name);
-        if (active.length < 5) return alert("Il faut au moins 5 participants actifs !");
-        
-        window.poolEnJeu = active.sort(() => 0.5 - Math.random()).slice(0, 5);
-        window.playerStates = {};
+    window.cycleStatus = (n) => {
+        window.playerStates[n] = ((window.playerStates[n] || 0) + 1) % 4;
         window.renderDisplay();
     };
 
     window.renderDisplay = () => {
-        const div = document.getElementById('current-players');
-        div.innerHTML = '';
-        const rows = [window.poolEnJeu.slice(0,3), window.poolEnJeu.slice(3,5)];
+        const div = document.getElementById('current-players'); div.innerHTML = '';
+        if(window.poolEnJeu.length === 0) { div.innerHTML = '<div style="opacity:0.3; margin-top:20px;">Prêt pour le tirage</div>'; return; }
+        
+        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
         rows.forEach(row => {
-            const rDiv = document.createElement('div');
-            rDiv.className = 'player-row';
-            row.forEach(name => {
-                const s = window.playerStates[name] || 0;
-                const b = document.createElement('div');
-                b.className = 'player-badge';
-                if(s===1) { b.style.background = 'var(--yellow-4als)'; }
-                else if(s===2) { b.style.background = 'var(--orange-faf)'; b.style.color='white'; }
-                else if(s===3) { b.style.background = 'var(--red-win)'; b.style.color='white'; }
-                b.innerText = name;
-                b.onclick = () => {
-                    window.playerStates[name] = (s + 1) % 4;
-                    window.renderDisplay();
-                };
-                rDiv.appendChild(b);
+            const rowDiv = document.createElement('div'); rowDiv.className = 'player-row';
+            row.forEach(n => {
+                const s = window.playerStates[n] || 0;
+                const b = document.createElement('div'); b.className = 'player-badge';
+                if(s===1){ b.style.background='var(--yellow-4als)'; b.style.color='black'; }
+                else if(s===2){ b.style.background='var(--orange-faf)'; b.style.color='white'; }
+                else if(s===3){ b.style.background='var(--red-win)'; b.style.color='white'; }
+                b.innerText = n; b.onclick = () => window.cycleStatus(n); rowDiv.appendChild(b);
             });
-            div.appendChild(rDiv);
+            div.appendChild(rowDiv);
         });
     };
 
-    window.openM = (id) => document.getElementById(id).style.display = 'block';
-    window.closeM = (id) => document.getElementById(id).style.display = 'none';
-    window.resetSession = () => { if(confirm("Nouvelle session ?")) { window.poolEnJeu = []; window.renderDisplay(); }};
+    window.tirage = async () => {
+        // Envoi des résultats au Sheet si une partie était en cours
+        if(window.poolEnJeu.length === 5) {
+            const results = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 0 }));
+            fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(results) });
+        }
 
-    loadFromSheet();
+        const active = window.players.filter(p => p.active).map(p => p.name);
+        if(active.length < 5) return alert("Il faut au moins 5 participants actifs");
+        
+        // Tirage aléatoire
+        window.poolEnJeu = active.sort(() => 0.5 - Math.random()).slice(0, 5);
+        window.playerStates = {};
+        
+        // Incrémenter stats de session
+        window.poolEnJeu.forEach(n => {
+            window.sessionStats[n] = (window.sessionStats[n] || 0) + 1;
+        });
+
+        window.renderDisplay();
+    };
+
+    window.updateUI = () => {
+        const cont = document.getElementById('list-p'); cont.innerHTML = '';
+        let count = 0;
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            if(p.active) count++;
+            const d = document.createElement('div'); 
+            d.className = `p-pill ${p.active?'active':''}`;
+            d.innerHTML = `<span style="flex:1" onclick="window.toggleP('${p.id}')">${p.name}</span>
+                           <span class="del-x" onclick="window.removePlayer('${p.id}')">✕</span>`;
+            cont.appendChild(d);
+        });
+        document.getElementById('header-p-count').innerText = `Participants (${count})`;
+    };
+
+    window.toggleP = (id) => {
+        const p = window.players.find(x => x.id === id);
+        if(p) { p.active = !p.active; window.updateUI(); }
+    };
+
+    window.removePlayer = (id) => {
+        if(confirm("Supprimer ?")) {
+            window.players = window.players.filter(x => x.id !== id);
+            window.updateUI();
+        }
+    };
+
+    window.addPlayer = () => {
+        const n = document.getElementById('add-input').value.trim().toUpperCase();
+        if(n) { 
+            window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true}); 
+            document.getElementById('add-input').value = ''; 
+            window.updateUI(); 
+        }
+    };
+
+    window.openM = (id) => {
+        document.getElementById(id).style.display = 'block';
+        if(id === 'modal-sj') {
+            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
+            window.players.filter(p=>p.active).forEach(p => {
+                const games = window.sessionStats[p.name] || 0;
+                b.innerHTML += `<tr><td class="name-col active">${p.name}</td><td>${games}</td></tr>`;
+            });
+        }
+        if(id === 'modal-sp') {
+            const b = document.getElementById('list-stats-perm'); b.innerHTML = '';
+            window.sheetData.forEach(cols => {
+                if(!cols[0]) return;
+                const pj = parseInt(cols[1]) || 0;
+                const q4 = parseInt(cols[2]) || 0;
+                const qf = parseInt(cols[3]) || 0;
+                const win = parseInt(cols[4]) || 0;
+                b.innerHTML += `<tr>
+                    <td class="name-col active">${cols[0]}</td>
+                    <td>${pj}</td>
+                    <td style="color:var(--yellow-4als)">${pj?Math.round(q4/pj*100):0}%</td>
+                    <td style="color:var(--orange-faf)">${pj?Math.round(qf/pj*100):0}%</td>
+                    <td style="color:var(--red-win)">${pj?Math.round(win/pj*100):0}%</td>
+                    <td>${win}</td>
+                </tr>`;
+            });
+        }
+    };
+
+    window.closeM = (id) => document.getElementById(id).style.display = 'none';
+    
+    // RESET SESSION : On ne touche pas à p.active !
+    window.resetSession = () => { 
+        if(confirm("Nouvelle séance ? Les compteurs de parties du jour seront remis à zéro.")) { 
+            window.poolEnJeu = []; 
+            window.sessionStats = {}; 
+            window.renderDisplay(); 
+        }
+    };
+
+    loadData();
 </script>
 </body>
 </html>
