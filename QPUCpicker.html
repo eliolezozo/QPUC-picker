@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Équité Absolue</title>
+    <title>QPUC Picker - Équité Corrigée</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -130,7 +130,7 @@
 
         <div class="nav-buttons">
             <button class="btn-nav" onclick="window.openM('modal-p')">Participants</button>
-            <button class="btn-nav" onclick="window.openM('modal-sj')">Parties jouées aujourd'hui</button>
+            <button class="btn-nav" onclick="window.openM('modal-sj')">Parties du jour</button>
             <button class="btn-nav" onclick="window.openM('modal-sp')">Statistiques</button>
         </div>
     </div>
@@ -140,16 +140,16 @@
             <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
             <div class="modal-header" id="header-p-count">Participants (0)</div>
             <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <input type="text" id="add-input" placeholder="Nouveau nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;">
+                <input type="text" id="add-input" placeholder="Nom..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;">
                 <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button>
             </div>
             <div class="scroll-content"><div id="list-p"></div></div>
         </div>
     </div>
 
-    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Parties aujourd'hui</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>RÉELLES</th><th>VIRTUELLLES</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
+    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Séance en cours</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>RÉELLES</th><th>SCORE TRI</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
     
-    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques Globales</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
+    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Stats Globales (Sheet)</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
 
 <script>
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
@@ -157,8 +157,8 @@
     const OFFICIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
 
     window.players = OFFICIAL_LIST.map(name => ({ id: Math.random().toString(36).substr(2,5), name, active: true }));
-    window.sessionStats = {};   // Vraies parties de la soirée
-    window.sessionBoost = {};   // Parties "fantômes" pour les nouveaux arrivants
+    window.sessionStats = {};   
+    window.sessionBoost = {};   
     window.sheetData = [];
     window.poolEnJeu = [];
     window.playerStates = {};
@@ -180,7 +180,7 @@
 
     window.renderDisplay = () => {
         const div = document.getElementById('current-players'); div.innerHTML = '';
-        if(window.poolEnJeu.length === 0) { div.innerHTML = '<div style="opacity:0.3; margin-top:20px;">Prêt pour le tirage</div>'; return; }
+        if(window.poolEnJeu.length === 0) { div.innerHTML = '<div style="opacity:0.3; margin-top:20px;">Appuyez sur "Prochaine Partie"</div>'; return; }
         const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
         rows.forEach(row => {
             const rowDiv = document.createElement('div'); rowDiv.className = 'player-row';
@@ -203,20 +203,22 @@
         }
 
         const active = window.players.filter(p => p.active).map(p => p.name);
-        if(active.length < 5) return alert("Sélectionnez au moins 5 participants");
+        if(active.length < 5) return alert("Besoin de 5 participants");
         
-        // TRI PAR SCORE VIRTUEL (RÉEL + BOOST)
-        const sortedByVirtual = [...active].sort((a, b) => {
-            const scoreA = (window.sessionStats[a] || 0) + (window.sessionBoost[a] || 0);
-            const scoreB = (window.sessionStats[b] || 0) + (window.sessionBoost[b] || 0);
-            return scoreA - scoreB;
+        // LOGIQUE DE TRI : SCORE VIRTUEL + ALÉATOIRE POUR ÉGALITÉS
+        const playersWithScores = active.map(name => ({
+            name: name,
+            score: (window.sessionStats[name] || 0) + (window.sessionBoost[name] || 0)
+        }));
+
+        playersWithScores.sort((a, b) => {
+            if (a.score !== b.score) return a.score - b.score;
+            return 0.5 - Math.random();
         });
 
-        const candidates = sortedByVirtual.slice(0, 8).sort(() => 0.5 - Math.random());
-        window.poolEnJeu = candidates.slice(0, 5);
+        window.poolEnJeu = playersWithScores.slice(0, 5).map(p => p.name);
         window.playerStates = {};
         
-        // On n'incrémente que le RÉEL pour le Sheet
         window.poolEnJeu.forEach(n => {
             window.sessionStats[n] = (window.sessionStats[n] || 0) + 1;
         });
@@ -244,7 +246,7 @@
     };
 
     window.removePlayer = (id) => {
-        if(confirm("Supprimer ?")) {
+        if(confirm("Supprimer ce joueur ?")) {
             window.players = window.players.filter(x => x.id !== id);
             window.updateUI();
         }
@@ -255,15 +257,12 @@
         if(n) { 
             window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true}); 
             
-            // LOGIQUE DE BOOST
-            const scores = Object.values(window.sessionStats).map((v, i) => {
-                const name = Object.keys(window.sessionStats)[i];
-                return v + (window.sessionBoost[name] || 0);
-            });
-            const minVirtual = scores.length > 0 ? Math.min(...scores) : 0;
+            // CALCUL DU BOOST : BASÉ SUR LE MAXIMUM ACTUEL DE LA SOIRÉE
+            const allScores = window.players.map(p => (window.sessionStats[p.name] || 0) + (window.sessionBoost[p.name] || 0));
+            const maxVirtual = allScores.length > 0 ? Math.max(...allScores) : 0;
 
-            // Il arrive à 0 réel, mais on lui donne un boost pour qu'il soit à min - 1
-            window.sessionBoost[n] = Math.max(0, minVirtual - 1);
+            // Il rejoint le groupe au score max, -1 pour passer à la prochaine partie
+            window.sessionBoost[n] = Math.max(0, maxVirtual - 1);
             window.sessionStats[n] = 0;
 
             document.getElementById('add-input').value = ''; 
@@ -297,7 +296,7 @@
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
     
     window.resetSession = () => { 
-        if(confirm("Nouvelle séance ? Les boosts et compteurs du jour seront effacés.")) { 
+        if(confirm("Démarrer une nouvelle séance ? Les scores temporaires seront remis à zéro.")) { 
             window.poolEnJeu = []; 
             window.sessionStats = {}; 
             window.sessionBoost = {}; 
