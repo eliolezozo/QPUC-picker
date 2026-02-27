@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Equité & Sync</title>
+    <title>QPUC Picker - Équité Absolue</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -24,7 +24,6 @@
         .main-container {
             width: 100%; max-width: 400px; height: 100vh; margin: 0 auto;
             display: flex; flex-direction: column; align-items: center;
-            /* On garde le padding spécial pour tes boutons du bas */
             padding: 15px 15px calc(45px + env(safe-area-inset-bottom)) 15px; 
             box-sizing: border-box; justify-content: space-between;
         }
@@ -35,7 +34,6 @@
             color: white; border-radius: 30px; padding: 6px 15px;
             font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
         }
-        .btn-super-reset { background: #d00; border: none; color: white; border-radius: 5px; padding: 5px 10px; font-size: 0.6rem; cursor: pointer; font-weight: bold; opacity: 0.6; }
 
         .btn-prochaine-partie {
             background-color: var(--blue-main); color: white;
@@ -149,26 +147,25 @@
         </div>
     </div>
 
-    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Parties aujourd'hui</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PARTIES</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
+    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Parties aujourd'hui</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>RÉELLES</th><th>VIRTUELLLES</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
     
-    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques (Sheet)</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
+    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques Globales</div><div class="scroll-content"><table class="stats-table"><thead><tr><th style="text-align:left">NOM</th><th>PJ</th><th style="color:var(--yellow-4als)">%4A</th><th style="color:var(--orange-faf)">%FAF</th><th style="color:var(--red-win)">%W</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
 
 <script>
-    // Configuration
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxB38LwC9z7HkZlVDx_cSi5GBS-H0ExxaCfKPRWkzekl_exh6Lf1_xev-ymwqUH1o1f/exec";
     const OFFICIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
 
     window.players = OFFICIAL_LIST.map(name => ({ id: Math.random().toString(36).substr(2,5), name, active: true }));
-    window.sessionStats = {}; // Pour compter les parties du jour
-    window.sheetData = [];    // Pour les stats globales
+    window.sessionStats = {};   // Vraies parties de la soirée
+    window.sessionBoost = {};   // Parties "fantômes" pour les nouveaux arrivants
+    window.sheetData = [];
     window.poolEnJeu = [];
     window.playerStates = {};
 
-    // Charger les stats du Sheet
     async function loadData() {
         try {
-            const res = await fetch(CSV_URL);
+            const res = await fetch(CSV_URL + "&cb=" + Date.now());
             const data = await res.text();
             window.sheetData = data.split('\n').slice(1).map(row => row.split(','));
             document.getElementById('status-sync').innerText = "Sync OK";
@@ -184,7 +181,6 @@
     window.renderDisplay = () => {
         const div = document.getElementById('current-players'); div.innerHTML = '';
         if(window.poolEnJeu.length === 0) { div.innerHTML = '<div style="opacity:0.3; margin-top:20px;">Prêt pour le tirage</div>'; return; }
-        
         const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
         rows.forEach(row => {
             const rowDiv = document.createElement('div'); rowDiv.className = 'player-row';
@@ -201,20 +197,26 @@
     };
 
     window.tirage = async () => {
-        // Envoi des résultats au Sheet si une partie était en cours
         if(window.poolEnJeu.length === 5) {
             const results = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 0 }));
             fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(results) });
         }
 
         const active = window.players.filter(p => p.active).map(p => p.name);
-        if(active.length < 5) return alert("Il faut au moins 5 participants actifs");
+        if(active.length < 5) return alert("Sélectionnez au moins 5 participants");
         
-        // Tirage aléatoire
-        window.poolEnJeu = active.sort(() => 0.5 - Math.random()).slice(0, 5);
+        // TRI PAR SCORE VIRTUEL (RÉEL + BOOST)
+        const sortedByVirtual = [...active].sort((a, b) => {
+            const scoreA = (window.sessionStats[a] || 0) + (window.sessionBoost[a] || 0);
+            const scoreB = (window.sessionStats[b] || 0) + (window.sessionBoost[b] || 0);
+            return scoreA - scoreB;
+        });
+
+        const candidates = sortedByVirtual.slice(0, 8).sort(() => 0.5 - Math.random());
+        window.poolEnJeu = candidates.slice(0, 5);
         window.playerStates = {};
         
-        // Incrémenter stats de session
+        // On n'incrémente que le RÉEL pour le Sheet
         window.poolEnJeu.forEach(n => {
             window.sessionStats[n] = (window.sessionStats[n] || 0) + 1;
         });
@@ -252,6 +254,18 @@
         const n = document.getElementById('add-input').value.trim().toUpperCase();
         if(n) { 
             window.players.push({id: Math.random().toString(36).substr(2,5), name: n, active: true}); 
+            
+            // LOGIQUE DE BOOST
+            const scores = Object.values(window.sessionStats).map((v, i) => {
+                const name = Object.keys(window.sessionStats)[i];
+                return v + (window.sessionBoost[name] || 0);
+            });
+            const minVirtual = scores.length > 0 ? Math.min(...scores) : 0;
+
+            // Il arrive à 0 réel, mais on lui donne un boost pour qu'il soit à min - 1
+            window.sessionBoost[n] = Math.max(0, minVirtual - 1);
+            window.sessionStats[n] = 0;
+
             document.getElementById('add-input').value = ''; 
             window.updateUI(); 
         }
@@ -262,8 +276,9 @@
         if(id === 'modal-sj') {
             const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
             window.players.filter(p=>p.active).forEach(p => {
-                const games = window.sessionStats[p.name] || 0;
-                b.innerHTML += `<tr><td class="name-col active">${p.name}</td><td>${games}</td></tr>`;
+                const reel = window.sessionStats[p.name] || 0;
+                const boost = window.sessionBoost[p.name] || 0;
+                b.innerHTML += `<tr><td class="name-col active">${p.name}</td><td>${reel}</td><td style="opacity:0.5">${reel + boost}</td></tr>`;
             });
         }
         if(id === 'modal-sp') {
@@ -274,25 +289,18 @@
                 const q4 = parseInt(cols[2]) || 0;
                 const qf = parseInt(cols[3]) || 0;
                 const win = parseInt(cols[4]) || 0;
-                b.innerHTML += `<tr>
-                    <td class="name-col active">${cols[0]}</td>
-                    <td>${pj}</td>
-                    <td style="color:var(--yellow-4als)">${pj?Math.round(q4/pj*100):0}%</td>
-                    <td style="color:var(--orange-faf)">${pj?Math.round(qf/pj*100):0}%</td>
-                    <td style="color:var(--red-win)">${pj?Math.round(win/pj*100):0}%</td>
-                    <td>${win}</td>
-                </tr>`;
+                b.innerHTML += `<tr><td class="name-col active">${cols[0]}</td><td>${pj}</td><td style="color:var(--yellow-4als)">${pj?Math.round(q4/pj*100):0}%</td><td style="color:var(--orange-faf)">${pj?Math.round(qf/pj*100):0}%</td><td style="color:var(--red-win)">${pj?Math.round(win/pj*100):0}%</td><td>${win}</td></tr>`;
             });
         }
     };
 
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
     
-    // RESET SESSION : On ne touche pas à p.active !
     window.resetSession = () => { 
-        if(confirm("Nouvelle séance ? Les compteurs de parties du jour seront remis à zéro.")) { 
+        if(confirm("Nouvelle séance ? Les boosts et compteurs du jour seront effacés.")) { 
             window.poolEnJeu = []; 
             window.sessionStats = {}; 
+            window.sessionBoost = {}; 
             window.renderDisplay(); 
         }
     };
