@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Historique</title>
+    <title>QPUC Picker - Précision Centième</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -136,7 +136,7 @@
     <div id="modal-p" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
-            <div class="modal-header">Édition Participants</div>
+            <div class="modal-header">Participants</div>
             <div style="display:flex; gap:8px; margin-bottom:10px;">
                 <input type="text" id="add-input" placeholder="NOM..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;">
                 <button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button>
@@ -148,7 +148,7 @@
     <div id="modal-sj" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-sj')">✕</div>
-            <div class="modal-header">Scores de la soirée</div>
+            <div class="modal-header">Scores Séance</div>
             <div class="scroll-content">
                 <table class="stats-table">
                     <thead><tr><th style="text-align:left">NOM</th><th>RÉEL</th><th>VIRTUEL</th></tr></thead>
@@ -161,14 +161,14 @@
     <div id="modal-sp" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-sp')">✕</div>
-            <div class="modal-header">Global (Google Sheet)</div>
+            <div class="modal-header">Global (Sheet)</div>
             <div class="scroll-content"><table class="stats-table" id="list-stats-perm"></table></div>
         </div>
     </div>
 
 <script>
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
-    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbwabzskFKMTus_wFHSJyRSN5tBq2lds9tTQ617hJsQ393XKIljWEmIcLtjkAGTs6wtU/exec`; // <--- REMPLACE PAR TON LIEN SCRIPT
+    const WEB_APP_URL = "TON_URL_WEB_APP_GOOGLE_SCRIPT"; 
 
     const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
 
@@ -190,7 +190,6 @@
         window.updateUI();
     }
 
-    // Fonction pour envoyer les résultats au Sheet
     async function sendResultsToSheet() {
         if(window.poolEnJeu.length === 5) {
             const results = window.poolEnJeu.map(n => ({ 
@@ -203,17 +202,17 @@
                     mode: 'no-cors', 
                     body: JSON.stringify(results) 
                 });
-            } catch(e) { console.error("Erreur d'envoi", e); }
+            } catch(e) { console.error("Échec d'envoi historique", e); }
         }
     }
 
     window.tirage = async () => {
-        // Envoi du tirage précédent avant d'en générer un nouveau
+        // Enregistre le tirage fini avant de passer au suivant
         await sendResultsToSheet();
         window.lastPool = [...window.poolEnJeu];
 
         const actifs = window.players.filter(p => p.active).map(p => p.name);
-        if(actifs.length < 5) return alert("Besoin de 5 actifs");
+        if(actifs.length < 5) return alert("5 joueurs requis minimum.");
 
         const regScores = actifs.filter(n => (window.sessionBoost[n] || 0) >= 0).map(n => window.sessionStats[n] || 0);
         const minRef = regScores.length > 0 ? Math.min(...regScores) : 0;
@@ -221,13 +220,18 @@
         const candidats = actifs.map(name => {
             let reel = window.sessionStats[name] || 0;
             let boost = window.sessionBoost[name] || 0;
+            
             if(boost === -1 && reel > 0) {
                 window.sessionBoost[name] = minRef - reel;
                 boost = window.sessionBoost[name];
             }
+
             let scoreBase = reel + boost;
             let penalite = window.lastPool.includes(name) ? 100 : 0;
-            return { name, scoreFinal: scoreBase + penalite + (Math.random() * 0.4) };
+            // AJUSTEMENT AUX CENTIÈMES (0.00 à 0.01) pour gérer > 20 joueurs sans collision
+            let grainAleatoire = Math.random() * 0.01; 
+
+            return { name, scoreFinal: scoreBase + penalite + grainAleatoire };
         });
 
         candidats.sort((a, b) => a.scoreFinal - b.scoreFinal);
@@ -238,8 +242,8 @@
     };
 
     window.confirmReset = async () => {
-        if(confirm("Démarrer une nouvelle séance ? (Le dernier tirage sera sauvegardé)")) {
-            await sendResultsToSheet(); // Sauvegarde du dernier tour avant reset
+        if(confirm("Nouvelle séance ? Le tirage actuel sera archivé dans l'historique.")) {
+            await sendResultsToSheet();
             window.sessionStats = {}; 
             window.sessionBoost = {}; 
             window.lastPool = []; 
@@ -293,7 +297,8 @@
             const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
             window.players.filter(p=>p.active).forEach(p => {
                 let r = window.sessionStats[p.name]||0; let v = r + (window.sessionBoost[p.name]||0);
-                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${r}</td><td>${v.toFixed(1)}</td></tr>`;
+                // Affichage précis pour debug si besoin
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${r}</td><td>${v.toFixed(2)}</td></tr>`;
             });
         }
         if(id === 'modal-sp') {
@@ -309,4 +314,3 @@
 </script>
 </body>
 </html>
-
