@@ -119,7 +119,7 @@
             <div id="status-sync" style="font-size: 0.5rem; opacity: 0.5;">Sync...</div>
         </div>
         
-        <button class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
+        <button id="btn-tirage" class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
         
         <div class="section-header">
             <div class="section-title">Partie en cours :</div>
@@ -145,37 +145,68 @@
 
     const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN"];
 
+    // VARIABLES GLOBALES
     window.players = INITIAL_LIST.map(n => ({ name: n, active: true }));
-    window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
-    window.sessionBoost = {}; window.lastPool = []; window.poolEnJeu = [];
-    window.playerStates = {}; window.sheetData = []; window.modeM = false;
+    window.sessionStats = {}; 
+    window.sessionLastPartie = {}; 
+    window.compteurParties = 0;
+    window.sessionBoost = {}; 
+    window.lastPool = [];
+    window.poolEnJeu = [];
+    window.playerStates = {};
+    window.sheetData = [];
+    window.modeM = false;
     window.replacementTarget = null;
 
-    async function loadData() {
-        try {
-            const res = await fetch(CSV_URL + "&cb=" + Date.now());
-            const data = await res.text();
-            window.sheetData = data.split('\n').slice(1).map(row => row.split(','));
-            document.getElementById('status-sync').innerText = "Sync OK";
-        } catch(e) { document.getElementById('status-sync').innerText = "Erreur Sync"; }
-        window.updateUI();
-    }
+    // FONCTION DE RENDU PRINCIPAL
+    window.renderDisplay = function() {
+        const div = document.getElementById('current-players');
+        div.innerHTML = '';
+        if(window.poolEnJeu.length === 0) return;
 
-    async function sendResultsToSheet() {
-        if(window.poolEnJeu.length === 5) {
-            // On envoie le statut (1 à 4) pour les participants
-            const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 1 }));
-            try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', body: JSON.stringify(dataToSend) });
-            } catch(e) { console.error("Erreur envoi", e); }
+        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
+        rows.forEach(row => {
+            const rDiv = document.createElement('div');
+            rDiv.className = 'player-row';
+            row.forEach(n => {
+                const b = document.createElement('div');
+                b.className = 'player-badge';
+                const s = window.playerStates[n] || 1;
+                
+                if(s === 2) b.style.background = 'var(--yellow-4als)';
+                else if(s === 3) b.style.background = 'var(--orange-faf)';
+                else if(s === 4) b.style.background = 'var(--red-win)';
+                
+                if(s > 1) b.style.color = (s === 2) ? 'black' : 'white';
+                b.innerText = n;
+
+                b.onclick = () => {
+                    if(window.modeM) {
+                        window.replacementTarget = n;
+                        window.openReplacementModal();
+                    } else {
+                        let current = window.playerStates[n] || 1;
+                        window.playerStates[n] = current >= 4 ? 1 : current + 1;
+                        window.renderDisplay();
+                    }
+                };
+                rDiv.appendChild(b);
+            });
+            div.appendChild(rDiv);
+        });
+    };
+
+    // LOGIQUE DE TIRAGE
+    window.tirage = async function() {
+        if (window.poolEnJeu.length > 0) {
+            await window.sendResultsToSheet();
         }
-    }
 
-    window.tirage = async () => {
-        if (window.poolEnJeu.length > 0) { await sendResultsToSheet(); }
         window.compteurParties++;
         window.lastPool = [...window.poolEnJeu];
         const actifs = window.players.filter(p => p.active).map(p => p.name);
-        if(actifs.length < 5) return alert("5 joueurs actifs requis.");
+        
+        if(actifs.length < 5) return alert("Besoin de 5 joueurs actifs.");
 
         const regScores = actifs.filter(n => (window.sessionBoost[n] || 0) >= 0).map(n => window.sessionStats[n] || 0);
         const minRef = regScores.length > 0 ? Math.min(...regScores) : 0;
@@ -199,27 +230,117 @@
         window.renderDisplay();
     };
 
-    window.renderDisplay = () => {
-        const div = document.getElementById('current-players'); div.innerHTML = '';
-        if(window.poolEnJeu.length === 0) return;
-        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
-        rows.forEach(row => {
-            const rDiv = document.createElement('div'); rDiv.className = 'player-row';
-            row.forEach(n => {
-                const b = document.createElement('div'); b.className = 'player-badge';
-                const s = window.playerStates[n] || 1;
-                if(s===2) b.style.background = 'var(--yellow-4als)';
-                if(s===3) b.style.background = 'var(--orange-faf)';
-                if(s===4) b.style.background = 'var(--red-win)';
-                if(s>1) b.style.color = (s===2)?'black':'white';
-                b.innerText = n;
-                b.onclick = () => {
-                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
-                    else { 
-                        let next = (window.playerStates[n] || 1) + 1;
-                        if(next > 4) next = 1;
-                        window.playerStates[n] = next; 
-                        window.renderDisplay(); 
-                    }
-                };
-                r
+    // ENVOI VERS GOOGLE SHEETS
+    window.sendResultsToSheet = async function() {
+        if(window.poolEnJeu.length === 5) {
+            const dataToSend = window.poolEnJeu.map(n => ({
+                name: n,
+                status: window.playerStates[n] || 1
+            }));
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    body: JSON.stringify(dataToSend)
+                });
+            } catch(e) { console.error("Erreur envoi", e); }
+        }
+    };
+
+    // GESTION DES MODALES ET INTERFACE
+    window.openM = function(id) {
+        document.getElementById(id).style.display = 'block';
+        if(id === 'modal-sj') {
+            const b = document.getElementById('list-stats-jour');
+            b.innerHTML = '';
+            window.players.filter(p => p.active && window.sessionStats[p.name]).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]||'-'}</td></tr>`;
+            });
+        }
+        if(id === 'modal-sp') {
+            const t = document.getElementById('list-stats-perm');
+            t.innerHTML = '<thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>%W</th><th>W</th></tr></thead><tbody>';
+            let sorted = [...window.sheetData].sort((a, b) => (parseInt(b[1]) || 0) - (parseInt(a[1]) || 0));
+            sorted.forEach(c => { 
+                if(!c[0]) return;
+                const pj = parseInt(c[1]) || 0;
+                const pct = (val) => pj > 0 ? Math.round(val/pj*100) + '%' : '0%';
+                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win">${pct(c[4])}</td><td class="c-win">${c[4] || 0}</td></tr>`;
+            });
+            t.innerHTML += '</tbody>';
+        }
+    };
+
+    window.closeM = function(id) { document.getElementById(id).style.display = 'none'; };
+
+    window.toggleModeM = function() {
+        window.modeM = !window.modeM;
+        document.getElementById('m-toggle').classList.toggle('active', window.modeM);
+    };
+
+    window.openReplacementModal = function() {
+        const listDiv = document.getElementById('list-replacement');
+        listDiv.innerHTML = '';
+        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div');
+            d.className = 'p-pill active';
+            d.innerText = p.name;
+            d.onclick = () => {
+                window.sessionStats[window.replacementTarget]--;
+                window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
+                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
+                window.playerStates[p.name] = 1;
+                window.toggleModeM();
+                window.closeM('modal-replacement');
+                window.renderDisplay();
+            };
+            listDiv.appendChild(d);
+        });
+        window.openM('modal-replacement');
+    };
+
+    window.updateUI = function() {
+        const cont = document.getElementById('list-p');
+        cont.innerHTML = '';
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div');
+            d.className = `p-pill ${p.active?'active':''}`;
+            d.innerText = p.name;
+            d.onclick = () => { p.active = !p.active; window.updateUI(); };
+            cont.appendChild(d);
+        });
+    };
+
+    window.addPlayer = function() {
+        const n = document.getElementById('add-input').value.trim().toUpperCase();
+        if(n && !window.players.find(p => p.name === n)) {
+            window.players.push({ name: n, active: true });
+            document.getElementById('add-input').value = '';
+            window.updateUI();
+        }
+    };
+
+    window.confirmReset = async function() {
+        if(confirm("Démarrer une nouvelle séance ?")) {
+            await window.sendResultsToSheet();
+            window.sessionStats = {}; window.compteurParties = 0; window.poolEnJeu = [];
+            window.renderDisplay();
+        }
+    };
+
+    // INITIALISATION
+    async function init() {
+        try {
+            const res = await fetch(CSV_URL + "&cb=" + Date.now());
+            const text = await res.text();
+            window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
+            document.getElementById('status-sync').innerText = "Sync OK";
+        } catch(e) { document.getElementById('status-sync').innerText = "Erreur Sync"; }
+        window.updateUI();
+    }
+
+    init();
+</script>
+</body>
+</html>
