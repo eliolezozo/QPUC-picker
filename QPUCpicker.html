@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Régie</title>
+    <title>QPUC Picker - Régie Officielle</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -44,6 +44,7 @@
 
         .section-header { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
         .section-title { color: var(--blue-main); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; }
+        
         .btn-m { 
             background: #444; color: white; border: 1px solid white; border-radius: 5px; 
             padding: 2px 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
@@ -61,6 +62,10 @@
             text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
+
+        .legend-area { width: 100%; text-align: center; margin-bottom: 5px; }
+        .legend-flex { display: flex; justify-content: center; align-items: center; gap: 3px; font-size: 0.55rem; }
+        .leg-box { padding: 3px 6px; border-radius: 10px; font-weight: 700; color: white; text-transform: uppercase; }
 
         .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px; }
         .btn-nav {
@@ -126,6 +131,18 @@
         </div>
         <div id="current-players"></div>
 
+        <div class="legend-area">
+            <div class="legend-flex">
+                <div class="leg-box" style="background:white; color:black; border:1px solid #ddd">Sorti</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--yellow-4als)">4ALS</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--orange-faf)">FaF</div>
+                <span style="color:#555">➔</span>
+                <div class="leg-box" style="background:var(--red-win)">Gagnant</div>
+            </div>
+        </div>
+
         <div class="nav-buttons">
             <button class="btn-nav" onclick="window.openM('modal-p')">Participants</button>
             <button class="btn-nav" onclick="window.openM('modal-sj')">Séance en cours</button>
@@ -134,11 +151,12 @@
     </div>
 
     <div id="modal-replacement" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-replacement')">✕</div><div class="modal-header">Remplacer par...</div><div class="scroll-content"><div id="list-replacement"></div></div></div></div>
+    
     <div id="modal-p" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-p')">✕</div><div class="modal-header">Participants</div><div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="add-input" placeholder="NOM..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;"><button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button></div><div class="scroll-content"><div id="list-p"></div></div></div></div>
-    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Séance du jour</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PARTIES</th><th>DERNIÈRE</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
-    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Statistiques Globales</div><div class="scroll-content"><table class="stats-table" id="list-stats-perm"></table></div></div></div>
-
-// --- REMPLACE TOUTE LA PARTIE SCRIPT DU HTML PAR CELLE-CI ---
+    
+    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Séance du jour</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>DERNIÈRE</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
+    
+    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Stats Globales</div><div class="scroll-content"><table class="stats-table" id="list-stats-perm"></table></div></div></div>
 
 <script>
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
@@ -156,6 +174,7 @@
     window.playerStates = {};
     window.sheetData = [];
     window.modeM = false;
+    window.replacementTarget = null;
 
     async function loadData() {
         try {
@@ -167,40 +186,19 @@
         window.updateUI();
     }
 
-    // FONCTION CRUCIALE : Envoie uniquement les scores à l'historique
     async function sendResultsToSheet() {
         if(window.poolEnJeu.length === 5) {
-            // On prépare l'envoi : Nom du joueur et son état (0, 1, 2 ou 3)
-            const dataToSend = window.poolEnJeu.map(n => ({
-                name: n,
-                status: window.playerStates[n] || 0
-            }));
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Important pour Google Apps Script
-                    cache: 'no-cache',
-                    body: JSON.stringify(dataToSend)
-                });
-                console.log("Données envoyées à l'historique");
-            } catch(e) {
-                console.error("Erreur lors de l'envoi vers Google Sheets", e);
-            }
+            const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 0 }));
+            try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', body: JSON.stringify(dataToSend) });
+            } catch(e) { console.error("Erreur envoi", e); }
         }
     }
 
     window.tirage = async () => {
-        // 1. On envoie les résultats de la partie QUI VIENT DE SE FINIR
-        if (window.poolEnJeu.length > 0) {
-            await sendResultsToSheet();
-        }
-
-        // 2. Préparation du nouveau tirage
+        if (window.poolEnJeu.length > 0) { await sendResultsToSheet(); }
         window.compteurParties++;
         window.lastPool = [...window.poolEnJeu];
         const actifs = window.players.filter(p => p.active).map(p => p.name);
-        
         if(actifs.length < 5) return alert("5 joueurs actifs requis.");
 
         const regScores = actifs.filter(n => (window.sessionBoost[n] || 0) >= 0).map(n => window.sessionStats[n] || 0);
@@ -216,8 +214,7 @@
 
         candidats.sort((a, b) => a.scoreFinal - b.scoreFinal);
         window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
-        window.playerStates = {}; // Reset des états pour la nouvelle partie
-        
+        window.playerStates = {};
         window.poolEnJeu.forEach(n => { 
             window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; 
             window.sessionLastPartie[n] = window.compteurParties;
@@ -225,8 +222,97 @@
         window.renderDisplay();
     };
 
-    // ... (Le reste des fonctions openM, closeM, toggleModeM reste identique)
+    window.renderDisplay = () => {
+        const div = document.getElementById('current-players'); div.innerHTML = '';
+        if(window.poolEnJeu.length === 0) return;
+        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
+        rows.forEach(row => {
+            const rDiv = document.createElement('div'); rDiv.className = 'player-row';
+            row.forEach(n => {
+                const b = document.createElement('div'); b.className = 'player-badge';
+                const s = window.playerStates[n] || 0;
+                if(s===1) b.style.background = 'var(--yellow-4als)';
+                if(s===2) b.style.background = 'var(--orange-faf)';
+                if(s===3) b.style.background = 'var(--red-win)';
+                if(s>0) b.style.color = (s===1)?'black':'white';
+                b.innerText = n;
+                b.onclick = () => {
+                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
+                    else { window.playerStates[n]=((window.playerStates[n]||0)+1)%4; window.renderDisplay(); }
+                };
+                rDiv.appendChild(b);
+            });
+            div.appendChild(rDiv);
+        });
+    };
+
+    window.toggleModeM = () => {
+        window.modeM = !window.modeM;
+        document.getElementById('m-toggle').classList.toggle('active', window.modeM);
+    };
+
+    window.openReplacementModal = () => {
+        const listDiv = document.getElementById('list-replacement'); listDiv.innerHTML = '';
+        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
+            d.onclick = () => {
+                window.sessionStats[window.replacementTarget] = Math.max(0, (window.sessionStats[window.replacementTarget] || 1) - 1);
+                window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
+                window.sessionLastPartie[p.name] = window.compteurParties;
+                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
+                window.playerStates[p.name] = 0; delete window.playerStates[window.replacementTarget];
+                window.toggleModeM(); window.closeM('modal-replacement'); window.renderDisplay();
+            };
+            listDiv.appendChild(d);
+        });
+        window.openM('modal-replacement');
+    };
+
+    window.openM = (id) => {
+        document.getElementById(id).style.display = 'block';
+        if(id === 'modal-sj') {
+            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
+            window.players.filter(p=>p.active && (window.sessionStats[p.name] > 0)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]||'-'}</td></tr>`;
+            });
+        }
+        if(id === 'modal-sp') {
+            const t = document.getElementById('list-stats-perm');
+            t.innerHTML = '<thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>%W</th><th>W</th></tr></thead><tbody>';
+            let sorted = [...window.sheetData].sort((a, b) => (parseInt(b[1]) || 0) - (parseInt(a[1]) || 0));
+            sorted.forEach(c => { 
+                if(!c[0]) return;
+                const pj = parseInt(c[1]) || 0;
+                const pct = (val) => pj > 0 ? Math.round(val/pj*100) + '%' : '';
+                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj||''}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win">${pct(c[4])}</td><td class="c-win">${(c[4]&&c[4]!="0")?c[4]:""}</td></tr>`;
+            });
+            t.innerHTML += '</tbody>';
+        }
+    };
+
+    window.closeM = (id) => { document.getElementById(id).style.display = 'none'; };
+    window.updateUI = () => {
+        const cont = document.getElementById('list-p'); cont.innerHTML = '';
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
+            d.innerText = p.name; d.onclick = () => { p.active = !p.active; window.updateUI(); };
+            cont.appendChild(d);
+        });
+    };
+    window.addPlayer = () => {
+        const n = document.getElementById('add-input').value.trim().toUpperCase();
+        if(n) { if(!window.players.find(p => p.name === n)) window.players.push({ name: n, active: true });
+        document.getElementById('add-input').value = ''; window.updateUI(); }
+    };
+    window.confirmReset = async () => {
+        if(confirm("Nouvelle séance ?")) {
+            await sendResultsToSheet();
+            window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
+            window.sessionBoost = {}; window.poolEnJeu = []; window.renderDisplay();
+        }
+    };
+
+    loadData();
 </script>
 </body>
 </html>
-
