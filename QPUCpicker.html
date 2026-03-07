@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Précision Centième</title>
+    <title>QPUC Picker - Mode Manuel & Stats</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -42,7 +42,15 @@
             text-transform: uppercase; margin-top: 10px; font-weight: 700;
         }
 
-        .section-title { color: var(--blue-main); font-size: 0.8rem; margin-top: 20px; text-transform: uppercase; font-weight: 700; }
+        .section-header { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
+        .section-title { color: var(--blue-main); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; }
+        .btn-m { 
+            background: #444; color: white; border: 1px solid white; border-radius: 5px; 
+            padding: 2px 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
+        }
+        .btn-m.active { background: var(--red-win); border-color: var(--red-win); animation: pulse 1s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
         #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
         .player-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
@@ -52,7 +60,9 @@
             padding: 8px 15px; font-size: 1rem; min-width: 85px;
             text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
         }
+        .player-badge.target { border: 2px dashed var(--red-win); transform: scale(1.05); }
 
         .legend-area { width: 100%; text-align: center; margin-bottom: 5px; }
         .legend-flex { display: flex; justify-content: center; align-items: center; gap: 3px; font-size: 0.55rem; }
@@ -86,19 +96,25 @@
         }
 
         .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
-        #list-p { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        #list-p, #list-replacement { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
         .p-pill { 
             border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
             text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
-            font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; display: flex; justify-content: center; align-items: center;
         }
         .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
 
-        .stats-table { width: 100%; border-collapse: collapse; }
+        .stats-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; text-transform: uppercase; }
-        .stats-table td { padding: 8px 4px; text-align: center; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0; }
-        .name-col { text-align: left; color: black; font-weight: 600; }
+        .stats-table td { padding: 8px 2px; text-align: center; font-size: 0.75rem; border-bottom: 1px solid #f0f0f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .name-col { text-align: left !important; color: black; font-weight: 700; width: 85px; }
+        
+        /* Couleurs Stats */
+        .c-pj { color: var(--blue-main); font-weight: bold; }
+        .c-4als { color: #d4ac0d; font-weight: bold; } /* Jaune sombre pour lisibilité sur blanc */
+        .c-faf { color: var(--orange-faf); font-weight: bold; }
+        .c-win { color: var(--red-win); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -111,7 +127,10 @@
         
         <button class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
         
-        <div class="section-title">Partie en cours :</div>
+        <div class="section-header">
+            <div class="section-title">Partie en cours :</div>
+            <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">M</button>
+        </div>
         <div id="current-players"></div>
 
         <div class="legend-area">
@@ -133,6 +152,14 @@
         </div>
     </div>
 
+    <div id="modal-replacement" class="overlay">
+        <div class="modal">
+            <div class="close-btn" onclick="window.closeM('modal-replacement')">✕</div>
+            <div class="modal-header">Remplacer par...</div>
+            <div class="scroll-content"><div id="list-replacement"></div></div>
+        </div>
+    </div>
+
     <div id="modal-p" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-p')">✕</div>
@@ -148,10 +175,10 @@
     <div id="modal-sj" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-sj')">✕</div>
-            <div class="modal-header">Scores Séance</div>
+            <div class="modal-header">Séance du jour</div>
             <div class="scroll-content">
                 <table class="stats-table">
-                    <thead><tr><th style="text-align:left">NOM</th><th>RÉEL</th><th>VIRTUEL</th></tr></thead>
+                    <thead><tr><th class="name-col">NOM</th><th>PARTIES</th><th>DERNIÈRE</th></tr></thead>
                     <tbody id="list-stats-jour"></tbody>
                 </table>
             </div>
@@ -161,7 +188,7 @@
     <div id="modal-sp" class="overlay">
         <div class="modal">
             <div class="close-btn" onclick="window.closeM('modal-sp')">✕</div>
-            <div class="modal-header">Global (Sheet)</div>
+            <div class="modal-header">Statistiques Globales</div>
             <div class="scroll-content"><table class="stats-table" id="list-stats-perm"></table></div>
         </div>
     </div>
@@ -170,15 +197,19 @@
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
     const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbxfR7GMysYxTeAoMTX0355OOVdkLERHeHkyRjpOWC9hVL_PJsIHVH81ufsqYivMOmso/exec`; 
 
-    const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN"];
+    const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "YANN", "VALERIE"];
 
     window.players = INITIAL_LIST.map(n => ({ name: n, active: true }));
     window.sessionStats = {}; 
+    window.sessionLastPartie = {}; 
+    window.compteurParties = 0;
     window.sessionBoost = {}; 
     window.lastPool = [];
     window.poolEnJeu = [];
     window.playerStates = {};
     window.sheetData = [];
+    window.modeM = false;
+    window.replacementTarget = null;
 
     async function loadData() {
         try {
@@ -197,59 +228,58 @@
                 status: window.playerStates[n] || 0 
             }));
             try {
-                await fetch(WEB_APP_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify(results) 
-                });
-            } catch(e) { console.error("Échec d'envoi historique", e); }
+                await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(results) });
+            } catch(e) { console.error("Erreur Sheet", e); }
         }
     }
 
     window.tirage = async () => {
-        // Enregistre le tirage fini avant de passer au suivant
         await sendResultsToSheet();
+        window.compteurParties++;
         window.lastPool = [...window.poolEnJeu];
-
         const actifs = window.players.filter(p => p.active).map(p => p.name);
-        if(actifs.length < 5) return alert("5 joueurs requis minimum.");
-
+        
         const regScores = actifs.filter(n => (window.sessionBoost[n] || 0) >= 0).map(n => window.sessionStats[n] || 0);
         const minRef = regScores.length > 0 ? Math.min(...regScores) : 0;
 
         const candidats = actifs.map(name => {
             let reel = window.sessionStats[name] || 0;
             let boost = window.sessionBoost[name] || 0;
-            
-            if(boost === -1 && reel > 0) {
-                window.sessionBoost[name] = minRef - reel;
-                boost = window.sessionBoost[name];
-            }
-
+            if(boost === -1 && reel > 0) { window.sessionBoost[name] = minRef - reel; boost = window.sessionBoost[name]; }
             let scoreBase = reel + boost;
             let penalite = window.lastPool.includes(name) ? 100 : 0;
-            // AJUSTEMENT AUX CENTIÈMES (0.00 à 0.01) pour gérer > 20 joueurs sans collision
-            let grainAleatoire = Math.random() * 0.01; 
-
-            return { name, scoreFinal: scoreBase + penalite + grainAleatoire };
+            let grain = Math.random() * 0.01;
+            return { name, scoreFinal: scoreBase + penalite + grain };
         });
 
         candidats.sort((a, b) => a.scoreFinal - b.scoreFinal);
         window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
         window.playerStates = {};
-        window.poolEnJeu.forEach(n => { window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; });
+        window.poolEnJeu.forEach(n => { 
+            window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; 
+            window.sessionLastPartie[n] = window.compteurParties;
+        });
         window.renderDisplay();
     };
 
-    window.confirmReset = async () => {
-        if(confirm("Nouvelle séance ? Le tirage actuel sera archivé dans l'historique.")) {
-            await sendResultsToSheet();
-            window.sessionStats = {}; 
-            window.sessionBoost = {}; 
-            window.lastPool = []; 
-            window.poolEnJeu = []; 
-            window.renderDisplay();
-        }
+    window.toggleModeM = () => {
+        window.modeM = !window.modeM;
+        document.getElementById('m-toggle').classList.toggle('active', window.modeM);
+    };
+
+    window.replacePlayer = (oldName, newName) => {
+        // Ajustement des stats : l'ancien perd sa participation, le nouveau gagne celle-ci
+        window.sessionStats[oldName] = Math.max(0, (window.sessionStats[oldName] || 1) - 1);
+        window.sessionStats[newName] = (window.sessionStats[newName] || 0) + 1;
+        window.sessionLastPartie[newName] = window.compteurParties;
+        
+        window.poolEnJeu = window.poolEnJeu.map(n => n === oldName ? newName : n);
+        window.playerStates[newName] = 0;
+        delete window.playerStates[oldName];
+        
+        window.toggleModeM();
+        window.closeM('modal-replacement');
+        window.renderDisplay();
     };
 
     window.renderDisplay = () => {
@@ -266,18 +296,42 @@
                 if(s===3) b.style.background = 'var(--red-win)';
                 if(s>0) b.style.color = (s===1)?'black':'white';
                 b.innerText = n;
-                b.onclick = () => { window.playerStates[n]=((window.playerStates[n]||0)+1)%4; window.renderDisplay(); };
+                b.onclick = () => {
+                    if(window.modeM) {
+                        window.replacementTarget = n;
+                        window.openReplacementModal();
+                    } else {
+                        window.playerStates[n]=((window.playerStates[n]||0)+1)%4; window.renderDisplay();
+                    }
+                };
                 rDiv.appendChild(b);
             });
             div.appendChild(rDiv);
         });
     };
 
+    window.openReplacementModal = () => {
+        const listDiv = document.getElementById('list-replacement');
+        listDiv.innerHTML = '';
+        const dispo = window.players
+            .filter(p => p.active && !window.poolEnJeu.includes(p.name))
+            .map(p => p.name)
+            .sort();
+        
+        dispo.forEach(name => {
+            const p = document.createElement('div');
+            p.className = 'p-pill active';
+            p.innerText = name;
+            p.onclick = () => window.replacePlayer(window.replacementTarget, name);
+            listDiv.appendChild(p);
+        });
+        window.openM('modal-replacement');
+    };
+
     window.addPlayer = () => {
         const n = document.getElementById('add-input').value.trim().toUpperCase();
         if(n) {
             if(!window.players.find(p => p.name === n)) window.players.push({ name: n, active: true });
-            window.sessionStats[n] = 0; window.sessionBoost[n] = -1;
             document.getElementById('add-input').value = ''; window.updateUI();
         }
     };
@@ -295,23 +349,45 @@
         document.getElementById(id).style.display = 'block';
         if(id === 'modal-sj') {
             const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
-            window.players.filter(p=>p.active).forEach(p => {
-                let r = window.sessionStats[p.name]||0; let v = r + (window.sessionBoost[p.name]||0);
-                // Affichage précis pour debug si besoin
-                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${r}</td><td>${v.toFixed(2)}</td></tr>`;
+            window.players.filter(p=>p.active && (window.sessionStats[p.name] > 0)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]||'-'}</td></tr>`;
             });
         }
         if(id === 'modal-sp') {
             const t = document.getElementById('list-stats-perm');
-            t.innerHTML = '<thead><tr><th>NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>W</th></tr></thead><tbody>';
-            window.sheetData.forEach(c => { if(c[0]) t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td>${c[1]}</td><td>${c[1]?Math.round(c[2]/c[1]*100):0}%</td><td>${c[1]?Math.round(c[3]/c[1]*100):0}%</td><td>${c[4]||0}</td></tr>`; });
+            t.innerHTML = '<thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>%WIN</th><th>W</th></tr></thead><tbody>';
+            window.sheetData.forEach(c => { 
+                if(!c[0]) return;
+                const pj = parseInt(c[1]) || 0;
+                const formatPct = (val) => pj > 0 ? Math.round(val/pj*100) + '%' : '';
+                
+                t.innerHTML += `<tr>
+                    <td class="name-col">${c[0]}</td>
+                    <td class="c-pj">${pj || ''}</td>
+                    <td class="c-4als">${formatPct(c[2])}</td>
+                    <td class="c-faf">${formatPct(c[3])}</td>
+                    <td class="c-win">${formatPct(c[4])}</td>
+                    <td class="c-win">${c[4] === "0" ? "" : (c[4] || "")}</td>
+                </tr>`;
+            });
             t.innerHTML += '</tbody>';
         }
     };
 
-    window.closeM = (id) => document.getElementById(id).style.display = 'none';
+    window.closeM = (id) => { 
+        document.getElementById(id).style.display = 'none'; 
+        if(id==='modal-replacement' && window.modeM) window.toggleModeM();
+    };
+
+    window.confirmReset = async () => {
+        if(confirm("Nouvelle séance ?")) {
+            await sendResultsToSheet();
+            window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
+            window.sessionBoost = {}; window.poolEnJeu = []; window.renderDisplay();
+        }
+    };
+
     loadData();
 </script>
 </body>
 </html>
-
