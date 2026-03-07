@@ -14,62 +14,51 @@
             --red-win: #c0392b;
             --btn-border: #ffffff;
         }
-
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
             background-color: var(--bg-dark); color: var(--white);
             font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden;
         }
-
         .main-container {
             width: 100%; max-width: 400px; height: 100vh; margin: 0 auto;
             display: flex; flex-direction: column; align-items: center;
             padding: 15px 15px calc(45px + env(safe-area-inset-bottom)) 15px; 
             box-sizing: border-box; justify-content: space-between;
         }
-
         .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
         .btn-top-reset {
             background: none; border: 1.5px solid var(--btn-border);
             color: white; border-radius: 30px; padding: 6px 15px;
             font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
         }
-
         .btn-prochaine-partie {
             background-color: var(--blue-main); color: white;
             width: 100%; border-radius: 50px; padding: 15px 0;
             font-size: 1.4rem; border: none; cursor: pointer;
             text-transform: uppercase; margin-top: 10px; font-weight: 700;
         }
-
         .section-header { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
         .section-title { color: var(--blue-main); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; }
-        
         .btn-m { 
             background: #444; color: white; border: 1px solid white; border-radius: 5px; 
             padding: 2px 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
         }
         .btn-m.active { background: var(--red-win); border-color: var(--red-win); animation: pulse 1s infinite; }
-
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
         #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
         .player-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
-
         .player-badge {
             background: white; color: black; border-radius: 25px;
             padding: 8px 15px; font-size: 1rem; min-width: 85px;
             text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-
         .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px; }
         .btn-nav {
             background: none; border: 1.5px solid var(--btn-border);
             color: white; border-radius: 30px; padding: 10px 0;
             font-size: 0.85rem; cursor: pointer; text-transform: uppercase; width: 100%; font-weight: 600;
         }
-
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; z-index: 1000; padding: 10px; box-sizing: border-box;
@@ -89,22 +78,18 @@
             background: #d00; border-radius: 50%; color: white; border: 2px solid white;
             font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-
         .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
         #list-p, #list-replacement { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        
         .p-pill { 
             border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
             text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
             font-weight: 600;
         }
         .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
-
         .stats-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; text-transform: uppercase; }
         .stats-table td { padding: 8px 2px; text-align: center; font-size: 0.75rem; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
         .name-col { text-align: left !important; color: black; font-weight: 700; width: 85px; overflow: hidden; text-overflow: ellipsis; }
-        
         .c-pj { color: var(--blue-main); font-weight: bold; }
         .c-4als { color: #d4ac0d; font-weight: bold; }
         .c-faf { color: var(--orange-faf); font-weight: bold; }
@@ -112,21 +97,17 @@
     </style>
 </head>
 <body>
-
     <div class="main-container">
         <div class="top-bar">
             <button class="btn-top-reset" onclick="window.confirmReset()">Nouvelle séance</button>
             <div id="status-sync" style="font-size: 0.5rem; opacity: 0.5;">Sync...</div>
         </div>
-        
         <button id="btn-tirage" class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
-        
         <div class="section-header">
             <div class="section-title">Partie en cours :</div>
             <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">M</button>
         </div>
         <div id="current-players"></div>
-
         <div class="nav-buttons">
             <button class="btn-nav" onclick="window.openM('modal-p')">Participants</button>
             <button class="btn-nav" onclick="window.openM('modal-sj')">Séance en cours</button>
@@ -145,25 +126,19 @@
 
     const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN"];
 
-    // VARIABLES GLOBALES
     window.players = INITIAL_LIST.map(n => ({ name: n, active: true }));
     window.sessionStats = {}; 
     window.sessionLastPartie = {}; 
     window.compteurParties = 0;
-    window.sessionBoost = {}; 
-    window.lastPool = [];
     window.poolEnJeu = [];
     window.playerStates = {};
     window.sheetData = [];
     window.modeM = false;
-    window.replacementTarget = null;
 
-    // FONCTION DE RENDU PRINCIPAL
     window.renderDisplay = function() {
         const div = document.getElementById('current-players');
         div.innerHTML = '';
         if(window.poolEnJeu.length === 0) return;
-
         const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
         rows.forEach(row => {
             const rDiv = document.createElement('div');
@@ -172,21 +147,15 @@
                 const b = document.createElement('div');
                 b.className = 'player-badge';
                 const s = window.playerStates[n] || 1;
-                
                 if(s === 2) b.style.background = 'var(--yellow-4als)';
                 else if(s === 3) b.style.background = 'var(--orange-faf)';
                 else if(s === 4) b.style.background = 'var(--red-win)';
-                
                 if(s > 1) b.style.color = (s === 2) ? 'black' : 'white';
                 b.innerText = n;
-
                 b.onclick = () => {
-                    if(window.modeM) {
-                        window.replacementTarget = n;
-                        window.openReplacementModal();
-                    } else {
-                        let current = window.playerStates[n] || 1;
-                        window.playerStates[n] = current >= 4 ? 1 : current + 1;
+                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
+                    else { 
+                        window.playerStates[n] = (window.playerStates[n] >= 4) ? 1 : (window.playerStates[n] || 1) + 1;
                         window.renderDisplay();
                     }
                 };
@@ -196,150 +165,75 @@
         });
     };
 
-    // LOGIQUE DE TIRAGE
     window.tirage = async function() {
-        if (window.poolEnJeu.length > 0) {
-            await window.sendResultsToSheet();
-        }
-
+        if (window.poolEnJeu.length > 0) await window.sendResultsToSheet();
         window.compteurParties++;
-        window.lastPool = [...window.poolEnJeu];
         const actifs = window.players.filter(p => p.active).map(p => p.name);
+        if(actifs.length < 5) return alert("Besoin de 5 joueurs.");
         
-        if(actifs.length < 5) return alert("Besoin de 5 joueurs actifs.");
-
-        const regScores = actifs.filter(n => (window.sessionBoost[n] || 0) >= 0).map(n => window.sessionStats[n] || 0);
-        const minRef = regScores.length > 0 ? Math.min(...regScores) : 0;
-
         const candidats = actifs.map(name => {
             let reel = window.sessionStats[name] || 0;
-            let boost = window.sessionBoost[name] || 0;
-            if(boost === -1 && reel > 0) { window.sessionBoost[name] = minRef - reel; boost = window.sessionBoost[name]; }
-            let penalite = window.lastPool.includes(name) ? 100 : 0;
-            return { name, scoreFinal: (reel + boost) + penalite + Math.random() * 0.01 };
+            let penalite = (window.poolEnJeu.includes(name)) ? 100 : 0;
+            return { name, score: reel + penalite + Math.random() };
         });
-
-        candidats.sort((a, b) => a.scoreFinal - b.scoreFinal);
+        candidats.sort((a, b) => a.score - b.score);
         window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
         window.playerStates = {};
         window.poolEnJeu.forEach(n => { 
-            window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; 
+            window.sessionStats[n] = (window.sessionStats[n] || 0) + 1;
             window.sessionLastPartie[n] = window.compteurParties;
             window.playerStates[n] = 1; 
         });
         window.renderDisplay();
     };
 
-    // ENVOI VERS GOOGLE SHEETS
     window.sendResultsToSheet = async function() {
-        if(window.poolEnJeu.length === 5) {
-            const dataToSend = window.poolEnJeu.map(n => ({
-                name: n,
-                status: window.playerStates[n] || 1
-            }));
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                    body: JSON.stringify(dataToSend)
-                });
-            } catch(e) { console.error("Erreur envoi", e); }
-        }
+        const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 1 }));
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(dataToSend)
+            });
+        } catch(e) { console.error(e); }
     };
 
-    // GESTION DES MODALES ET INTERFACE
     window.openM = function(id) {
         document.getElementById(id).style.display = 'block';
-        if(id === 'modal-sj') {
-            const b = document.getElementById('list-stats-jour');
-            b.innerHTML = '';
-            window.players.filter(p => p.active && window.sessionStats[p.name]).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]||'-'}</td></tr>`;
-            });
-        }
         if(id === 'modal-sp') {
             const t = document.getElementById('list-stats-perm');
             t.innerHTML = '<thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>%W</th><th>W</th></tr></thead><tbody>';
-            let sorted = [...window.sheetData].sort((a, b) => (parseInt(b[1]) || 0) - (parseInt(a[1]) || 0));
-            sorted.forEach(c => { 
+            window.sheetData.sort((a, b) => (parseInt(b[1]) || 0) - (parseInt(a[1]) || 0)).forEach(c => { 
                 if(!c[0]) return;
                 const pj = parseInt(c[1]) || 0;
                 const pct = (val) => pj > 0 ? Math.round(val/pj*100) + '%' : '0%';
-                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win">${pct(c[4])}</td><td class="c-win">${c[4] || 0}</td></tr>`;
+                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td>${pct(c[2])}</td><td>${pct(c[3])}</td><td>${pct(c[4])}</td><td class="c-win">${c[4] || 0}</td></tr>`;
             });
             t.innerHTML += '</tbody>';
         }
     };
-
-    window.closeM = function(id) { document.getElementById(id).style.display = 'none'; };
-
-    window.toggleModeM = function() {
-        window.modeM = !window.modeM;
-        document.getElementById('m-toggle').classList.toggle('active', window.modeM);
+    window.closeM = (id) => document.getElementById(id).style.display = 'none';
+    window.toggleModeM = () => { window.modeM = !window.modeM; document.getElementById('m-toggle').classList.toggle('active'); };
+    window.addPlayer = () => {
+        const n = document.getElementById('add-input').value.trim().toUpperCase();
+        if(n) { window.players.push({ name: n, active: true }); window.updateUI(); }
     };
-
-    window.openReplacementModal = function() {
-        const listDiv = document.getElementById('list-replacement');
-        listDiv.innerHTML = '';
-        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div');
-            d.className = 'p-pill active';
-            d.innerText = p.name;
-            d.onclick = () => {
-                window.sessionStats[window.replacementTarget]--;
-                window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
-                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
-                window.playerStates[p.name] = 1;
-                window.toggleModeM();
-                window.closeM('modal-replacement');
-                window.renderDisplay();
-            };
-            listDiv.appendChild(d);
-        });
-        window.openM('modal-replacement');
-    };
-
-    window.updateUI = function() {
-        const cont = document.getElementById('list-p');
-        cont.innerHTML = '';
+    window.updateUI = () => {
+        const cont = document.getElementById('list-p'); cont.innerHTML = '';
         window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div');
-            d.className = `p-pill ${p.active?'active':''}`;
-            d.innerText = p.name;
-            d.onclick = () => { p.active = !p.active; window.updateUI(); };
+            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
+            d.innerText = p.name; d.onclick = () => { p.active = !p.active; window.updateUI(); };
             cont.appendChild(d);
         });
     };
+    window.confirmReset = async () => { if(confirm("Nouvelle séance ?")) { await window.sendResultsToSheet(); location.reload(); } };
 
-    window.addPlayer = function() {
-        const n = document.getElementById('add-input').value.trim().toUpperCase();
-        if(n && !window.players.find(p => p.name === n)) {
-            window.players.push({ name: n, active: true });
-            document.getElementById('add-input').value = '';
-            window.updateUI();
-        }
-    };
-
-    window.confirmReset = async function() {
-        if(confirm("Démarrer une nouvelle séance ?")) {
-            await window.sendResultsToSheet();
-            window.sessionStats = {}; window.compteurParties = 0; window.poolEnJeu = [];
-            window.renderDisplay();
-        }
-    };
-
-    // INITIALISATION
     async function init() {
-        try {
-            const res = await fetch(CSV_URL + "&cb=" + Date.now());
-            const text = await res.text();
-            window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
-            document.getElementById('status-sync').innerText = "Sync OK";
-        } catch(e) { document.getElementById('status-sync').innerText = "Erreur Sync"; }
+        const res = await fetch(CSV_URL + "&cb=" + Date.now());
+        const text = await res.text();
+        window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
         window.updateUI();
     }
-
     init();
 </script>
 </body>
