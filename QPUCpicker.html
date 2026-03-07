@@ -163,6 +163,7 @@
 
     async function sendResultsToSheet() {
         if(window.poolEnJeu.length === 5) {
+            // On envoie le statut (1 à 4) pour les participants
             const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 1 }));
             try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', body: JSON.stringify(dataToSend) });
             } catch(e) { console.error("Erreur envoi", e); }
@@ -193,7 +194,7 @@
         window.poolEnJeu.forEach(n => { 
             window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; 
             window.sessionLastPartie[n] = window.compteurParties;
-            window.playerStates[n] = 1; // Statut 1 par défaut (présent)
+            window.playerStates[n] = 1; 
         });
         window.renderDisplay();
     };
@@ -221,79 +222,4 @@
                         window.renderDisplay(); 
                     }
                 };
-                rDiv.appendChild(b);
-            });
-            div.appendChild(rDiv);
-        });
-    };
-
-    window.toggleModeM = () => {
-        window.modeM = !window.modeM;
-        document.getElementById('m-toggle').classList.toggle('active', window.modeM);
-    };
-
-    window.openReplacementModal = () => {
-        const listDiv = document.getElementById('list-replacement'); listDiv.innerHTML = '';
-        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
-            d.onclick = () => {
-                window.sessionStats[window.replacementTarget] = Math.max(0, (window.sessionStats[window.replacementTarget] || 1) - 1);
-                window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
-                window.sessionLastPartie[p.name] = window.compteurParties;
-                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
-                window.playerStates[p.name] = 1; delete window.playerStates[window.replacementTarget];
-                window.toggleModeM(); window.closeM('modal-replacement'); window.renderDisplay();
-            };
-            listDiv.appendChild(d);
-        });
-        window.openM('modal-replacement');
-    };
-
-    window.openM = (id) => {
-        document.getElementById(id).style.display = 'block';
-        if(id === 'modal-sj') {
-            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
-            window.players.filter(p=>p.active && (window.sessionStats[p.name] > 0)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]||'-'}</td></tr>`;
-            });
-        }
-        if(id === 'modal-sp') {
-            const t = document.getElementById('list-stats-perm');
-            t.innerHTML = '<thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>%W</th><th>W</th></tr></thead><tbody>';
-            let sorted = [...window.sheetData].sort((a, b) => (parseInt(b[1]) || 0) - (parseInt(a[1]) || 0));
-            sorted.forEach(c => { 
-                if(!c[0]) return;
-                const pj = parseInt(c[1]) || 0;
-                const pct = (val) => pj > 0 ? Math.round(val/pj*100) + '%' : '';
-                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj||''}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win">${pct(c[4])}</td><td class="c-win">${(c[4]&&c[4]!="0")?c[4]:""}</td></tr>`;
-            });
-            t.innerHTML += '</tbody>';
-        }
-    };
-
-    window.closeM = (id) => document.getElementById(id).style.display = 'none';
-    window.updateUI = () => {
-        const cont = document.getElementById('list-p'); cont.innerHTML = '';
-        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
-            d.innerText = p.name; d.onclick = () => { p.active = !p.active; window.updateUI(); };
-            cont.appendChild(d);
-        });
-    };
-    window.addPlayer = () => {
-        const n = document.getElementById('add-input').value.trim().toUpperCase();
-        if(n) { if(!window.players.find(p => p.name === n)) window.players.push({ name: n, active: true });
-        document.getElementById('add-input').value = ''; window.updateUI(); }
-    };
-    window.confirmReset = async () => {
-        if(confirm("Nouvelle séance ?")) {
-            await sendResultsToSheet();
-            window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
-            window.sessionBoost = {}; window.poolEnJeu = []; window.renderDisplay();
-        }
-    };
-    loadData();
-</script>
-</body>
-</html>
-
+                r
