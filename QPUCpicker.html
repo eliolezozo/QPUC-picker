@@ -91,8 +91,6 @@
         .stats-table td { padding: 8px 2px; text-align: center; font-size: 0.75rem; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
         .name-col { text-align: left !important; color: black; font-weight: 700; width: 85px; overflow: hidden; text-overflow: ellipsis; }
         .c-pj { color: var(--blue-main); font-weight: bold; }
-        .c-4als { color: #d4ac0d; font-weight: bold; }
-        .c-faf { color: var(--orange-faf); font-weight: bold; }
         .c-win { color: var(--red-win); font-weight: bold; }
     </style>
 </head>
@@ -122,10 +120,11 @@
 
 <script>
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
-    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbyT9YwxdAkiZNqxXbHzgq_RviW-ZxCC1iyrUOp95Q9mhL2yBYsInkbfDBo5P0XyS05Z/exec`; 
+    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`; 
 
     const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN"];
 
+    // Global Data
     window.players = INITIAL_LIST.map(n => ({ name: n, active: true }));
     window.sessionStats = {}; 
     window.sessionLastPartie = {}; 
@@ -135,6 +134,7 @@
     window.sheetData = [];
     window.modeM = false;
 
+    // Functions
     window.renderDisplay = function() {
         const div = document.getElementById('current-players');
         div.innerHTML = '';
@@ -200,6 +200,12 @@
 
     window.openM = function(id) {
         document.getElementById(id).style.display = 'block';
+        if(id === 'modal-sj') {
+            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
+            window.players.filter(p => window.sessionStats[p.name]).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]}</td></tr>`;
+            });
+        }
         if(id === 'modal-sp') {
             const t = document.getElementById('list-stats-perm');
             t.innerHTML = '<thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4A</th><th>%FAF</th><th>%W</th><th>W</th></tr></thead><tbody>';
@@ -212,12 +218,31 @@
             t.innerHTML += '</tbody>';
         }
     };
+
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
-    window.toggleModeM = () => { window.modeM = !window.modeM; document.getElementById('m-toggle').classList.toggle('active'); };
-    window.addPlayer = () => {
-        const n = document.getElementById('add-input').value.trim().toUpperCase();
-        if(n) { window.players.push({ name: n, active: true }); window.updateUI(); }
+    
+    window.toggleModeM = () => { 
+        window.modeM = !window.modeM; 
+        document.getElementById('m-toggle').classList.toggle('active', window.modeM); 
     };
+
+    window.openReplacementModal = function() {
+        const listDiv = document.getElementById('list-replacement');
+        listDiv.innerHTML = '';
+        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
+            d.onclick = () => {
+                window.sessionStats[window.replacementTarget]--;
+                window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
+                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
+                window.playerStates[p.name] = 1;
+                window.toggleModeM(); window.closeM('modal-replacement'); window.renderDisplay();
+            };
+            listDiv.appendChild(d);
+        });
+        window.openM('modal-replacement');
+    };
+
     window.updateUI = () => {
         const cont = document.getElementById('list-p'); cont.innerHTML = '';
         window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
@@ -226,12 +251,21 @@
             cont.appendChild(d);
         });
     };
+
+    window.addPlayer = () => {
+        const n = document.getElementById('add-input').value.trim().toUpperCase();
+        if(n) { window.players.push({ name: n, active: true }); window.updateUI(); }
+    };
+
     window.confirmReset = async () => { if(confirm("Nouvelle séance ?")) { await window.sendResultsToSheet(); location.reload(); } };
 
     async function init() {
-        const res = await fetch(CSV_URL + "&cb=" + Date.now());
-        const text = await res.text();
-        window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
+        try {
+            const res = await fetch(CSV_URL + "&cb=" + Date.now());
+            const text = await res.text();
+            window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
+            document.getElementById('status-sync').innerText = "Sync OK";
+        } catch(e) { document.getElementById('status-sync').innerText = "Sync Error"; }
         window.updateUI();
     }
     init();
