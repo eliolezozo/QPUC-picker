@@ -222,29 +222,41 @@
         window.renderDisplay();
     };
 
-    window.renderDisplay = () => {
-        const div = document.getElementById('current-players'); div.innerHTML = '';
-        if(window.poolEnJeu.length === 0) return;
-        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
-        rows.forEach(row => {
-            const rDiv = document.createElement('div'); rDiv.className = 'player-row';
-            row.forEach(n => {
-                const b = document.createElement('div'); b.className = 'player-badge';
-                const s = window.playerStates[n] || 0;
-                if(s===1) b.style.background = 'var(--yellow-4als)';
-                if(s===2) b.style.background = 'var(--orange-faf)';
-                if(s===3) b.style.background = 'var(--red-win)';
-                if(s>0) b.style.color = (s===1)?'black':'white';
-                b.innerText = n;
-                b.onclick = () => {
-                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
-                    else { window.playerStates[n]=((window.playerStates[n]||0)+1)%4; window.renderDisplay(); }
-                };
-                rDiv.appendChild(b);
-            });
-            div.appendChild(rDiv);
+   window.renderDisplay = () => {
+    const div = document.getElementById('current-players'); div.innerHTML = '';
+    if(window.poolEnJeu.length === 0) return;
+    const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
+    rows.forEach(row => {
+        const rDiv = document.createElement('div'); rDiv.className = 'player-row';
+        row.forEach(n => {
+            const b = document.createElement('div'); b.className = 'player-badge';
+            // Nouveau barème : 0=Rien, 1=Présent(Blanc), 2=4ALS(Jaune), 3=FAF(Orange), 4=Gagnant(Rouge)
+            const s = window.playerStates[n] || 1; // Par défaut, un joueur tiré a le statut 1
+            if(!window.playerStates[n]) window.playerStates[n] = 1; 
+
+            if(s===2) b.style.background = 'var(--yellow-4als)';
+            if(s===3) b.style.background = 'var(--orange-faf)';
+            if(s===4) b.style.background = 'var(--red-win)';
+            if(s>1) b.style.color = (s===2)?'black':'white';
+            
+            b.innerText = n;
+            b.onclick = () => {
+                if(window.modeM) { 
+                    window.replacementTarget = n; 
+                    window.openReplacementModal(); 
+                } else {
+                    // Cycle : 1 -> 2 -> 3 -> 4 -> 1
+                    let nextState = (window.playerStates[n] || 1) + 1;
+                    if(nextState > 4) nextState = 1;
+                    window.playerStates[n] = nextState;
+                    window.renderDisplay();
+                }
+            };
+            rDiv.appendChild(b);
         });
-    };
+        div.appendChild(rDiv);
+    });
+};
 
     window.toggleModeM = () => {
         window.modeM = !window.modeM;
@@ -316,4 +328,5 @@
 </script>
 </body>
 </html>
+
 
