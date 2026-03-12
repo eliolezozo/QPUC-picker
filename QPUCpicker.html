@@ -86,6 +86,8 @@
         .c-4als { color: var(--yellow-4als); }
         .c-faf { color: var(--orange-faf); }
         .c-win-pct { color: var(--red-win); }
+        .p-pill { border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; font-weight: 600; }
+        .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -111,13 +113,15 @@
     <div id="modal-replacement" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-replacement')">✕</div><div class="modal-header">Remplacer par...</div><div class="scroll-content"><div id="list-replacement" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div></div></div></div>
     <div id="modal-p" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-p')">✕</div><div class="modal-header">Participants</div><div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="add-input" placeholder="NOM..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;"><button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button></div><div class="scroll-content"><div id="list-p" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div></div></div></div>
     <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Séance du jour</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>DERNIÈRE</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
-    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Stats Globales</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4ALS</th><th>%FAF</th><th>%WIN</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
+    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Stats Globales</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>4ALS</th><th>FAF</th><th>%WIN</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
 
 <script>
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
-    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`; 
+    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbxfR7GMysYxTeAoMTX0355OOVdkLERHeHkyRjpOWC9hVL_PJsIHVH81ufsqYivMOmso/exec`; 
 
-    window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN"].map(n => ({ name: n, active: true }));
+    const INITIAL_LIST = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN"];
+
+    window.players = INITIAL_LIST.map(n => ({ name: n, active: true }));
     window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
     window.poolEnJeu = []; window.playerStates = {}; window.sheetData = []; window.modeM = false;
 
@@ -180,14 +184,15 @@
             const sorted = [...window.sheetData].sort((a,b) => (parseInt(b[1])||0) - (parseInt(a[1])||0));
             sorted.forEach(c => { if(!c[0]) return;
                 const pj = parseInt(c[1]) || 0;
-                const pct = (v) => pj > 0 ? Math.round((parseInt(v)||0)/pj*100)+'%' : '0%';
-                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win-pct">${pct(c[4])}</td><td>${c[4]||0}</td></tr>`;
+                const winPct = pj > 0 ? Math.round((parseInt(c[4])||0)/pj*100)+'%' : '0%';
+                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td class="c-4als">${c[2] || 0}</td><td class="c-faf">${c[3] || 0}</td><td class="c-win-pct">${winPct}</td><td>${c[5] || 0}</td></tr>`;
             });
         }
     };
 
     window.closeM = (id) => document.getElementById(id).style.display = 'none';
     window.toggleModeM = () => { window.modeM = !window.modeM; document.getElementById('m-toggle').classList.toggle('active', window.modeM); };
+    
     window.openReplacementModal = function() {
         const listDiv = document.getElementById('list-replacement'); listDiv.innerHTML = '';
         window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
@@ -230,4 +235,4 @@
     init();
 </script>
 </body>
-</html>
+    </html>
