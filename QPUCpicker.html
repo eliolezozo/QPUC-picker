@@ -12,6 +12,8 @@
             --yellow-4als: #f1c40f;
             --orange-faf: #e67e22;
             --red-win: #c0392b;
+            --green-ok: #27ae60;
+            --grey-off: #444;
             --btn-border: #ffffff;
         }
         body, html {
@@ -41,9 +43,18 @@
         .section-title { color: var(--blue-main); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; }
         .btn-m { 
             background: #444; color: white; border: 1px solid white; border-radius: 5px; 
-            padding: 2px 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
+            padding: 5px 12px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
         }
         .btn-m.active { background: var(--red-win); border-color: var(--red-win); animation: pulse 1s infinite; }
+        
+        /* STYLE DU BOUTON EQUILIBRAGE */
+        .btn-eq {
+            background: #222; color: #555; border: 1px solid #555; border-radius: 5px;
+            padding: 5px 12px; font-size: 0.7rem; cursor: not-allowed; font-weight: bold;
+        }
+        .btn-eq.ready { background: var(--red-win); color: white; border-color: white; cursor: pointer; }
+        .btn-eq.active { background: var(--green-ok); color: white; border-color: white; cursor: pointer; }
+
         #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
         .player-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
         .player-badge {
@@ -87,7 +98,6 @@
         .c-faf { color: var(--orange-faf); }
         .c-win-pct { color: var(--red-win); }
 
-        /* AJOUT DU STYLE POUR LES BOUTONS PARTICIPANTS */
         .p-pill { 
             border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
             text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
@@ -106,8 +116,8 @@
         </div>
         <button id="btn-tirage" class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
         <div class="section-header">
-            <div class="section-title">Partie en cours :</div>
-            <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">M</button>
+            <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">Échanger joueur</button>
+            <button id="eq-toggle" class="btn-eq" onclick="window.toggleModeEq()">Mode Équilibrage</button>
         </div>
         <div id="current-players"></div>
         <div class="nav-buttons">
@@ -128,7 +138,11 @@
 
     window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true }));
     window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
-    window.poolEnJeu = []; window.playerStates = {}; window.sheetData = []; window.modeM = false;
+    window.poolEnJeu = []; window.playerStates = {}; window.sheetData = []; 
+    window.modeM = false; window.modeEq = false;
+    
+    // BACKEND POUR L'EQUILIBRAGE
+    window.sessionScores = {}; // Somme des points pour la séance
 
     window.renderDisplay = function() {
         const div = document.getElementById('current-players'); div.innerHTML = '';
@@ -152,22 +166,92 @@
             });
             div.appendChild(rDiv);
         });
+        window.checkEqButtonStatus();
+    };
+
+    window.checkEqButtonStatus = function() {
+        const actifs = window.players.filter(p => p.active);
+        const tousOntJoue = actifs.every(p => (window.sessionStats[p.name] || 0) > 0);
+        const btn = document.getElementById('eq-toggle');
+        
+        if (tousOntJoue && actifs.length > 0) {
+            btn.classList.add('ready');
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.classList.remove('ready', 'active');
+            window.modeEq = false;
+            btn.style.cursor = 'not-allowed';
+        }
+        if (window.modeEq) btn.classList.add('active');
+    };
+
+    window.toggleModeEq = function() {
+        const btn = document.getElementById('eq-toggle');
+        if (!btn.classList.contains('ready')) return;
+        window.modeEq = !window.modeEq;
+        btn.classList.toggle('active', window.modeEq);
     };
 
     window.tirage = async function() {
-        if (window.poolEnJeu.length > 0) await window.sendResultsToSheet();
+        if (window.poolEnJeu.length > 0) {
+            // Enregistrement des points avant de passer à la suite
+            window.poolEnJeu.forEach(n => {
+                const s = window.playerStates[n] || 1;
+                let pts = 0;
+                if (s === 2) pts = 1;
+                if (s === 3) pts = 2;
+                if (s === 4) pts = 3;
+                window.sessionScores[n] = (window.sessionScores[n] || 0) + pts;
+            });
+            await window.sendResultsToSheet();
+        }
+
         window.compteurParties++;
         const actifs = window.players.filter(p => p.active).map(p => p.name);
         if(actifs.length < 5) return alert("Besoin de 5 joueurs.");
-        const candidats = actifs.map(name => {
-            let pjS = window.sessionStats[name] || 0;
-            let pen = (window.poolEnJeu.includes(name)) ? 1000 : 0;
-            return { name, score: (pjS * 10) + pen + Math.floor(Math.random() * 10) };
-        });
-        candidats.sort((a, b) => a.score - b.score);
-        window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
+
+        const dispo = actifs.filter(name => !window.poolEnJeu.includes(name));
+        
+        if (window.modeEq) {
+            // ALGORITHME EQUILIBRAGE : Voisinage de classement
+            // 1. Trier les dispos par score de session (moyenne ou total)
+            dispo.sort((a, b) => {
+                const scoreA = window.sessionScores[a] / (window.sessionStats[a] || 1);
+                const scoreB = window.sessionScores[b] / (window.sessionStats[b] || 1);
+                return scoreB - scoreA; // Du plus fort au plus faible
+            });
+
+            // 2. Choisir un point de départ aléatoire dans la liste triée pour prendre un "voisinage"
+            // On tire une fenêtre de 5 joueurs consécutifs dans le classement
+            const maxIndex = Math.max(0, dispo.length - 5);
+            const startIndex = Math.floor(Math.random() * (maxIndex + 1));
+            window.poolEnJeu = dispo.slice(startIndex, startIndex + 5);
+            
+            // Si pas assez (ex: après un échanger joueur), compléter au hasard
+            if (window.poolEnJeu.length < 5) {
+                const restants = dispo.filter(n => !window.poolEnJeu.includes(n));
+                while(window.poolEnJeu.length < 5) {
+                    const rIdx = Math.floor(Math.random() * restants.length);
+                    window.poolEnJeu.push(restants.splice(rIdx, 1)[0]);
+                }
+            }
+        } else {
+            // ALGORITHME STANDARD
+            const candidats = actifs.map(name => {
+                let pjS = window.sessionStats[name] || 0;
+                let pen = (window.poolEnJeu.includes(name)) ? 1000 : 0;
+                return { name, score: (pjS * 10) + pen + Math.floor(Math.random() * 10) };
+            });
+            candidats.sort((a, b) => a.score - b.score);
+            window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
+        }
+
         window.playerStates = {};
-        window.poolEnJeu.forEach(n => { window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; window.sessionLastPartie[n] = window.compteurParties; window.playerStates[n] = 1; });
+        window.poolEnJeu.forEach(n => { 
+            window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; 
+            window.sessionLastPartie[n] = window.compteurParties; 
+            window.playerStates[n] = 1; 
+        });
         window.renderDisplay();
     };
 
@@ -220,6 +304,7 @@
             d.onclick = () => { 
                 p.active = !p.active; 
                 window.updateUI(); 
+                window.checkEqButtonStatus();
             };
             cont.appendChild(d);
         });
@@ -239,6 +324,7 @@
             document.getElementById('status-sync').innerText = "Sync OK";
         } catch(e) { document.getElementById('status-sync').innerText = "Sync Error"; }
         window.updateUI();
+        window.checkEqButtonStatus();
     }
     init();
 </script>
