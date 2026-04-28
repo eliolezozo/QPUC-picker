@@ -38,10 +38,10 @@
             text-transform: uppercase; margin-top: 10px; font-weight: 700;
         }
         .section-header { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
+        .section-title { color: var(--blue-main); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; }
         .btn-m { 
             background: #444; color: white; border: 1px solid white; border-radius: 5px; 
-            padding: 8px 20px; font-size: 0.8rem; cursor: pointer; font-weight: bold;
-            text-transform: uppercase;
+            padding: 2px 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
         }
         .btn-m.active { background: var(--red-win); border-color: var(--red-win); animation: pulse 1s infinite; }
         #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
@@ -82,12 +82,19 @@
         .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; }
         .stats-table td { padding: 8px 2px; text-align: center; font-size: 0.72rem; border-bottom: 1px solid #f0f0f0; font-weight: 600; }
         .name-col { text-align: left !important; color: black; font-weight: 800 !important; width: 75px; overflow: hidden; }
+        .c-pj { color: black; }
+        .c-4als { color: var(--yellow-4als); }
+        .c-faf { color: var(--orange-faf); }
+        .c-win-pct { color: var(--red-win); }
+
+        /* AJOUT DU STYLE POUR LES BOUTONS PARTICIPANTS */
         .p-pill { 
             border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
             text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
             font-weight: 600; margin-bottom: 5px;
         }
         .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
+
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -99,7 +106,8 @@
         </div>
         <button id="btn-tirage" class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
         <div class="section-header">
-            <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">Échanger joueur</button>
+            <div class="section-title">Partie en cours :</div>
+            <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">M</button>
         </div>
         <div id="current-players"></div>
         <div class="nav-buttons">
@@ -118,10 +126,10 @@
     const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
     const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`; 
 
+    
     window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true }));
     window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
     window.poolEnJeu = []; window.playerStates = {}; window.sheetData = []; window.modeM = false;
-    window.sessionScores = {}; // Somme des points acquis durant la séance
 
     window.renderDisplay = function() {
         const div = document.getElementById('current-players'); div.innerHTML = '';
@@ -148,70 +156,19 @@
     };
 
     window.tirage = async function() {
-        // Sauvegarde des points de la partie qui s'achève
-        if (window.poolEnJeu.length > 0) {
-            window.poolEnJeu.forEach(n => {
-                const s = window.playerStates[n] || 1;
-                let pts = 0;
-                if(s === 2) pts = 1; else if(s === 3) pts = 2; else if(s === 4) pts = 3;
-                window.sessionScores[n] = (window.sessionScores[n] || 0) + pts;
-            });
-            await window.sendResultsToSheet();
-        }
-
+        if (window.poolEnJeu.length > 0) await window.sendResultsToSheet();
         window.compteurParties++;
         const actifs = window.players.filter(p => p.active).map(p => p.name);
         if(actifs.length < 5) return alert("Besoin de 5 joueurs.");
-
-        // ALGORITHME DE VOISINAGE AUTOMATIQUE (Dès la Partie 3)
-        if (window.compteurParties >= 3) {
-            // Calculer la force moyenne de chaque joueur actif
-            let poolNiveau = actifs.map(name => ({
-                name,
-                avg: (window.sessionScores[name] || 0) / Math.max(1, window.sessionStats[name] || 0),
-                pj: window.sessionStats[name] || 0,
-                last: window.sessionLastPartie[name] || 0
-            }));
-
-            // Trier par niveau (décroissant)
-            poolNiveau.sort((a, b) => b.avg - a.avg);
-
-            // Chercher la meilleure fenêtre de 5 joueurs
-            // On privilégie ceux qui n'ont pas joué la dernière, SAUF si l'écart de niveau est trop grand
-            let exclus = window.poolEnJeu;
-            let candidats = [];
-
-            // 1. On identifie les éligibles (ceux qui n'ont pas joué la P-1)
-            let eligibles = poolNiveau.filter(p => !exclus.includes(p.name));
-            
-            // 2. On regarde si on peut former un groupe cohérent uniquement avec des éligibles
-            // Sinon, on injecte un "exclu" si son niveau est plus proche de la moyenne du groupe
-            if (eligibles.length >= 5) {
-                // On prend une fenêtre aléatoire dans les éligibles classés pour varier les niveaux
-                let idx = Math.floor(Math.random() * (eligibles.length - 4));
-                candidats = eligibles.slice(idx, idx + 5).map(p => p.name);
-            } else {
-                // Cas de force majeure ou effectif réduit : on mélange éligibles et exclus prioritaires
-                candidats = poolNiveau.slice(0, 5).map(p => p.name);
-            }
-            window.poolEnJeu = candidats;
-        } else {
-            // Tirage standard pour les 2 premières parties (équilibrage du temps de jeu)
-            const list = actifs.map(name => {
-                let pj = window.sessionStats[name] || 0;
-                let pen = (window.poolEnJeu.includes(name)) ? 1000 : 0;
-                return { name, score: (pj * 10) + pen + Math.floor(Math.random() * 10) };
-            });
-            list.sort((a, b) => a.score - b.score);
-            window.poolEnJeu = list.slice(0, 5).map(p => p.name);
-        }
-
-        window.playerStates = {};
-        window.poolEnJeu.forEach(n => {
-            window.sessionStats[n] = (window.sessionStats[n] || 0) + 1;
-            window.sessionLastPartie[n] = window.compteurParties;
-            window.playerStates[n] = 1;
+        const candidats = actifs.map(name => {
+            let pjS = window.sessionStats[name] || 0;
+            let pen = (window.poolEnJeu.includes(name)) ? 1000 : 0;
+            return { name, score: (pjS * 10) + pen + Math.floor(Math.random() * 10) };
         });
+        candidats.sort((a, b) => a.score - b.score);
+        window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
+        window.playerStates = {};
+        window.poolEnJeu.forEach(n => { window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; window.sessionLastPartie[n] = window.compteurParties; window.playerStates[n] = 1; });
         window.renderDisplay();
     };
 
@@ -261,7 +218,10 @@
         window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
             const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
             d.innerText = p.name; 
-            d.onclick = () => { p.active = !p.active; window.updateUI(); };
+            d.onclick = () => { 
+                p.active = !p.active; 
+                window.updateUI(); 
+            };
             cont.appendChild(d);
         });
     };
