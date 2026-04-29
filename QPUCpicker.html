@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Régie QPUC</title>
+    <title>Régie QPUC - Aléatoire</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -27,7 +27,7 @@
         .header-btns { width: 100%; display: flex; justify-content: space-between; margin-bottom: 20px; }
         .btn-top {
             background: none; border: 2px solid white; color: white;
-            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer;
+            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer; text-transform: uppercase;
         }
         .btn-top.active { background: var(--red-win); border-color: var(--red-win); }
         
@@ -42,7 +42,7 @@
         .footer-nav { width: 100%; display: flex; gap: 10px; margin-top: auto; padding-bottom: 10px; }
         .btn-nav {
             flex: 1; background: none; border: 2px solid white; color: white;
-            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer;
+            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer; text-transform: uppercase;
         }
 
         .overlay {
@@ -176,40 +176,42 @@
         }
 
         const checkedBoxes = Array.from(document.querySelectorAll('.g-chk:checked'));
-        let selection = checkedBoxes.map(cb => cb.value);
+        // STRICT : Un joueur "rouge" (en jeu) est exclu, même si coché.
+        let selection = checkedBoxes
+            .map(cb => cb.value)
+            .filter(name => !window.poolEnJeu.includes(name));
         
-        if (selection.length < 5) {
-            // Identifier le groupe de point de départ (le plus bas parmi les cochés)
-            let baseScore = 0;
-            if (selection.length > 0) {
-                baseScore = Math.min(...selection.map(n => window.players.find(p => p.name === n).score));
-            }
+        let baseScore = 0;
+        if (selection.length > 0) {
+            baseScore = Math.min(...selection.map(n => window.players.find(p => p.name === n).score));
+        }
 
-            // Pool d'éligibles (Actifs et pas dans le match précédent)
+        if (selection.length < 5) {
             let eligibles = window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name) && !selection.includes(p.name));
             
-            // Tri par remontée : Score >= baseScore, puis par score croissant, puis par PJ croissant (retard)
-            eligibles.sort((a, b) => {
-                if (a.score !== b.score) return a.score - b.score;
-                return a.pj - b.pj;
-            });
+            // On mélange les éligibles pour garantir l'aléatoire à critères égaux
+            eligibles.sort(() => Math.random() - 0.5);
 
-            // On complète avec les éligibles qui ont un score >= baseScore
+            // Tri par remontée : Score puis PJ (le mélange aléatoire fait le reste pour les égalités)
+            eligibles.sort((a, b) => a.score - b.score || a.pj - b.pj);
+
+            // On complète avec score >= baseScore
             let candidates = eligibles.filter(p => p.score >= baseScore);
             while (selection.length < 5 && candidates.length > 0) {
                 selection.push(candidates.shift().name);
             }
 
-            // Si toujours pas assez, on prend ce qui reste en dessous
+            // Si toujours pas 5, on complète avec le reste
             if (selection.length < 5) {
-                let leftovers = eligibles.filter(p => p.score < baseScore).sort((a,b) => b.score - a.score || a.pj - b.pj);
+                let leftovers = eligibles.filter(p => p.score < baseScore);
                 while (selection.length < 5 && leftovers.length > 0) {
                     selection.push(leftovers.shift().name);
                 }
             }
         }
 
-        window.poolEnJeu = selection.slice(0, 5);
+        // On mélange l'affichage final pour ne pas avoir d'ordre fixe
+        window.poolEnJeu = selection.slice(0, 5).sort(() => Math.random() - 0.5);
         window.playerStates = {};
         window.poolEnJeu.forEach(n => {
             window.players.find(p => p.name === n).pj++;
@@ -226,18 +228,19 @@
         const sortedPJs = [...new Set(eligibles.map(p => p.pj))].sort((a,b) => a - b);
         const thresholdBlue = sortedPJs.length > 1 ? sortedPJs[1] : 999;
 
-        let sorted = [...window.players].filter(p => p.active).sort((a,b) => b.score - a.score || a.pj - b.pj);
+        let sorted = [...window.players].filter(p => p.active).sort((a,b) => b.score - a.score || a.pj - b.pj || a.name.localeCompare(b.name));
         
         sorted.forEach(p => {
             let colorClass = 'status-black';
-            let isEligible = !window.poolEnJeu.includes(p.name);
-            if (!isEligible) colorClass = 'status-red';
+            let isCurrent = window.poolEnJeu.includes(p.name);
+            
+            if (isCurrent) colorClass = 'status-red';
             else if (p.pj < thresholdBlue) colorClass = 'status-blue';
 
             const tr = document.createElement('tr');
             tr.className = colorClass;
             tr.innerHTML = `
-                <td><input type="checkbox" class="g-chk" value="${p.name}" ${p.pj === 0 && isEligible ? 'checked' : ''}></td>
+                <td><input type="checkbox" class="g-chk" value="${p.name}" ${p.pj === 0 && !isCurrent ? 'checked' : ''} ${isCurrent ? 'disabled' : ''}></td>
                 <td class="name-td">${p.name}</td>
                 <td>${p.score}</td>
                 <td>${p.pj}</td>
