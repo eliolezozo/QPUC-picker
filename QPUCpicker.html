@@ -36,7 +36,7 @@
         .player-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
         .player-badge {
             background: white; color: black; border-radius: 30px; padding: 12px;
-            font-size: 1.1rem; width: 125px; text-align: center; font-weight: normal;
+            font-size: 1.1rem; width: 125px; text-align: center;
             cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5); text-transform: uppercase;
         }
 
@@ -81,7 +81,7 @@
         .groupes-table { width: 100%; border-collapse: collapse; }
         .groupes-table th { font-size: 0.7rem; color: #777; text-align: center; text-transform: uppercase; }
         .groupes-table td { padding: 8px 4px; text-align: center; font-size: 1.1rem; }
-        .name-td { text-align: left !important; width: 50%; font-weight: normal; }
+        .name-td { text-align: left !important; width: 50%; }
         .status-red { color: var(--red-win); }
         .status-blue { color: var(--blue-qpuc); font-weight: bold; }
         input[type="checkbox"] { transform: scale(1.6); }
@@ -89,7 +89,7 @@
         .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
         .p-pill { 
             border: 1.5px solid #ddd; border-radius: 20px; padding: 8px;
-            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; font-weight: normal;
+            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999;
         }
         .p-pill.active { border-color: var(--blue-qpuc); color: black; background: #f8f9fa; }
     </style>
@@ -149,11 +149,14 @@
     let modeM = false;
     let replacementTarget = null;
 
-    // Fonction de brassage réel pour casser l'ordre alphabétique
-    const shuffleArray = (array) => {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+    // Mélange de Fisher-Yates : garantit un hasard pur
+    const shuffle = (array) => {
+        let m = array.length, t, i;
+        while (m) {
+            i = Math.floor(Math.random() * m--);
+            t = array[m];
+            array[m] = array[i];
+            array[i] = t;
         }
         return array;
     };
@@ -200,38 +203,36 @@
                                   .filter(n => !poolEnJeu.includes(n));
         
         let selection = [...checkedNames];
-        
-        // 1. On prend tous les joueurs éligibles (actifs + pas dans le match précédent)
-        let candidatesPool = players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name));
-        
-        // 2. ON BRASSE LE POOL IMMEDIATEMENT pour casser l'ordre de la liste
-        shuffleArray(candidatesPool);
+
+        // ON BRASSE LES JOUEURS AVANT TOUT POUR TUER L'ORDRE ALPHABETIQUE
+        let candidates = shuffle([...players].filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
 
         if (selection.length < 5) {
             if (selection.length > 0) {
-                // Logique de cascade basée sur le classement Score/PJ (et brassage pour égalités)
-                let sortedList = [...players].filter(p => p.active).sort((a,b) => b.score - a.score || b.pj - a.pj);
-                let firstChecked = selection[0];
-                let indexInSorted = sortedList.findIndex(p => p.name === firstChecked);
-                let median = sortedList.length / 2;
+                // Cascade bidirectionnelle basée sur le classement
+                let sortedClassment = [...players].filter(p => p.active).sort((a,b) => b.score - a.score || b.pj - a.pj);
+                let firstChecked = players.find(p => p.name === selection[0]);
+                let idx = sortedClassment.findIndex(p => p.name === firstChecked.name);
 
-                if (indexInSorted < median) {
-                    // Cascade vers le BAS
-                    candidatesPool.sort((a,b) => b.score - a.score || b.pj - a.pj);
+                if (idx < sortedClassment.length / 2) {
+                    // Cascade vers le bas (scores plus faibles)
+                    candidates.sort((a, b) => b.score - a.score || b.pj - a.pj);
                 } else {
-                    // Cascade vers le HAUT
-                    candidatesPool.sort((a,b) => a.score - b.score || a.pj - b.pj);
+                    // Cascade vers le haut (scores plus forts)
+                    candidates.sort((a, b) => a.score - b.score || a.pj - b.pj);
                 }
-                while (selection.length < 5 && candidatesPool.length > 0) selection.push(candidatesPool.shift().name);
             } else {
-                // Tirage 100% ALÉATOIRE (ex: début de séance)
-                // Le pool est déjà brassé, on prend juste les 5 premiers
-                while (selection.length < 5 && candidatesPool.length > 0) selection.push(candidatesPool.shift().name);
+                // Tirage sans sélection : priorité aux PJ les plus bas, mais brassés
+                candidates.sort((a, b) => a.pj - b.pj);
+            }
+
+            while (selection.length < 5 && candidates.length > 0) {
+                selection.push(candidates.shift().name);
             }
         }
 
-        // Attribution finale aléatoire des pupitres
-        poolEnJeu = shuffleArray(selection.slice(0, 5));
+        // Attribution finale des places au hasard
+        poolEnJeu = shuffle(selection.slice(0, 5));
         playerStates = {};
         poolEnJeu.forEach(n => { players.find(p => p.name === n).pj++; playerStates[n] = 1; });
         closeM('modal-g');
@@ -240,7 +241,7 @@
 
     const renderG = () => {
         const body = document.getElementById('body-g'); body.innerHTML = '';
-        // Classement Score DESC / PJ DESC
+        // Classement : Score DESC, puis PJ DESC
         let sorted = [...players].filter(p => p.active).sort((a,b) => b.score - a.score || b.pj - a.pj);
         let minPJ = Math.min(...sorted.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
 
@@ -262,7 +263,6 @@
 
     const renderP = () => {
         const grid = document.getElementById('grid-p'); grid.innerHTML = '';
-        // Uniquement ici on garde l'ordre alphabétique pour que l'utilisateur s'y retrouve
         [...players].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
             d.innerText = p.name;
@@ -283,7 +283,7 @@
 
     function openReplacementModal() {
         const grid = document.getElementById('grid-replacement'); grid.innerHTML = '';
-        shuffleArray(players.filter(p => p.active && !poolEnJeu.includes(p.name))).forEach(p => {
+        shuffle(players.filter(p => p.active && !poolEnJeu.includes(p.name))).forEach(p => {
             const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
             d.onclick = () => {
                 players.find(x => x.name === replacementTarget).pj--;
