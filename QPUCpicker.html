@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Régie QPUC - Aléatoire</title>
+    <title>Régie QPUC</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -17,7 +17,7 @@
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
             background-color: var(--bg-dark); color: white;
-            font-family: 'Arial Black', sans-serif; overflow: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden;
         }
         .main-container {
             width: 100%; max-width: 420px; height: 100vh; margin: 0 auto;
@@ -26,8 +26,8 @@
         }
         .header-btns { width: 100%; display: flex; justify-content: space-between; margin-bottom: 20px; }
         .btn-top {
-            background: none; border: 2px solid white; color: white;
-            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer; text-transform: uppercase;
+            background: none; border: 1px solid white; color: white;
+            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer;
         }
         .btn-top.active { background: var(--red-win); border-color: var(--red-win); }
         
@@ -35,14 +35,14 @@
         .player-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
         .player-badge {
             background: white; color: black; border-radius: 30px; padding: 12px;
-            font-size: 1.1rem; width: 120px; text-align: center;
+            font-size: 1.1rem; width: 130px; text-align: center; font-weight: normal;
             cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5); text-transform: uppercase;
         }
 
         .footer-nav { width: 100%; display: flex; gap: 10px; margin-top: auto; padding-bottom: 10px; }
         .btn-nav {
-            flex: 1; background: none; border: 2px solid white; color: white;
-            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer; text-transform: uppercase;
+            flex: 1; background: none; border: 1px solid white; color: white;
+            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer;
         }
 
         .overlay {
@@ -50,36 +50,33 @@
             background: rgba(0,0,0,0.9); display: none; z-index: 1000;
         }
         .modal {
-            background: white; border-radius: 25px; width: 92%; max-width: 380px;
+            background: white; border-radius: 25px; width: 92%; max-height: 90vh;
             margin: 20px auto; color: black; position: relative; padding: 15px;
-            max-height: 90vh; display: flex; flex-direction: column;
+            display: flex; flex-direction: column; box-sizing: border-box;
         }
         .close-circle {
-            position: absolute; top: -12px; right: -12px; background: var(--red-exit);
-            color: white; width: 35px; height: 35px; border-radius: 50%;
+            position: absolute; top: -10px; right: -10px; background: var(--red-exit);
+            color: white; width: 30px; height: 30px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
-            border: 2px solid white; font-size: 20px; z-index: 1010;
+            border: 2px solid white; font-weight: bold;
         }
 
         .btn-tirage {
             background: var(--green-tirage); color: white; border-radius: 15px;
-            padding: 10px 40px; font-size: 1.6rem; border: none; cursor: pointer;
-            align-self: center; margin-bottom: 10px; font-weight: bold;
+            padding: 12px; font-size: 1.4rem; border: none; cursor: pointer;
+            margin-bottom: 15px; font-weight: bold; width: 100%;
         }
         .groupes-table { width: 100%; border-collapse: collapse; }
-        .groupes-table th { font-size: 0.7rem; color: #777; text-align: center; }
-        .groupes-table td { padding: 8px 4px; text-align: center; font-size: 1.1rem; font-weight: bold; }
-        .name-td { text-align: left !important; width: 50%; }
-        .status-red { color: var(--red-win); }
-        .status-blue { color: var(--blue-qpuc); }
-        input[type="checkbox"] { transform: scale(1.6); }
+        .groupes-table th { font-size: 0.7rem; color: #666; text-transform: uppercase; padding-bottom: 5px; }
+        .groupes-table td { padding: 6px 2px; text-align: center; font-size: 1rem; font-weight: normal; }
+        .name-td { text-align: left !important; font-weight: normal !important; }
+        .status-red { color: var(--red-win); opacity: 0.6; }
+        .status-blue { color: var(--blue-qpuc); font-weight: bold !important; }
+        input[type="checkbox"] { transform: scale(1.5); }
 
         .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
-        .p-pill { 
-            border: 1.5px solid #ddd; border-radius: 20px; padding: 8px;
-            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999;
-        }
-        .p-pill.active { border-color: var(--blue-qpuc); color: black; background: #f8f9fa; }
+        .p-pill { border: 1px solid #ccc; border-radius: 20px; padding: 10px; text-align: center; cursor: pointer; color: #666; }
+        .p-pill.active { border-color: var(--blue-qpuc); color: black; background: #e1f5fe; }
     </style>
 </head>
 <body>
@@ -89,9 +86,7 @@
         <button class="btn-top" onclick="confirmReset()">Nouvelle séance</button>
         <button id="m-toggle" class="btn-top" onclick="toggleModeM()">Changer joueur</button>
     </div>
-
     <div id="current-players"></div>
-
     <div class="footer-nav">
         <button class="btn-nav" onclick="openM('modal-p')">Participants</button>
         <button class="btn-nav" onclick="openM('modal-g')">Groupes</button>
@@ -104,9 +99,7 @@
         <button class="btn-tirage" onclick="lancerTirage()">TIRAGE</button>
         <div style="overflow-y: auto;">
             <table class="groupes-table">
-                <thead>
-                    <tr><th style="width:15%"></th><th class="name-td"></th><th>SCORE</th><th>PJ</th></tr>
-                </thead>
+                <thead><tr><th></th><th class="name-td">NOM</th><th>PTS</th><th>PJ</th></tr></thead>
                 <tbody id="body-g"></tbody>
             </table>
         </div>
@@ -129,30 +122,27 @@
 
 <script>
     const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`;
+    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true, score: 0, pj: 0 }));
+    let poolEnJeu = [];
+    let playerStates = {};
+    let modeM = false;
+    let replacementTarget = null;
 
-    window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true, score: 0, pj: 0 }));
-    window.poolEnJeu = [];
-    window.playerStates = {};
-    window.modeM = false;
-    window.replacementTarget = null;
-
-    window.renderDisplay = function() {
+    const renderDisplay = () => {
         const div = document.getElementById('current-players'); div.innerHTML = '';
-        if(window.poolEnJeu.length === 0) return;
-        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
-        rows.forEach(row => {
+        if(poolEnJeu.length === 0) return;
+        [poolEnJeu.slice(0, 3), poolEnJeu.slice(3, 5)].forEach(row => {
             const rDiv = document.createElement('div'); rDiv.className = 'player-row';
             row.forEach(n => {
                 const b = document.createElement('div'); b.className = 'player-badge';
-                const s = window.playerStates[n] || 1;
-                if(s === 2) b.style.background = 'var(--yellow-4als)';
-                else if(s === 3) b.style.background = 'var(--orange-faf)';
-                else if(s === 4) b.style.background = 'var(--red-win)';
-                if(s > 1) b.style.color = (s === 2) ? 'black' : 'white';
+                const s = playerStates[n] || 1;
+                if(s === 2) { b.style.background = 'var(--yellow-4als)'; b.style.color = 'black'; }
+                else if(s === 3) { b.style.background = 'var(--orange-faf)'; b.style.color = 'white'; }
+                else if(s === 4) { b.style.background = 'var(--red-win)'; b.style.color = 'white'; }
                 b.innerText = n;
                 b.onclick = () => {
-                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
-                    else { window.playerStates[n] = (window.playerStates[n] >= 4) ? 1 : (window.playerStates[n] || 1) + 1; window.renderDisplay(); }
+                    if(modeM) { replacementTarget = n; openReplacementModal(); }
+                    else { playerStates[n] = (playerStates[n] >= 4) ? 1 : (playerStates[n] || 1) + 1; renderDisplay(); }
                 };
                 rDiv.appendChild(b);
             });
@@ -160,131 +150,111 @@
         });
     };
 
-    window.sendResultsToSheet = async function() {
-        const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 1 }));
-        try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dataToSend) }); } catch(e) {}
+    const sendResultsToSheet = async () => {
+        const data = poolEnJeu.map(n => ({ name: n, status: playerStates[n] || 1 }));
+        try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) }); } catch(e) {}
     };
 
     async function lancerTirage() {
-        if (window.poolEnJeu.length > 0) {
-            await window.sendResultsToSheet();
-            window.poolEnJeu.forEach(n => {
-                const p = window.players.find(x => x.name === n);
-                const s = window.playerStates[n] || 1;
+        if (poolEnJeu.length > 0) {
+            await sendResultsToSheet();
+            poolEnJeu.forEach(n => {
+                let p = players.find(x => x.name === n);
+                let s = playerStates[n] || 1;
                 if(s === 2) p.score += 1; else if(s === 3) p.score += 2; else if(s === 4) p.score += 3;
             });
         }
 
-        const checkedBoxes = Array.from(document.querySelectorAll('.g-chk:checked'));
-        // STRICT : Un joueur "rouge" (en jeu) est exclu, même si coché.
-        let selection = checkedBoxes
-            .map(cb => cb.value)
-            .filter(name => !window.poolEnJeu.includes(name));
+        const checkedNames = Array.from(document.querySelectorAll('.g-chk:checked'))
+                                  .map(cb => cb.value)
+                                  .filter(n => !poolEnJeu.includes(n));
         
-        let baseScore = 0;
-        if (selection.length > 0) {
-            baseScore = Math.min(...selection.map(n => window.players.find(p => p.name === n).score));
-        }
-
+        let selection = [...checkedNames];
+        let sortedFullList = [...players].filter(p => p.active).sort((a,b) => a.score - b.score || a.pj - b.pj);
+        
         if (selection.length < 5) {
-            let eligibles = window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name) && !selection.includes(p.name));
+            let eligibles = sortedFullList.filter(p => !poolEnJeu.includes(p.name) && !selection.includes(p.name));
             
-            // On mélange les éligibles pour garantir l'aléatoire à critères égaux
-            eligibles.sort(() => Math.random() - 0.5);
+            // Déterminer la direction de la cascade
+            if (selection.length > 0) {
+                let firstChecked = selection[0];
+                let indexInSorted = sortedFullList.findIndex(p => p.name === firstChecked);
+                let median = sortedFullList.length / 2;
 
-            // Tri par remontée : Score puis PJ (le mélange aléatoire fait le reste pour les égalités)
-            eligibles.sort((a, b) => a.score - b.score || a.pj - b.pj);
-
-            // On complète avec score >= baseScore
-            let candidates = eligibles.filter(p => p.score >= baseScore);
-            while (selection.length < 5 && candidates.length > 0) {
-                selection.push(candidates.shift().name);
-            }
-
-            // Si toujours pas 5, on complète avec le reste
-            if (selection.length < 5) {
-                let leftovers = eligibles.filter(p => p.score < baseScore);
-                while (selection.length < 5 && leftovers.length > 0) {
-                    selection.push(leftovers.shift().name);
+                if (indexInSorted < median) {
+                    // Cascade vers le BAS (on cherche les scores plus élevés après lui)
+                    let candidates = eligibles.sort((a,b) => a.score - b.score || a.pj - b.pj || (Math.random() - 0.5));
+                    while (selection.length < 5 && candidates.length > 0) selection.push(candidates.shift().name);
+                } else {
+                    // Cascade vers le HAUT (on cherche les scores plus faibles avant lui)
+                    let candidates = eligibles.sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
+                    while (selection.length < 5 && candidates.length > 0) selection.push(candidates.shift().name);
                 }
+            } else {
+                // Rien de coché : Aléatoire parmi les bleus/en retard
+                eligibles.sort((a,b) => a.pj - b.pj || (Math.random() - 0.5));
+                while (selection.length < 5 && eligibles.length > 0) selection.push(eligibles.shift().name);
             }
         }
 
-        // On mélange l'affichage final pour ne pas avoir d'ordre fixe
-        window.poolEnJeu = selection.slice(0, 5).sort(() => Math.random() - 0.5);
-        window.playerStates = {};
-        window.poolEnJeu.forEach(n => {
-            window.players.find(p => p.name === n).pj++;
-            window.playerStates[n] = 1;
-        });
-
+        poolEnJeu = selection.slice(0, 5).sort(() => Math.random() - 0.5);
+        playerStates = {};
+        poolEnJeu.forEach(n => { players.find(p => p.name === n).pj++; playerStates[n] = 1; });
         closeM('modal-g');
-        window.renderDisplay();
+        renderDisplay();
     }
 
-    function renderG() {
+    const renderG = () => {
         const body = document.getElementById('body-g'); body.innerHTML = '';
-        const eligibles = window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name));
-        const sortedPJs = [...new Set(eligibles.map(p => p.pj))].sort((a,b) => a - b);
-        const thresholdBlue = sortedPJs.length > 1 ? sortedPJs[1] : 999;
+        let activePlayers = players.filter(p => p.active).sort((a,b) => a.score - b.score || a.pj - b.pj);
+        let minPJ = Math.min(...activePlayers.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
 
-        let sorted = [...window.players].filter(p => p.active).sort((a,b) => b.score - a.score || a.pj - b.pj || a.name.localeCompare(b.name));
-        
-        sorted.forEach(p => {
-            let colorClass = 'status-black';
-            let isCurrent = window.poolEnJeu.includes(p.name);
-            
-            if (isCurrent) colorClass = 'status-red';
-            else if (p.pj < thresholdBlue) colorClass = 'status-blue';
+        activePlayers.forEach(p => {
+            let isPrevious = poolEnJeu.includes(p.name);
+            let tr = document.createElement('tr');
+            if (isPrevious) tr.className = 'status-red';
+            else if (p.pj === minPJ) tr.className = 'status-blue';
 
-            const tr = document.createElement('tr');
-            tr.className = colorClass;
             tr.innerHTML = `
-                <td><input type="checkbox" class="g-chk" value="${p.name}" ${p.pj === 0 && !isCurrent ? 'checked' : ''} ${isCurrent ? 'disabled' : ''}></td>
+                <td><input type="checkbox" class="g-chk" value="${p.name}" ${p.pj === 0 && !isPrevious ? 'checked' : ''} ${isPrevious ? 'disabled' : ''}></td>
                 <td class="name-td">${p.name}</td>
                 <td>${p.score}</td>
                 <td>${p.pj}</td>
             `;
             body.appendChild(tr);
         });
-    }
+    };
 
-    function openM(id) { 
-        if(id === 'modal-g') renderG(); 
-        if(id === 'modal-p') renderP();
-        document.getElementById(id).style.display = 'block'; 
-    }
-    function closeM(id) { document.getElementById(id).style.display = 'none'; }
-    function toggleModeM() { window.modeM = !window.modeM; document.getElementById('m-toggle').classList.toggle('active', window.modeM); }
-
-    function renderP() {
+    const renderP = () => {
         const grid = document.getElementById('grid-p'); grid.innerHTML = '';
-        window.players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+        players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
             d.innerText = p.name;
             d.onclick = () => { p.active = !p.active; renderP(); };
             grid.appendChild(d);
         });
-    }
+    };
 
-    window.openReplacementModal = function() {
+    function openReplacementModal() {
         const grid = document.getElementById('grid-replacement'); grid.innerHTML = '';
-        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+        players.filter(p => p.active && !poolEnJeu.includes(p.name)).sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
             d.onclick = () => {
-                window.players.find(x => x.name === window.replacementTarget).pj--;
+                players.find(x => x.name === replacementTarget).pj--;
                 p.pj++;
-                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
-                window.playerStates[p.name] = 1;
-                delete window.playerStates[window.replacementTarget];
-                toggleModeM(); closeM('modal-replacement'); window.renderDisplay();
+                poolEnJeu = poolEnJeu.map(n => n === replacementTarget ? p.name : n);
+                playerStates[p.name] = 1;
+                toggleModeM(); closeM('modal-replacement'); renderDisplay();
             };
             grid.appendChild(d);
         });
         document.getElementById('modal-replacement').style.display = 'block';
-    };
+    }
 
-    function confirmReset() { if(confirm("Nouvelle séance ?")) { window.sendResultsToSheet(); location.reload(); } }
+    const openM = (id) => { if(id==='modal-g') renderG(); if(id==='modal-p') renderP(); document.getElementById(id).style.display='block'; };
+    const closeM = (id) => { document.getElementById(id).style.display='none'; };
+    const toggleModeM = () => { modeM = !modeM; document.getElementById('m-toggle').classList.toggle('active', modeM); };
+    const confirmReset = () => { if(confirm("Nouvelle séance ?")) location.reload(); };
 </script>
 </body>
 </html>
