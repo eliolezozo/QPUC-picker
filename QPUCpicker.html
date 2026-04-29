@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Régie QPUC</title>
+    <title>Régie QPUC - Stratégique</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
-            --blue-qpuc: #0091d2;
+            --blue-main: #0091d2;
             --green-tirage: #27ae60;
             --red-exit: #d0002d;
             --yellow-4als: #f1c40f;
@@ -25,25 +25,26 @@
             padding: 15px; box-sizing: border-box;
         }
         
-        /* Écran Principal */
+        /* En-tête */
         .header-btns { width: 100%; display: flex; justify-content: space-between; margin-bottom: 20px; }
         .btn-top {
             background: none; border: 2px solid white; color: white;
-            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer;
+            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer; text-transform: uppercase;
         }
         .btn-top.active { background: var(--red-win); border-color: var(--red-win); }
         
+        /* Zone de jeu */
         #display-zone { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; width: 100%; }
         .badge {
             background: white; color: black; border-radius: 30px; padding: 15px;
             font-size: 1.3rem; width: 80%; margin: 0 auto; text-align: center;
-            cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5); text-transform: uppercase;
         }
 
         .footer-nav { width: 100%; display: flex; gap: 10px; margin-top: auto; padding-bottom: 10px; }
         .btn-nav {
             flex: 1; background: none; border: 2px solid white; color: white;
-            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer;
+            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer; text-transform: uppercase;
         }
 
         /* Modales */
@@ -63,33 +64,32 @@
             border: 2px solid white; font-size: 20px; z-index: 10;
         }
 
-        /* UI Participants (Image 1) */
-        .part-header { background: var(--blue-qpuc); color: white; padding: 10px; border-radius: 20px; text-align: center; margin-bottom: 10px; }
+        /* UI Participants */
+        .part-header { background: var(--blue-main); color: white; padding: 10px; border-radius: 20px; text-align: center; margin-bottom: 10px; text-transform: uppercase; }
         .search-bar { display: flex; gap: 5px; margin-bottom: 10px; }
-        .search-bar input { flex: 1; border-radius: 15px; border: 1px solid #ccc; padding: 8px; }
-        .btn-add { background: var(--blue-qpuc); color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; cursor: pointer; }
+        .search-bar input { flex: 1; border-radius: 15px; border: 1px solid #ccc; padding: 8px; text-transform: uppercase; }
+        .btn-add { background: var(--blue-main); color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; cursor: pointer; }
         .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
-        .pill { 
-            border: 1.5px solid var(--blue-qpuc); border-radius: 20px; padding: 8px;
-            text-align: center; font-size: 0.8rem; cursor: pointer; color: var(--blue-qpuc);
+        .p-pill { 
+            border: 1.5px solid #ddd; border-radius: 20px; padding: 8px;
+            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999;
         }
-        .pill.inactive { border-color: #ddd; color: #ddd; }
+        .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
 
-        /* UI Groupes (Image 2) */
+        /* UI Groupes */
         .btn-tirage {
             background: var(--green-tirage); color: white; border-radius: 15px;
             padding: 10px 40px; font-size: 1.6rem; border: none; cursor: pointer;
-            align-self: center; margin-bottom: 10px;
+            align-self: center; margin-bottom: 10px; font-weight: 900;
         }
         .groupes-table { width: 100%; border-collapse: collapse; }
         .groupes-table th { font-size: 0.7rem; color: #777; text-align: center; padding: 5px; }
-        .groupes-table td { padding: 8px 4px; text-align: center; font-size: 1.2rem; }
+        .groupes-table td { padding: 8px 4px; text-align: center; font-size: 1.2rem; font-weight: 900; }
         .name-td { text-align: left !important; width: 50%; }
         .status-red { color: var(--red-win); }
-        .status-blue { color: var(--blue-qpuc); }
+        .status-blue { color: var(--blue-main); }
         .status-black { color: black; }
         input[type="checkbox"] { transform: scale(1.6); }
-
     </style>
 </head>
 <body>
@@ -101,7 +101,8 @@
     </div>
 
     <div id="display-zone">
-        </div>
+        <div style="text-align:center; opacity:0.5">Ouvrez "GROUPES" pour commencer</div>
+    </div>
 
     <div class="footer-nav">
         <button class="btn-nav" onclick="openM('modal-p')">Participants</button>
@@ -150,6 +151,8 @@
 </div>
 
 <script>
+    const WEB_APP_URL = `TON_URL_GOOGLE_SCRIPT_ICI`; // Remplacer par ton URL de déploiement Apps Script
+
     let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"]
         .map(n => ({ name: n, active: true, score: 0, pj: 0 }));
     
@@ -167,11 +170,10 @@
 
     // --- LOGIQUE PARTICIPANTS ---
     function renderP() {
-        const grid = document.getElementById('grid-p');
-        grid.innerHTML = '';
+        const grid = document.getElementById('grid-p'); grid.innerHTML = '';
         players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const div = document.createElement('div');
-            div.className = `pill ${p.active ? '' : 'inactive'}`;
+            div.className = `p-pill ${p.active ? 'active' : ''}`;
             div.innerText = p.name;
             div.onclick = () => { p.active = !p.active; renderP(); };
             grid.appendChild(div);
@@ -182,22 +184,19 @@
         const val = document.getElementById('in-add').value.toUpperCase().trim();
         if(val && !players.find(p => p.name === val)) {
             players.push({ name: val, active: true, score: 0, pj: 0 });
-            document.getElementById('in-add').value = '';
-            renderP();
+            document.getElementById('in-add').value = ''; renderP();
         }
     }
 
     // --- LOGIQUE GROUPES ---
     function renderG() {
-        const body = document.getElementById('body-g');
-        body.innerHTML = '';
-
-        // Calcul du critère bleu : PJ < 2ème PJ le plus bas parmi les éligibles
+        const body = document.getElementById('body-g'); body.innerHTML = '';
         const eligibles = players.filter(p => p.active && !currentPartie.includes(p.name));
-        const sortedPJs = [...new Set(eligibles.map(p => p.pj))].sort((a,b) => a - b);
-        const thresholdBlue = sortedPJs.length > 1 ? sortedPJs[1] : 999;
+        
+        // Calcul du bleu : PJ < 2ème PJ le plus bas parmi les éligibles
+        const pjs = [...new Set(eligibles.map(p => p.pj))].sort((a,b) => a - b);
+        const thresholdBlue = pjs.length > 1 ? pjs[1] : (pjs[0] || 0);
 
-        // Tri : Score DESC, puis PJ ASC
         let list = players.filter(p => p.active).sort((a,b) => {
             if(b.score !== a.score) return b.score - a.score;
             return a.pj - b.pj;
@@ -205,15 +204,14 @@
 
         list.forEach(p => {
             let colorClass = 'status-black';
-            let isEligible = !currentPartie.includes(p.name);
-            
-            if(!isEligible) colorClass = 'status-red';
+            let isCurrent = currentPartie.includes(p.name);
+            if(isCurrent) colorClass = 'status-red';
             else if(p.pj < thresholdBlue) colorClass = 'status-blue';
 
             const tr = document.createElement('tr');
             tr.className = colorClass;
             tr.innerHTML = `
-                <td><input type="checkbox" class="g-chk" value="${p.name}" ${isEligible ? 'checked' : ''}></td>
+                <td><input type="checkbox" class="g-chk" value="${p.name}"></td>
                 <td class="name-td">${p.name}</td>
                 <td>${p.score}</td>
                 <td>${p.pj}</td>
@@ -222,34 +220,32 @@
         });
     }
 
-    function executerTirage() {
-        // Enregistrement des scores du match fini
-        currentPartie.forEach(n => {
-            let p = players.find(x => x.name === n);
-            let s = playerStates[n] || 1;
-            if(s === 2) p.score += 1;
-            else if(s === 3) p.score += 2;
-            else if(s === 4) p.score += 3;
-        });
+    async function executerTirage() {
+        // 1. Envoi des résultats de la partie qui vient de se finir
+        if(currentPartie.length > 0) {
+            await envoyerResultatsSheet();
+            // Mise à jour des scores en local
+            currentPartie.forEach(n => {
+                let p = players.find(x => x.name === n);
+                let s = playerStates[n] || 1;
+                if(s === 2) p.score += 1;
+                else if(s === 3) p.score += 2;
+                else if(s === 4) p.score += 3;
+            });
+        }
 
+        // 2. Nouveau Tirage
         const checked = Array.from(document.querySelectorAll('.g-chk:checked')).map(i => i.value);
-        if(checked.length < 1) return alert("Sélectionnez des joueurs !");
+        if(checked.length === 0) return alert("Sélectionnez au moins un pool !");
 
         let selection = [];
-        // Si plus de 5, on tire au sort parmi les cochés
         if(checked.length >= 5) {
             selection = checked.sort(() => Math.random() - 0.5).slice(0, 5);
         } else {
-            // Sinon on prend tous les cochés et on complète par cascade
             selection = [...checked];
-            let eligibles = players.filter(p => p.active && !currentPartie.includes(p.name) && !selection.includes(p.name));
-            
-            // On trie les éligibles par proximité de score et retard de PJ
-            eligibles.sort((a,b) => a.pj - b.pj); 
-            
-            while(selection.length < 5 && eligibles.length > 0) {
-                selection.push(eligibles.shift().name);
-            }
+            let eligibles = players.filter(p => p.active && !currentPartie.includes(p.name) && !selection.includes(p.name))
+                                   .sort((a,b) => a.pj - b.pj);
+            while(selection.length < 5 && eligibles.length > 0) selection.push(eligibles.shift().name);
         }
 
         currentPartie = selection;
@@ -259,33 +255,48 @@
             playerStates[n] = 1;
         });
 
-        closeM('modal-g');
-        renderMain();
+        closeM('modal-g'); renderMain();
+    }
+
+    async function envoyerResultatsSheet() {
+        // Prépare les données pour TOUS les joueurs actifs
+        // 0: absent, 1: blanc, 2: jaune, 3: orange, 4: rouge
+        const data = players.filter(p => p.active).map(p => {
+            let s = 0;
+            if(currentPartie.includes(p.name)) {
+                s = playerStates[p.name] || 1;
+            }
+            return { name: p.name, score: s };
+        });
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(data)
+            });
+        } catch(e) { console.error("Erreur sync Sheet", e); }
     }
 
     // --- LOGIQUE PRINCIPALE ---
     function renderMain() {
-        const zone = document.getElementById('display-zone');
-        zone.innerHTML = '';
+        const zone = document.getElementById('display-zone'); zone.innerHTML = '';
         currentPartie.forEach(name => {
             const b = document.createElement('div');
-            b.className = 'badge';
-            b.innerText = name;
-            updateStyle(b, name);
+            b.className = 'badge'; b.innerText = name;
+            updateBadgeStyle(b, name);
             b.onclick = () => {
-                if(modeM) {
-                    targetToSwap = name;
-                    openSwap();
-                } else {
+                if(modeM) { targetToSwap = name; openSwap(); }
+                else {
                     playerStates[name] = (playerStates[name] % 4) + 1;
-                    updateStyle(b, name);
+                    updateBadgeStyle(b, name);
                 }
             };
             zone.appendChild(b);
         });
     }
 
-    function updateStyle(el, name) {
+    function updateBadgeStyle(el, name) {
         const s = playerStates[name];
         el.style.background = 'white'; el.style.color = 'black';
         if(s === 2) el.style.background = 'var(--yellow-4als)';
@@ -299,24 +310,17 @@
     }
 
     function openSwap() {
-        const grid = document.getElementById('grid-swap');
-        grid.innerHTML = '';
+        const grid = document.getElementById('grid-swap'); grid.innerHTML = '';
         players.filter(p => p.active && !currentPartie.includes(p.name))
-               .sort((a,b) => a.name.localeCompare(b.name))
-               .forEach(p => {
+               .sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const div = document.createElement('div');
-            div.className = 'pill';
-            div.innerText = p.name;
+            div.className = 'p-pill active'; div.innerText = p.name;
             div.onclick = () => {
                 let oldP = players.find(x => x.name === targetToSwap);
-                oldP.pj--;
-                p.pj++;
+                oldP.pj--; p.pj++;
                 currentPartie = currentPartie.map(n => n === targetToSwap ? p.name : n);
-                playerStates[p.name] = 1;
-                delete playerStates[targetToSwap];
-                closeM('modal-swap');
-                toggleModeM();
-                renderMain();
+                playerStates[p.name] = 1; delete playerStates[targetToSwap];
+                closeM('modal-swap'); toggleModeM(); renderMain();
             };
             grid.appendChild(div);
         });
@@ -324,10 +328,9 @@
     }
 
     function resetSession() {
-        if(confirm("Réinitialiser la séance ?")) {
+        if(confirm("Réinitialiser les scores et parties de la séance ?")) {
             players.forEach(p => { p.score = 0; p.pj = 0; });
-            currentPartie = [];
-            renderMain();
+            currentPartie = []; renderMain();
         }
     }
 </script>
