@@ -3,188 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC - Régie Stratégique</title>
+    <title>Régie QPUC</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
-            --blue-main: #3498db;
-            --white: #ffffff;
+            --blue-qpuc: #0091d2;
+            --green-tirage: #27ae60;
+            --red-exit: #d0002d;
             --yellow-4als: #f1c40f;
             --orange-faf: #e67e22;
             --red-win: #c0392b;
-            --text-red: #c0392b;
-            --text-blue: #3498db;
         }
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: var(--bg-dark); color: var(--white);
-            font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden;
+            background-color: var(--bg-dark); color: white;
+            font-family: 'Arial Black', sans-serif; overflow: hidden;
         }
         .main-container {
-            width: 100%; max-width: 400px; height: 100vh; margin: 0 auto;
+            width: 100%; max-width: 420px; height: 100vh; margin: 0 auto;
             display: flex; flex-direction: column; align-items: center;
-            padding: 15px; box-sizing: border-box; justify-content: space-between;
+            padding: 15px; box-sizing: border-box;
         }
-        .top-bar { width: 100%; display: flex; justify-content: space-between; }
-        .btn-top-reset {
-            background: none; border: 1.5px solid white; color: white;
-            border-radius: 30px; padding: 6px 15px; font-size: 0.75rem; cursor: pointer;
-        }
-        #current-players { display: flex; flex-direction: column; align-items: center; gap: 15px; flex: 1; justify-content: center; width: 100%; }
-        .player-badge {
-            background: white; color: black; border-radius: 25px; padding: 12px 25px;
-            font-size: 1.2rem; min-width: 150px; text-align: center; cursor: pointer;
-            font-weight: 700; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .nav-buttons { width: 100%; display: flex; gap: 10px; margin-bottom: env(safe-area-inset-bottom); }
-        .btn-nav {
-            flex: 1; background: none; border: 1.5px solid white; color: white;
-            border-radius: 30px; padding: 12px 0; font-size: 0.85rem; cursor: pointer; font-weight: 600;
-        }
-        .btn-m.active { background: var(--red-win); border-color: var(--red-win); }
         
-        /* Modal Groupes Style Image */
+        /* Écran Principal */
+        .header-btns { width: 100%; display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .btn-top {
+            background: none; border: 2px solid white; color: white;
+            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer;
+        }
+        .btn-top.active { background: var(--red-win); border-color: var(--red-win); }
+        
+        #display-zone { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; width: 100%; }
+        .badge {
+            background: white; color: black; border-radius: 30px; padding: 15px;
+            font-size: 1.3rem; width: 80%; margin: 0 auto; text-align: center;
+            cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        .footer-nav { width: 100%; display: flex; gap: 10px; margin-top: auto; padding-bottom: 10px; }
+        .btn-nav {
+            flex: 1; background: none; border: 2px solid white; color: white;
+            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer;
+        }
+
+        /* Modales */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: none; z-index: 1000;
+            background: rgba(0,0,0,0.9); display: none; z-index: 1000;
         }
-        .modal-groupes {
-            background: white; border-radius: 30px; width: 90%; max-width: 380px;
-            margin: 5% auto; color: black; padding: 20px; position: relative;
-            max-height: 85vh; display: flex; flex-direction: column;
+        .modal {
+            background: white; border-radius: 25px; width: 92%; max-width: 380px;
+            margin: 20px auto; color: black; position: relative; padding: 15px;
+            max-height: 90vh; display: flex; flex-direction: column;
         }
-        .tirage-header {
-            background: #27ae60; color: white; border: none; border-radius: 15px;
-            padding: 10px 40px; font-size: 1.5rem; font-weight: 900; align-self: center;
-            cursor: pointer; margin-bottom: 15px; text-transform: uppercase;
-        }
-        .close-red {
-            position: absolute; top: -10px; right: -10px; background: var(--red-win);
+        .close-circle {
+            position: absolute; top: -12px; right: -12px; background: var(--red-exit);
             color: white; width: 35px; height: 35px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            border: 2px solid white; font-size: 20px; z-index: 10;
         }
-        .groupes-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .groupes-table th { color: #888; font-size: 0.7rem; text-transform: uppercase; padding: 5px; }
-        .groupes-table td { padding: 8px 5px; text-align: center; font-weight: 800; font-size: 1.1rem; }
-        .name-cell { text-align: left !important; width: 45%; }
-        .check-cell { width: 10%; }
-        input[type="checkbox"] { transform: scale(1.5); }
-        
-        /* Couleurs UI */
-        .status-red { color: var(--text-red); }
-        .status-blue { color: var(--text-blue); }
+
+        /* UI Participants (Image 1) */
+        .part-header { background: var(--blue-qpuc); color: white; padding: 10px; border-radius: 20px; text-align: center; margin-bottom: 10px; }
+        .search-bar { display: flex; gap: 5px; margin-bottom: 10px; }
+        .search-bar input { flex: 1; border-radius: 15px; border: 1px solid #ccc; padding: 8px; }
+        .btn-add { background: var(--blue-qpuc); color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; cursor: pointer; }
+        .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
+        .pill { 
+            border: 1.5px solid var(--blue-qpuc); border-radius: 20px; padding: 8px;
+            text-align: center; font-size: 0.8rem; cursor: pointer; color: var(--blue-qpuc);
+        }
+        .pill.inactive { border-color: #ddd; color: #ddd; }
+
+        /* UI Groupes (Image 2) */
+        .btn-tirage {
+            background: var(--green-tirage); color: white; border-radius: 15px;
+            padding: 10px 40px; font-size: 1.6rem; border: none; cursor: pointer;
+            align-self: center; margin-bottom: 10px;
+        }
+        .groupes-table { width: 100%; border-collapse: collapse; }
+        .groupes-table th { font-size: 0.7rem; color: #777; text-align: center; padding: 5px; }
+        .groupes-table td { padding: 8px 4px; text-align: center; font-size: 1.2rem; }
+        .name-td { text-align: left !important; width: 50%; }
+        .status-red { color: var(--red-win); }
+        .status-blue { color: var(--blue-qpuc); }
         .status-black { color: black; }
+        input[type="checkbox"] { transform: scale(1.6); }
+
     </style>
 </head>
 <body>
 
 <div class="main-container">
-    <div class="top-bar">
-        <button class="btn-top-reset" onclick="resetSession()">Nouvelle séance</button>
+    <div class="header-btns">
+        <button class="btn-top" onclick="resetSession()">Nouvelle séance</button>
+        <button id="btn-m" class="btn-top" onclick="toggleModeM()">Changer joueur</button>
     </div>
 
-    <div id="current-players">
-        <div style="opacity: 0.5">Appuyez sur "Groupes" pour tirer les joueurs</div>
-    </div>
+    <div id="display-zone">
+        </div>
 
-    <div style="width:100%; text-align:center; margin-bottom:10px;">
-        <button id="btn-m" class="btn-nav" style="max-width:200px" onclick="toggleModeM()">Changer joueur</button>
+    <div class="footer-nav">
+        <button class="btn-nav" onclick="openM('modal-p')">Participants</button>
+        <button class="btn-nav" onclick="openM('modal-g')">Groupes</button>
     </div>
+</div>
 
-    <div class="nav-buttons">
-        <button class="btn-nav" onclick="openModal('modal-p')">Participants</button>
-        <button class="btn-nav" onclick="openModal('modal-g')">Groupes</button>
+<div id="modal-p" class="overlay">
+    <div class="modal">
+        <div class="close-circle" onclick="closeM('modal-p')">✕</div>
+        <div class="part-header">PARTICIPANTS</div>
+        <div class="search-bar">
+            <input type="text" id="in-add" placeholder="NOM...">
+            <button class="btn-add" onclick="addPlayer()">+</button>
+        </div>
+        <div class="pill-grid" id="grid-p"></div>
     </div>
 </div>
 
 <div id="modal-g" class="overlay">
-    <div class="modal-groupes">
-        <div class="close-red" onclick="closeModal('modal-g')">✕</div>
-        <button class="tirage-header" onclick="executerTirage()">Tirage</button>
-        
-        <div style="overflow-y: auto; flex: 1;">
+    <div class="modal">
+        <div class="close-circle" onclick="closeM('modal-g')">✕</div>
+        <button class="btn-tirage" onclick="executerTirage()">TIRAGE</button>
+        <div style="overflow-y: auto;">
             <table class="groupes-table">
                 <thead>
                     <tr>
-                        <th class="check-cell"></th>
-                        <th class="name-cell"></th>
-                        <th>Score</th>
-                        <th>Parties</th>
+                        <th style="width:15%"></th>
+                        <th class="name-td"></th>
+                        <th>SCORE</th>
+                        <th>PARTIES</th>
                     </tr>
                 </thead>
-                <tbody id="groupes-body">
-                    </tbody>
+                <tbody id="body-g"></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<div id="modal-p" class="overlay">
-    <div class="modal-groupes" style="max-width: 300px;">
-        <div class="close-red" onclick="closeModal('modal-p')">✕</div>
-        <div style="font-weight: 800; text-align: center; margin-bottom: 15px;">ACTIVER / DÉSACTIVER</div>
-        <div id="participants-list" style="overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
-        </div>
+<div id="modal-swap" class="overlay">
+    <div class="modal">
+        <div class="close-circle" onclick="closeM('modal-swap')">✕</div>
+        <div class="part-header">REMPLACER PAR...</div>
+        <div class="pill-grid" id="grid-swap"></div>
     </div>
 </div>
 
 <script>
-    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true, score: 0, pj: 0 }));
+    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"]
+        .map(n => ({ name: n, active: true, score: 0, pj: 0 }));
     
-    let poolEnJeu = [];
+    let currentPartie = [];
     let playerStates = {};
     let modeM = false;
-    let lastPool = [];
+    let targetToSwap = null;
 
-    function openModal(id) {
-        if(id === 'modal-g') renderGroupes();
-        if(id === 'modal-p') renderParticipants();
+    function openM(id) {
+        if(id === 'modal-p') renderP();
+        if(id === 'modal-g') renderG();
         document.getElementById(id).style.display = 'block';
     }
+    function closeM(id) { document.getElementById(id).style.display = 'none'; }
 
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function renderParticipants() {
-        const list = document.getElementById('participants-list');
-        list.innerHTML = '';
+    // --- LOGIQUE PARTICIPANTS ---
+    function renderP() {
+        const grid = document.getElementById('grid-p');
+        grid.innerHTML = '';
         players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const div = document.createElement('div');
-            div.style.display = 'flex';
-            div.style.justifyContent = 'space-between';
-            div.innerHTML = `<span>${p.name}</span><input type="checkbox" ${p.active?'checked':''} onchange="toggleActive('${p.name}')">`;
-            list.appendChild(div);
+            div.className = `pill ${p.active ? '' : 'inactive'}`;
+            div.innerText = p.name;
+            div.onclick = () => { p.active = !p.active; renderP(); };
+            grid.appendChild(div);
         });
     }
 
-    function toggleActive(name) {
-        let p = players.find(x => x.name === name);
-        p.active = !p.active;
+    function addPlayer() {
+        const val = document.getElementById('in-add').value.toUpperCase().trim();
+        if(val && !players.find(p => p.name === val)) {
+            players.push({ name: val, active: true, score: 0, pj: 0 });
+            document.getElementById('in-add').value = '';
+            renderP();
+        }
     }
 
-    function renderGroupes() {
-        const body = document.getElementById('groupes-body');
+    // --- LOGIQUE GROUPES ---
+    function renderG() {
+        const body = document.getElementById('body-g');
         body.innerHTML = '';
-        
-        // Calcul du retard (moyenne PJ des éligibles)
-        const eligibles = players.filter(p => p.active && !poolEnJeu.includes(p.name));
-        const avgPJ = eligibles.length ? eligibles.reduce((acc, p) => acc + p.pj, 0) / eligibles.length : 0;
+
+        // Calcul du critère bleu : PJ < 2ème PJ le plus bas parmi les éligibles
+        const eligibles = players.filter(p => p.active && !currentPartie.includes(p.name));
+        const sortedPJs = [...new Set(eligibles.map(p => p.pj))].sort((a,b) => a - b);
+        const thresholdBlue = sortedPJs.length > 1 ? sortedPJs[1] : 999;
 
         // Tri : Score DESC, puis PJ ASC
-        let sorted = players.filter(p => p.active).sort((a,b) => {
+        let list = players.filter(p => p.active).sort((a,b) => {
             if(b.score !== a.score) return b.score - a.score;
             return a.pj - b.pj;
         });
 
-        sorted.forEach(p => {
+        list.forEach(p => {
             let colorClass = 'status-black';
-            if(poolEnJeu.includes(p.name)) colorClass = 'status-red';
-            else if(p.pj < Math.floor(avgPJ)) colorClass = 'status-blue';
+            let isEligible = !currentPartie.includes(p.name);
+            
+            if(!isEligible) colorClass = 'status-red';
+            else if(p.pj < thresholdBlue) colorClass = 'status-blue';
 
             const tr = document.createElement('tr');
             tr.className = colorClass;
             tr.innerHTML = `
-                <td class="check-cell"><input type="checkbox" class="tirage-check" value="${p.name}"></td>
-                <td class="name-cell">${p.name}</td>
+                <td><input type="checkbox" class="g-chk" value="${p.name}" ${isEligible ? 'checked' : ''}></td>
+                <td class="name-td">${p.name}</td>
                 <td>${p.score}</td>
                 <td>${p.pj}</td>
             `;
@@ -193,76 +223,72 @@
     }
 
     function executerTirage() {
-        // Enregistrer les scores de la partie précédente avant de changer
-        if(poolEnJeu.length > 0) {
-            poolEnJeu.forEach(name => {
-                let p = players.find(x => x.name === name);
-                let s = playerStates[name] || 1;
-                if(s === 2) p.score += 1;
-                if(s === 3) p.score += 2;
-                if(s === 4) p.score += 3;
-            });
-        }
+        // Enregistrement des scores du match fini
+        currentPartie.forEach(n => {
+            let p = players.find(x => x.name === n);
+            let s = playerStates[n] || 1;
+            if(s === 2) p.score += 1;
+            else if(s === 3) p.score += 2;
+            else if(s === 4) p.score += 3;
+        });
 
-        const checks = document.querySelectorAll('.tirage-check:checked');
-        let selectionnes = Array.from(checks).map(c => c.value);
-        
-        if(selectionnes.length === 0) return alert("Cochez au moins un joueur");
+        const checked = Array.from(document.querySelectorAll('.g-chk:checked')).map(i => i.value);
+        if(checked.length < 1) return alert("Sélectionnez des joueurs !");
 
-        // On complète si < 5
-        if(selectionnes.length < 5) {
-            let actifsEligibles = players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selectionnes.includes(p.name));
+        let selection = [];
+        // Si plus de 5, on tire au sort parmi les cochés
+        if(checked.length >= 5) {
+            selection = checked.sort(() => Math.random() - 0.5).slice(0, 5);
+        } else {
+            // Sinon on prend tous les cochés et on complète par cascade
+            selection = [...checked];
+            let eligibles = players.filter(p => p.active && !currentPartie.includes(p.name) && !selection.includes(p.name));
             
-            // Tri par proximité de score avec la moyenne de la sélection
-            let avgScoreSel = selectionnes.reduce((acc, n) => acc + players.find(x=>x.name===n).score, 0) / selectionnes.length;
+            // On trie les éligibles par proximité de score et retard de PJ
+            eligibles.sort((a,b) => a.pj - b.pj); 
             
-            actifsEligibles.sort((a,b) => {
-                let distA = Math.abs(a.score - avgScoreSel);
-                let distB = Math.abs(b.score - avgScoreSel);
-                if(distA !== distB) return distA - distB;
-                return a.pj - b.pj; // Priorité retard
-            });
-
-            while(selectionnes.length < 5 && actifsEligibles.length > 0) {
-                selectionnes.push(actifsEligibles.shift().name);
+            while(selection.length < 5 && eligibles.length > 0) {
+                selection.push(eligibles.shift().name);
             }
         }
 
-        // Finalisation
-        poolEnJeu = selectionnes.slice(0, 5);
+        currentPartie = selection;
         playerStates = {};
-        poolEnJeu.forEach(name => {
-            players.find(x => x.name === name).pj += 1;
-            playerStates[name] = 1;
+        currentPartie.forEach(n => {
+            players.find(x => x.name === n).pj++;
+            playerStates[n] = 1;
         });
 
-        closeModal('modal-g');
+        closeM('modal-g');
         renderMain();
     }
 
+    // --- LOGIQUE PRINCIPALE ---
     function renderMain() {
-        const container = document.getElementById('current-players');
-        container.innerHTML = '';
-        poolEnJeu.forEach(name => {
+        const zone = document.getElementById('display-zone');
+        zone.innerHTML = '';
+        currentPartie.forEach(name => {
             const b = document.createElement('div');
-            b.className = 'player-badge';
-            updateBadgeStyle(b, name);
+            b.className = 'badge';
             b.innerText = name;
+            updateStyle(b, name);
             b.onclick = () => {
-                if(modeM) swapPlayer(name);
-                else {
+                if(modeM) {
+                    targetToSwap = name;
+                    openSwap();
+                } else {
                     playerStates[name] = (playerStates[name] % 4) + 1;
-                    updateBadgeStyle(b, name);
+                    updateStyle(b, name);
                 }
             };
-            container.appendChild(b);
+            zone.appendChild(b);
         });
     }
 
-    function updateBadgeStyle(el, name) {
-        let s = playerStates[name];
+    function updateStyle(el, name) {
+        const s = playerStates[name];
         el.style.background = 'white'; el.style.color = 'black';
-        if(s === 2) { el.style.background = 'var(--yellow-4als)'; }
+        if(s === 2) el.style.background = 'var(--yellow-4als)';
         if(s === 3) { el.style.background = 'var(--orange-faf)'; el.style.color = 'white'; }
         if(s === 4) { el.style.background = 'var(--red-win)'; el.style.color = 'white'; }
     }
@@ -272,25 +298,35 @@
         document.getElementById('btn-m').classList.toggle('active', modeM);
     }
 
-    function swapPlayer(oldName) {
-        const newName = prompt("Remplacer " + oldName + " par (NOM) :");
-        if(newName && players.find(x => x.name === newName.toUpperCase())) {
-            let pOld = players.find(x => x.name === oldName);
-            let pNew = players.find(x => x.name === newName.toUpperCase());
-            pOld.pj--; 
-            pNew.pj++;
-            poolEnJeu = poolEnJeu.map(n => n === oldName ? pNew.name : n);
-            playerStates[pNew.name] = 1;
-            delete playerStates[oldName];
-            renderMain();
-        }
-        toggleModeM();
+    function openSwap() {
+        const grid = document.getElementById('grid-swap');
+        grid.innerHTML = '';
+        players.filter(p => p.active && !currentPartie.includes(p.name))
+               .sort((a,b) => a.name.localeCompare(b.name))
+               .forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'pill';
+            div.innerText = p.name;
+            div.onclick = () => {
+                let oldP = players.find(x => x.name === targetToSwap);
+                oldP.pj--;
+                p.pj++;
+                currentPartie = currentPartie.map(n => n === targetToSwap ? p.name : n);
+                playerStates[p.name] = 1;
+                delete playerStates[targetToSwap];
+                closeM('modal-swap');
+                toggleModeM();
+                renderMain();
+            };
+            grid.appendChild(div);
+        });
+        openM('modal-swap');
     }
 
     function resetSession() {
-        if(confirm("Réinitialiser les scores et PJ ?")) {
+        if(confirm("Réinitialiser la séance ?")) {
             players.forEach(p => { p.score = 0; p.pj = 0; });
-            poolEnJeu = [];
+            currentPartie = [];
             renderMain();
         }
     }
