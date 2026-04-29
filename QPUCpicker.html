@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QPUC Picker - Régie</title>
+    <title>QPUC - Régie Stratégique</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -12,7 +12,8 @@
             --yellow-4als: #f1c40f;
             --orange-faf: #e67e22;
             --red-win: #c0392b;
-            --btn-border: #ffffff;
+            --text-red: #c0392b;
+            --text-blue: #3498db;
         }
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
@@ -22,226 +23,277 @@
         .main-container {
             width: 100%; max-width: 400px; height: 100vh; margin: 0 auto;
             display: flex; flex-direction: column; align-items: center;
-            padding: 15px 15px calc(45px + env(safe-area-inset-bottom)) 15px; 
-            box-sizing: border-box; justify-content: space-between;
+            padding: 15px; box-sizing: border-box; justify-content: space-between;
         }
-        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        .top-bar { width: 100%; display: flex; justify-content: space-between; }
         .btn-top-reset {
-            background: none; border: 1.5px solid var(--btn-border);
-            color: white; border-radius: 30px; padding: 6px 15px;
-            font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
+            background: none; border: 1.5px solid white; color: white;
+            border-radius: 30px; padding: 6px 15px; font-size: 0.75rem; cursor: pointer;
         }
-        .btn-prochaine-partie {
-            background-color: var(--blue-main); color: white;
-            width: 100%; border-radius: 50px; padding: 15px 0;
-            font-size: 1.4rem; border: none; cursor: pointer;
-            text-transform: uppercase; margin-top: 10px; font-weight: 700;
-        }
-        .section-header { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
-        .section-title { color: var(--blue-main); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; }
-        .btn-m { 
-            background: #444; color: white; border: 1px solid white; border-radius: 5px; 
-            padding: 2px 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
-        }
-        .btn-m.active { background: var(--red-win); border-color: var(--red-win); animation: pulse 1s infinite; }
-        #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
-        .player-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
+        #current-players { display: flex; flex-direction: column; align-items: center; gap: 15px; flex: 1; justify-content: center; width: 100%; }
         .player-badge {
-            background: white; color: black; border-radius: 25px;
-            padding: 8px 15px; font-size: 1rem; min-width: 85px;
-            text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            background: white; color: black; border-radius: 25px; padding: 12px 25px;
+            font-size: 1.2rem; min-width: 150px; text-align: center; cursor: pointer;
+            font-weight: 700; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px; }
+        .nav-buttons { width: 100%; display: flex; gap: 10px; margin-bottom: env(safe-area-inset-bottom); }
         .btn-nav {
-            background: none; border: 1.5px solid var(--btn-border);
-            color: white; border-radius: 30px; padding: 10px 0;
-            font-size: 0.85rem; cursor: pointer; text-transform: uppercase; width: 100%; font-weight: 600;
+            flex: 1; background: none; border: 1.5px solid white; color: white;
+            border-radius: 30px; padding: 12px 0; font-size: 0.85rem; cursor: pointer; font-weight: 600;
         }
+        .btn-m.active { background: var(--red-win); border-color: var(--red-win); }
+        
+        /* Modal Groupes Style Image */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; z-index: 1000; padding: 10px; box-sizing: border-box;
+            background: rgba(0,0,0,0.8); display: none; z-index: 1000;
         }
-        .modal {
-            background: white; border-radius: 25px; width: 98%; max-width: 395px;
-            margin: 20px auto; position: relative; padding: 12px;
-            color: black; display: flex; flex-direction: column; max-height: 85vh;
+        .modal-groupes {
+            background: white; border-radius: 30px; width: 90%; max-width: 380px;
+            margin: 5% auto; color: black; padding: 20px; position: relative;
+            max-height: 85vh; display: flex; flex-direction: column;
         }
-        .modal-header {
-            background: var(--blue-main); color: white; border-radius: 20px;
-            padding: 10px; text-align: center; font-size: 1rem; text-transform: uppercase;
-            margin-bottom: 10px; font-weight: 700;
+        .tirage-header {
+            background: #27ae60; color: white; border: none; border-radius: 15px;
+            padding: 10px 40px; font-size: 1.5rem; font-weight: 900; align-self: center;
+            cursor: pointer; margin-bottom: 15px; text-transform: uppercase;
         }
-        .close-btn {
-            position: absolute; top: -10px; right: -5px; width: 35px; height: 35px;
-            background: #d00; border-radius: 50%; color: white; border: 2px solid white;
-            font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001;
+        .close-red {
+            position: absolute; top: -10px; right: -10px; background: var(--red-win);
+            color: white; width: 35px; height: 35px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;
         }
-        .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
-        .stats-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; }
-        .stats-table td { padding: 8px 2px; text-align: center; font-size: 0.72rem; border-bottom: 1px solid #f0f0f0; font-weight: 600; }
-        .name-col { text-align: left !important; color: black; font-weight: 800 !important; width: 75px; overflow: hidden; }
-        .c-pj { color: black; }
-        .c-4als { color: var(--yellow-4als); }
-        .c-faf { color: var(--orange-faf); }
-        .c-win-pct { color: var(--red-win); }
-
-        /* AJOUT DU STYLE POUR LES BOUTONS PARTICIPANTS */
-        .p-pill { 
-            border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
-            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
-            font-weight: 600; margin-bottom: 5px;
-        }
-        .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .groupes-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .groupes-table th { color: #888; font-size: 0.7rem; text-transform: uppercase; padding: 5px; }
+        .groupes-table td { padding: 8px 5px; text-align: center; font-weight: 800; font-size: 1.1rem; }
+        .name-cell { text-align: left !important; width: 45%; }
+        .check-cell { width: 10%; }
+        input[type="checkbox"] { transform: scale(1.5); }
+        
+        /* Couleurs UI */
+        .status-red { color: var(--text-red); }
+        .status-blue { color: var(--text-blue); }
+        .status-black { color: black; }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="top-bar">
-            <button class="btn-top-reset" onclick="window.confirmReset()">Nouvelle séance</button>
-            <div id="status-sync" style="font-size: 0.5rem; opacity: 0.5;">Sync...</div>
-        </div>
-        <button id="btn-tirage" class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
-        <div class="section-header">
-            <div class="section-title">Partie en cours :</div>
-            <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">M</button>
-        </div>
-        <div id="current-players"></div>
-        <div class="nav-buttons">
-            <button class="btn-nav" onclick="window.openM('modal-p')">Participants</button>
-            <button class="btn-nav" onclick="window.openM('modal-sj')">Séance en cours</button>
-            <button class="btn-nav" onclick="window.openM('modal-sp')">Statistiques</button>
-        </div>
+
+<div class="main-container">
+    <div class="top-bar">
+        <button class="btn-top-reset" onclick="resetSession()">Nouvelle séance</button>
     </div>
 
-    <div id="modal-replacement" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-replacement')">✕</div><div class="modal-header">Remplacer par...</div><div class="scroll-content"><div id="list-replacement" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div></div></div></div>
-    <div id="modal-p" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-p')">✕</div><div class="modal-header">Participants</div><div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="add-input" placeholder="NOM..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;"><button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button></div><div class="scroll-content"><div id="list-p" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div></div></div></div>
-    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Séance du jour</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>DERNIÈRE</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
-    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Stats Globales</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4ALS</th><th>%FAF</th><th>%WIN</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
+    <div id="current-players">
+        <div style="opacity: 0.5">Appuyez sur "Groupes" pour tirer les joueurs</div>
+    </div>
+
+    <div style="width:100%; text-align:center; margin-bottom:10px;">
+        <button id="btn-m" class="btn-nav" style="max-width:200px" onclick="toggleModeM()">Changer joueur</button>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="btn-nav" onclick="openModal('modal-p')">Participants</button>
+        <button class="btn-nav" onclick="openModal('modal-g')">Groupes</button>
+    </div>
+</div>
+
+<div id="modal-g" class="overlay">
+    <div class="modal-groupes">
+        <div class="close-red" onclick="closeModal('modal-g')">✕</div>
+        <button class="tirage-header" onclick="executerTirage()">Tirage</button>
+        
+        <div style="overflow-y: auto; flex: 1;">
+            <table class="groupes-table">
+                <thead>
+                    <tr>
+                        <th class="check-cell"></th>
+                        <th class="name-cell"></th>
+                        <th>Score</th>
+                        <th>Parties</th>
+                    </tr>
+                </thead>
+                <tbody id="groupes-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-p" class="overlay">
+    <div class="modal-groupes" style="max-width: 300px;">
+        <div class="close-red" onclick="closeModal('modal-p')">✕</div>
+        <div style="font-weight: 800; text-align: center; margin-bottom: 15px;">ACTIVER / DÉSACTIVER</div>
+        <div id="participants-list" style="overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+        </div>
+    </div>
+</div>
 
 <script>
-    const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
-    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`; 
-
+    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true, score: 0, pj: 0 }));
     
-    window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true }));
-    window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
-    window.poolEnJeu = []; window.playerStates = {}; window.sheetData = []; window.modeM = false;
+    let poolEnJeu = [];
+    let playerStates = {};
+    let modeM = false;
+    let lastPool = [];
 
-    window.renderDisplay = function() {
-        const div = document.getElementById('current-players'); div.innerHTML = '';
-        if(window.poolEnJeu.length === 0) return;
-        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
-        rows.forEach(row => {
-            const rDiv = document.createElement('div'); rDiv.className = 'player-row';
-            row.forEach(n => {
-                const b = document.createElement('div'); b.className = 'player-badge';
-                const s = window.playerStates[n] || 1;
-                if(s === 2) b.style.background = 'var(--yellow-4als)';
-                else if(s === 3) b.style.background = 'var(--orange-faf)';
-                else if(s === 4) b.style.background = 'var(--red-win)';
-                if(s > 1) b.style.color = (s === 2) ? 'black' : 'white';
-                b.innerText = n;
-                b.onclick = () => {
-                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
-                    else { window.playerStates[n] = (window.playerStates[n] >= 4) ? 1 : (window.playerStates[n] || 1) + 1; window.renderDisplay(); }
-                };
-                rDiv.appendChild(b);
-            });
-            div.appendChild(rDiv);
-        });
-    };
-
-    window.tirage = async function() {
-        if (window.poolEnJeu.length > 0) await window.sendResultsToSheet();
-        window.compteurParties++;
-        const actifs = window.players.filter(p => p.active).map(p => p.name);
-        if(actifs.length < 5) return alert("Besoin de 5 joueurs.");
-        const candidats = actifs.map(name => {
-            let pjS = window.sessionStats[name] || 0;
-            let pen = (window.poolEnJeu.includes(name)) ? 1000 : 0;
-            return { name, score: (pjS * 10) + pen + Math.floor(Math.random() * 10) };
-        });
-        candidats.sort((a, b) => a.score - b.score);
-        window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
-        window.playerStates = {};
-        window.poolEnJeu.forEach(n => { window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; window.sessionLastPartie[n] = window.compteurParties; window.playerStates[n] = 1; });
-        window.renderDisplay();
-    };
-
-    window.sendResultsToSheet = async function() {
-        const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 1 }));
-        try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dataToSend) }); } catch(e) {}
-    };
-
-    window.openM = function(id) {
+    function openModal(id) {
+        if(id === 'modal-g') renderGroupes();
+        if(id === 'modal-p') renderParticipants();
         document.getElementById(id).style.display = 'block';
-        if(id === 'modal-sj') {
-            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
-            window.players.filter(p => window.sessionStats[p.name]).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]}</td></tr>`;
-            });
-        }
-        if(id === 'modal-sp') {
-            const t = document.getElementById('list-stats-perm'); t.innerHTML = '';
-            const sorted = [...window.sheetData].sort((a,b) => (parseInt(b[1])||0) - (parseInt(a[1])||0));
-            sorted.forEach(c => { if(!c[0]) return;
-                const pj = parseInt(c[1]) || 0;
-                const pct = (v) => pj > 0 ? Math.round((parseInt(v)||0)/pj*100)+'%' : '0%';
-                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win-pct">${pct(c[4])}</td><td>${c[4]||0}</td></tr>`;
-            });
-        }
-    };
-
-    window.closeM = (id) => document.getElementById(id).style.display = 'none';
-    window.toggleModeM = () => { window.modeM = !window.modeM; document.getElementById('m-toggle').classList.toggle('active', window.modeM); };
-    window.openReplacementModal = function() {
-        const listDiv = document.getElementById('list-replacement'); listDiv.innerHTML = '';
-        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
-            d.onclick = () => {
-                window.sessionStats[window.replacementTarget]--; window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
-                window.sessionLastPartie[p.name] = window.compteurParties;
-                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
-                window.playerStates[p.name] = 1; window.toggleModeM(); window.closeM('modal-replacement'); window.renderDisplay();
-            };
-            listDiv.appendChild(d);
-        });
-        document.getElementById('modal-replacement').style.display = 'block';
-    };
-
-    window.updateUI = () => {
-        const cont = document.getElementById('list-p'); cont.innerHTML = '';
-        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
-            d.innerText = p.name; 
-            d.onclick = () => { 
-                p.active = !p.active; 
-                window.updateUI(); 
-            };
-            cont.appendChild(d);
-        });
-    };
-
-    window.addPlayer = () => {
-        const n = document.getElementById('add-input').value.trim().toUpperCase();
-        if(n) { window.players.push({ name: n, active: true }); window.updateUI(); document.getElementById('add-input').value=''; }
-    };
-
-    window.confirmReset = async () => { if(confirm("Nouvelle séance ?")) { await window.sendResultsToSheet(); location.reload(); } };
-
-    async function init() {
-        try {
-            const res = await fetch(CSV_URL + "&cb=" + Date.now()); const text = await res.text();
-            window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
-            document.getElementById('status-sync').innerText = "Sync OK";
-        } catch(e) { document.getElementById('status-sync').innerText = "Sync Error"; }
-        window.updateUI();
     }
-    init();
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function renderParticipants() {
+        const list = document.getElementById('participants-list');
+        list.innerHTML = '';
+        players.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.innerHTML = `<span>${p.name}</span><input type="checkbox" ${p.active?'checked':''} onchange="toggleActive('${p.name}')">`;
+            list.appendChild(div);
+        });
+    }
+
+    function toggleActive(name) {
+        let p = players.find(x => x.name === name);
+        p.active = !p.active;
+    }
+
+    function renderGroupes() {
+        const body = document.getElementById('groupes-body');
+        body.innerHTML = '';
+        
+        // Calcul du retard (moyenne PJ des éligibles)
+        const eligibles = players.filter(p => p.active && !poolEnJeu.includes(p.name));
+        const avgPJ = eligibles.length ? eligibles.reduce((acc, p) => acc + p.pj, 0) / eligibles.length : 0;
+
+        // Tri : Score DESC, puis PJ ASC
+        let sorted = players.filter(p => p.active).sort((a,b) => {
+            if(b.score !== a.score) return b.score - a.score;
+            return a.pj - b.pj;
+        });
+
+        sorted.forEach(p => {
+            let colorClass = 'status-black';
+            if(poolEnJeu.includes(p.name)) colorClass = 'status-red';
+            else if(p.pj < Math.floor(avgPJ)) colorClass = 'status-blue';
+
+            const tr = document.createElement('tr');
+            tr.className = colorClass;
+            tr.innerHTML = `
+                <td class="check-cell"><input type="checkbox" class="tirage-check" value="${p.name}"></td>
+                <td class="name-cell">${p.name}</td>
+                <td>${p.score}</td>
+                <td>${p.pj}</td>
+            `;
+            body.appendChild(tr);
+        });
+    }
+
+    function executerTirage() {
+        // Enregistrer les scores de la partie précédente avant de changer
+        if(poolEnJeu.length > 0) {
+            poolEnJeu.forEach(name => {
+                let p = players.find(x => x.name === name);
+                let s = playerStates[name] || 1;
+                if(s === 2) p.score += 1;
+                if(s === 3) p.score += 2;
+                if(s === 4) p.score += 3;
+            });
+        }
+
+        const checks = document.querySelectorAll('.tirage-check:checked');
+        let selectionnes = Array.from(checks).map(c => c.value);
+        
+        if(selectionnes.length === 0) return alert("Cochez au moins un joueur");
+
+        // On complète si < 5
+        if(selectionnes.length < 5) {
+            let actifsEligibles = players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selectionnes.includes(p.name));
+            
+            // Tri par proximité de score avec la moyenne de la sélection
+            let avgScoreSel = selectionnes.reduce((acc, n) => acc + players.find(x=>x.name===n).score, 0) / selectionnes.length;
+            
+            actifsEligibles.sort((a,b) => {
+                let distA = Math.abs(a.score - avgScoreSel);
+                let distB = Math.abs(b.score - avgScoreSel);
+                if(distA !== distB) return distA - distB;
+                return a.pj - b.pj; // Priorité retard
+            });
+
+            while(selectionnes.length < 5 && actifsEligibles.length > 0) {
+                selectionnes.push(actifsEligibles.shift().name);
+            }
+        }
+
+        // Finalisation
+        poolEnJeu = selectionnes.slice(0, 5);
+        playerStates = {};
+        poolEnJeu.forEach(name => {
+            players.find(x => x.name === name).pj += 1;
+            playerStates[name] = 1;
+        });
+
+        closeModal('modal-g');
+        renderMain();
+    }
+
+    function renderMain() {
+        const container = document.getElementById('current-players');
+        container.innerHTML = '';
+        poolEnJeu.forEach(name => {
+            const b = document.createElement('div');
+            b.className = 'player-badge';
+            updateBadgeStyle(b, name);
+            b.innerText = name;
+            b.onclick = () => {
+                if(modeM) swapPlayer(name);
+                else {
+                    playerStates[name] = (playerStates[name] % 4) + 1;
+                    updateBadgeStyle(b, name);
+                }
+            };
+            container.appendChild(b);
+        });
+    }
+
+    function updateBadgeStyle(el, name) {
+        let s = playerStates[name];
+        el.style.background = 'white'; el.style.color = 'black';
+        if(s === 2) { el.style.background = 'var(--yellow-4als)'; }
+        if(s === 3) { el.style.background = 'var(--orange-faf)'; el.style.color = 'white'; }
+        if(s === 4) { el.style.background = 'var(--red-win)'; el.style.color = 'white'; }
+    }
+
+    function toggleModeM() {
+        modeM = !modeM;
+        document.getElementById('btn-m').classList.toggle('active', modeM);
+    }
+
+    function swapPlayer(oldName) {
+        const newName = prompt("Remplacer " + oldName + " par (NOM) :");
+        if(newName && players.find(x => x.name === newName.toUpperCase())) {
+            let pOld = players.find(x => x.name === oldName);
+            let pNew = players.find(x => x.name === newName.toUpperCase());
+            pOld.pj--; 
+            pNew.pj++;
+            poolEnJeu = poolEnJeu.map(n => n === oldName ? pNew.name : n);
+            playerStates[pNew.name] = 1;
+            delete playerStates[oldName];
+            renderMain();
+        }
+        toggleModeM();
+    }
+
+    function resetSession() {
+        if(confirm("Réinitialiser les scores et PJ ?")) {
+            players.forEach(p => { p.score = 0; p.pj = 0; });
+            poolEnJeu = [];
+            renderMain();
+        }
+    }
 </script>
 </body>
 </html>
