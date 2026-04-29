@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Régie QPUC</title>
+    <title>Régie QPUC Pro</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -189,26 +189,40 @@
                                   .filter(n => !poolEnJeu.includes(n));
         
         let selection = [...checkedNames];
+        let allActive = players.filter(p => p.active);
+        let maxPJ = Math.max(...allActive.map(p => p.pj));
 
-        // LOGIQUE RADICALE : On mélange tout le monde dès le départ
-        let allCandidates = shuffle([...players].filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
+        // 1. DÉBUT DE SÉANCE : Si personne n'a joué (PJ max = 0)
+        if (maxPJ === 0 && selection.length === 0) {
+            let startPool = shuffle([...allActive]);
+            selection = startPool.slice(0, 5).map(p => p.name);
+        } else {
+            // 2. TIRAGE EN COURS DE SÉANCE
+            let eligibles = shuffle(allActive.filter(p => !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
+            let currentRanking = [...allActive].sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
 
-        if (selection.length < 5) {
-            if (selection.length > 0) {
-                // Cascade si quelqu'un est coché
-                let firstChecked = players.find(p => p.name === selection[0]);
-                if (firstChecked.score > 4) {
-                    allCandidates.sort((a,b) => b.score - a.score || b.pj - a.pj);
+            if (selection.length < 5) {
+                if (selection.length > 0) {
+                    // CASCADE DYNAMIQUE
+                    let pivot = players.find(p => p.name === selection[0]);
+                    let pivotIdx = currentRanking.findIndex(p => p.name === pivot.name);
+                    let isHigh = pivotIdx < (currentRanking.length / 2);
+
+                    if (isHigh) {
+                        // On descend, si on bloque, on remonte
+                        eligibles.sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
+                    } else {
+                        // On monte, si on bloque, on descend
+                        eligibles.sort((a,b) => a.score - b.score || a.pj - b.pj || (Math.random() - 0.5));
+                    }
                 } else {
-                    allCandidates.sort((a,b) => a.score - b.score || a.pj - b.pj);
+                    // Tirage par équité de jeu (PJ min) mais brassé
+                    eligibles.sort((a,b) => a.pj - b.pj || (Math.random() - 0.5));
                 }
-            } else {
-                // TIRAGE PUR (1er et 2eme match) : On mélange et on prend
-                // On trie juste par PJ pour l'équité, mais le shuffle initial gère le hasard
-                allCandidates.sort((a,b) => a.pj - b.pj);
-            }
-            while (selection.length < 5 && allCandidates.length > 0) {
-                selection.push(allCandidates.shift().name);
+
+                while (selection.length < 5 && eligibles.length > 0) {
+                    selection.push(eligibles.shift().name);
+                }
             }
         }
 
@@ -230,7 +244,6 @@
             if (isPrevious) tr.className = 'status-red';
             else if (p.pj === minPJ) tr.className = 'status-blue';
 
-            // CORRECTION : On ne coche PLUS rien automatiquement pour forcer le hasard
             tr.innerHTML = `
                 <td><input type="checkbox" class="g-chk" value="${p.name}" ${isPrevious ? 'disabled' : ''}></td>
                 <td class="name-td">${p.name}</td>
