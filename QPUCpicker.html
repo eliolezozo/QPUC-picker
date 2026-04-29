@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Régie QPUC Pro</title>
+    <title>Régie QPUC</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
@@ -57,16 +57,6 @@
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             border: 2px solid white; font-size: 20px; font-weight: bold;
         }
-        .add-bar { display: flex; gap: 8px; margin-bottom: 15px; }
-        .add-input { 
-            flex: 1; padding: 10px; border-radius: 20px; border: 1.5px solid #ddd; 
-            text-transform: uppercase; font-size: 0.9rem;
-        }
-        .btn-add-circle {
-            background: var(--blue-qpuc); color: white; border: none;
-            width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
-            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
-        }
         .btn-tirage {
             background: var(--green-tirage); color: white; border-radius: 15px;
             padding: 10px 40px; font-size: 1.6rem; border: none; cursor: pointer;
@@ -116,10 +106,6 @@
 <div id="modal-p" class="overlay">
     <div class="modal">
         <div class="close-circle" onclick="closeM('modal-p')">✕</div>
-        <div class="add-bar">
-            <input type="text" id="new-player-name" class="add-input" placeholder="NOM...">
-            <button class="btn-add-circle" onclick="addNewPlayer()">+</button>
-        </div>
         <div class="pill-grid" id="grid-p"></div>
     </div>
 </div>
@@ -184,48 +170,41 @@
             });
         }
 
-        const checkedNames = Array.from(document.querySelectorAll('.g-chk:checked'))
-                                  .map(cb => cb.value)
-                                  .filter(n => !poolEnJeu.includes(n));
+        // Récupérer les noms cochés (ceux à 0 PJ le sont par défaut)
+        let checkedElements = Array.from(document.querySelectorAll('.g-chk:checked'))
+                                   .map(cb => cb.value)
+                                   .filter(n => !poolEnJeu.includes(n));
         
-        let selection = [...checkedNames];
-        let allActive = players.filter(p => p.active);
-        let maxPJ = Math.max(...allActive.map(p => p.pj));
+        // On mélange IMMÉDIATEMENT la liste des cochés pour casser l'ordre alphabétique
+        let selection = shuffle([...checkedElements]);
 
-        // 1. DÉBUT DE SÉANCE : Si personne n'a joué (PJ max = 0)
-        if (maxPJ === 0 && selection.length === 0) {
-            let startPool = shuffle([...allActive]);
-            selection = startPool.slice(0, 5).map(p => p.name);
-        } else {
-            // 2. TIRAGE EN COURS DE SÉANCE
-            let eligibles = shuffle(allActive.filter(p => !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
-            let currentRanking = [...allActive].sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
+        let eligibles = shuffle(players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
+        let currentRanking = [...players].filter(p => p.active).sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
 
-            if (selection.length < 5) {
-                if (selection.length > 0) {
-                    // CASCADE DYNAMIQUE
-                    let pivot = players.find(p => p.name === selection[0]);
-                    let pivotIdx = currentRanking.findIndex(p => p.name === pivot.name);
-                    let isHigh = pivotIdx < (currentRanking.length / 2);
-
-                    if (isHigh) {
-                        // On descend, si on bloque, on remonte
-                        eligibles.sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
-                    } else {
-                        // On monte, si on bloque, on descend
-                        eligibles.sort((a,b) => a.score - b.score || a.pj - b.pj || (Math.random() - 0.5));
-                    }
+        if (selection.length < 5) {
+            if (selection.length > 0) {
+                // LOGIQUE DE CASCADE DYNAMIQUE
+                let pivot = players.find(p => p.name === selection[0]);
+                let pivotIdx = currentRanking.findIndex(p => p.name === pivot.name);
+                
+                if (pivotIdx < currentRanking.length / 2) {
+                    // On est en haut du classement -> on cherche à descendre
+                    eligibles.sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
                 } else {
-                    // Tirage par équité de jeu (PJ min) mais brassé
-                    eligibles.sort((a,b) => a.pj - b.pj || (Math.random() - 0.5));
+                    // On est en bas du classement -> on cherche à monter
+                    eligibles.sort((a,b) => a.score - b.score || a.pj - b.pj || (Math.random() - 0.5));
                 }
+            } else {
+                // Si rien n'est coché (ne devrait pas arriver avec l'auto-cochage)
+                eligibles.sort((a,b) => a.pj - b.pj || (Math.random() - 0.5));
+            }
 
-                while (selection.length < 5 && eligibles.length > 0) {
-                    selection.push(eligibles.shift().name);
-                }
+            while (selection.length < 5 && eligibles.length > 0) {
+                selection.push(eligibles.shift().name);
             }
         }
 
+        // On ne prend que les 5 premiers et on les brasse pour les pupitres
         poolEnJeu = shuffle(selection.slice(0, 5));
         playerStates = {};
         poolEnJeu.forEach(n => { players.find(p => p.name === n).pj++; playerStates[n] = 1; });
@@ -244,8 +223,11 @@
             if (isPrevious) tr.className = 'status-red';
             else if (p.pj === minPJ) tr.className = 'status-blue';
 
+            // COCHAGE AUTOMATIQUE : Si PJ est à 0 et n'était pas dans le match précédent
+            let shouldBeChecked = (p.pj === 0 && !isPrevious);
+
             tr.innerHTML = `
-                <td><input type="checkbox" class="g-chk" value="${p.name}" ${isPrevious ? 'disabled' : ''}></td>
+                <td><input type="checkbox" class="g-chk" value="${p.name}" ${shouldBeChecked ? 'checked' : ''} ${isPrevious ? 'disabled' : ''}></td>
                 <td class="name-td">${p.name}</td>
                 <td>${p.score}</td>
                 <td>${p.pj}</td>
@@ -262,16 +244,6 @@
             d.onclick = () => { p.active = !p.active; renderP(); };
             grid.appendChild(d);
         });
-    };
-
-    const addNewPlayer = () => {
-        const input = document.getElementById('new-player-name');
-        const name = input.value.trim().toUpperCase();
-        if (name && !players.find(p => p.name === name)) {
-            players.push({ name: name, active: true, score: 0, pj: 0 });
-            input.value = '';
-            renderP();
-        }
     };
 
     function openReplacementModal() {
