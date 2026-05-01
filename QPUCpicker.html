@@ -24,12 +24,21 @@
             display: flex; flex-direction: column; align-items: center;
             padding: 15px; box-sizing: border-box;
         }
-        .header-btns { width: 100%; display: flex; justify-content: space-between; margin-bottom: 20px; }
+        /* Nouvelle grille pour les boutons du haut */
+        .header-grid { 
+            width: 100%; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
         .btn-top {
             background: none; border: 2px solid white; color: white;
-            border-radius: 20px; padding: 8px 15px; font-size: 0.8rem; cursor: pointer; text-transform: uppercase;
+            border-radius: 20px; padding: 8px 5px; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;
+            width: 100%;
         }
         .btn-top.active { background: var(--red-win); border-color: var(--red-win); }
+        
         #current-players { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; width: 100%; }
         .player-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
         .player-badge {
@@ -37,11 +46,7 @@
             font-size: 1.1rem; width: 125px; text-align: center;
             cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5); text-transform: uppercase;
         }
-        .footer-nav { width: 100%; display: flex; gap: 10px; margin-top: auto; padding-bottom: 10px; }
-        .btn-nav {
-            flex: 1; background: none; border: 2px solid white; color: white;
-            border-radius: 30px; padding: 12px 0; font-size: 0.9rem; cursor: pointer; text-transform: uppercase;
-        }
+        
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); display: none; z-index: 1000;
@@ -77,15 +82,13 @@
 <body>
 
 <div class="main-container">
-    <div class="header-btns">
-        <button class="btn-top" onclick="confirmReset()">Nouvelle séance</button>
-        <button id="m-toggle" class="btn-top" onclick="toggleModeM()">Changer joueur</button>
+    <div class="header-grid">
+        <button class="btn-top" onclick="confirmReset()">Séance</button>
+        <button id="m-toggle" class="btn-top" onclick="toggleModeM()">Changer</button>
+        <button class="btn-top" onclick="openM('modal-p')">Participants</button>
+        <button class="btn-top" onclick="openM('modal-g')">Groupes</button>
     </div>
     <div id="current-players"></div>
-    <div class="footer-nav">
-        <button class="btn-nav" onclick="openM('modal-p')">Participants</button>
-        <button class="btn-nav" onclick="openM('modal-g')">Groupes</button>
-    </div>
 </div>
 
 <div id="modal-g" class="overlay">
@@ -170,12 +173,10 @@
             });
         }
 
-        // Récupérer les noms cochés (ceux à 0 PJ le sont par défaut)
         let checkedElements = Array.from(document.querySelectorAll('.g-chk:checked'))
                                    .map(cb => cb.value)
                                    .filter(n => !poolEnJeu.includes(n));
         
-        // On mélange IMMÉDIATEMENT la liste des cochés pour casser l'ordre alphabétique
         let selection = shuffle([...checkedElements]);
 
         let eligibles = shuffle(players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
@@ -183,19 +184,15 @@
 
         if (selection.length < 5) {
             if (selection.length > 0) {
-                // LOGIQUE DE CASCADE DYNAMIQUE
                 let pivot = players.find(p => p.name === selection[0]);
                 let pivotIdx = currentRanking.findIndex(p => p.name === pivot.name);
                 
                 if (pivotIdx < currentRanking.length / 2) {
-                    // On est en haut du classement -> on cherche à descendre
                     eligibles.sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
                 } else {
-                    // On est en bas du classement -> on cherche à monter
                     eligibles.sort((a,b) => a.score - b.score || a.pj - b.pj || (Math.random() - 0.5));
                 }
             } else {
-                // Si rien n'est coché (ne devrait pas arriver avec l'auto-cochage)
                 eligibles.sort((a,b) => a.pj - b.pj || (Math.random() - 0.5));
             }
 
@@ -204,7 +201,6 @@
             }
         }
 
-        // On ne prend que les 5 premiers et on les brasse pour les pupitres
         poolEnJeu = shuffle(selection.slice(0, 5));
         playerStates = {};
         poolEnJeu.forEach(n => { players.find(p => p.name === n).pj++; playerStates[n] = 1; });
@@ -223,7 +219,6 @@
             if (isPrevious) tr.className = 'status-red';
             else if (p.pj === minPJ) tr.className = 'status-blue';
 
-            // COCHAGE AUTOMATIQUE : Si PJ est à 0 et n'était pas dans le match précédent
             let shouldBeChecked = (p.pj === 0 && !isPrevious);
 
             tr.innerHTML = `
