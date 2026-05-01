@@ -142,19 +142,9 @@
 
     const sortPlayers = (list) => {
         return list.sort((a, b) => {
-            // 1. D'abord ceux qui ont des victoires (triés par victoires puis PJ)
             if (b.victories !== a.victories) return b.victories - a.victories;
-            if (a.victories > 0) return b.pj - a.pj;
-
-            // 2. Ensuite ceux qui ont des FàF (triés par FàF puis PJ)
             if (b.faf !== a.faf) return b.faf - a.faf;
-            if (a.faf > 0) return b.pj - a.pj;
-
-            // 3. Ensuite ceux qui ont des 4ALS (triés par 4ALS puis PJ)
             if (b.als4 !== a.als4) return b.als4 - a.als4;
-            if (a.als4 > 0) return b.pj - a.pj;
-
-            // 4. Enfin les autres par PJ
             return b.pj - a.pj;
         });
     };
@@ -204,22 +194,62 @@
                 else if(s === 2) p.als4 += 1;
             });
         }
-        let checkedElements = Array.from(document.querySelectorAll('.g-chk:checked')).map(cb => cb.value);
-        let selection = shuffle([...checkedElements]);
-        let eligibles = shuffle(players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
+        
+        let currentRanking = sortPlayers([...players].filter(p => p.active));
+        let checkedNames = Array.from(document.querySelectorAll('.g-chk:checked')).map(cb => cb.value);
+        let selection = [...checkedNames];
         
         if (selection.length < 5) {
-            if (selection.length > 0) {
-                let pivot = players.find(p => p.name === selection[0]);
-                let currentRanking = sortPlayers([...players].filter(p => p.active));
-                let pivotIdx = currentRanking.findIndex(p => p.name === pivot.name);
-                if (pivotIdx < currentRanking.length / 2) sortPlayers(eligibles);
-                else eligibles.sort((a,b) => a.pj - b.pj);
-            } else {
-                eligibles.sort((a,b) => a.pj - b.pj);
+            // Déterminer la direction
+            let goUp = true; 
+            if (checkedNames.length > 0) {
+                let avgPos = checkedNames.reduce((acc, name) => acc + currentRanking.findIndex(p => p.name === name), 0) / checkedNames.length;
+                if (avgPos < currentRanking.length / 2) goUp = false; // On est en haut, on descend
             }
-            while (selection.length < 5 && eligibles.length > 0) selection.push(eligibles.shift().name);
+
+            // Création des groupes d'égalités (Blocs)
+            let blocks = [];
+            currentRanking.forEach(p => {
+                if (!poolEnJeu.includes(p.name) && !selection.includes(p.name)) {
+                    let last = blocks[blocks.length - 1];
+                    if (last && last[0].victories === p.victories && last[0].faf === p.faf && last[0].als4 === p.als4) {
+                        last.push(p);
+                    } else {
+                        blocks.push([p]);
+                    }
+                }
+            });
+
+            // Trouver l'index du bloc de départ
+            let startBlockIdx = goUp ? blocks.length - 1 : 0;
+            if (checkedNames.length > 0) {
+                let firstChecked = currentRanking.find(p => p.name === checkedNames[0]);
+                startBlockIdx = blocks.findIndex(b => b[0].victories === firstChecked.victories && b[0].faf === firstChecked.faf && b[0].als4 === firstChecked.als4);
+            }
+
+            let currentIdx = startBlockIdx;
+            let minPJGlobal = Math.min(...currentRanking.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
+
+            while (selection.length < 5 && currentIdx >= 0 && currentIdx < blocks.length) {
+                let block = blocks[currentIdx];
+                // Priorité aux bleus (PJ minimum) dans le bloc
+                let priority = shuffle(block.filter(p => p.pj === minPJGlobal));
+                let others = shuffle(block.filter(p => p.pj !== minPJGlobal));
+                
+                let pool = [...priority, ...others];
+                while (selection.length < 5 && pool.length > 0) {
+                    selection.push(pool.shift().name);
+                }
+                
+                currentIdx += goUp ? -1 : 1;
+                // Si on arrive au bout d'un côté, on repart dans l'autre pour compléter
+                if (selection.length < 5 && (currentIdx < 0 || currentIdx >= blocks.length)) {
+                    goUp = !goUp;
+                    currentIdx = goUp ? blocks.length - 1 : 0;
+                }
+            }
         }
+        
         poolEnJeu = shuffle(selection.slice(0, 5));
         playerStates = {};
         poolEnJeu.forEach(n => { players.find(p => p.name === n).pj++; playerStates[n] = 1; });
