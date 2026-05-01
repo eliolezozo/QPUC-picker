@@ -36,7 +36,12 @@
             border-radius: 20px; padding: 8px 5px; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;
             width: 100%;
         }
-        .btn-top.active { background: var(--red-win); border-color: var(--red-win); }
+        /* Styles spécifiques des boutons */
+        .btn-fin { border-color: var(--red-win); }
+        .btn-participants { border-color: var(--blue-qpuc); }
+        .btn-switch { background: #555; border: none; }
+        .btn-switch.active { background: var(--red-win); }
+        .btn-tirage-nav { background: var(--blue-qpuc); border: none; }
         
         #current-players { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; width: 100%; }
         .player-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
@@ -67,10 +72,10 @@
             align-self: center; margin-bottom: 10px; font-weight: bold;
         }
         .groupes-table { width: 100%; border-collapse: collapse; }
-        .groupes-table th { font-size: 0.7rem; color: #777; text-align: center; text-transform: uppercase; }
-        .groupes-table td { padding: 8px 4px; text-align: center; font-size: 1.1rem; }
-        .name-td { text-align: left !important; width: 50%; }
-        .status-red { display: none; } /* Les joueurs non éligibles deviennent invisibles */
+        .groupes-table th { font-size: 0.6rem; color: #777; text-align: center; text-transform: uppercase; }
+        .groupes-table td { padding: 8px 2px; text-align: center; font-size: 1rem; }
+        .name-td { text-align: left !important; width: 40%; font-size: 0.9rem !important; }
+        .status-red { display: none; } 
         .status-blue { color: var(--blue-qpuc); font-weight: bold; }
         input[type="checkbox"] { transform: scale(1.6); }
         .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
@@ -82,10 +87,10 @@
 
 <div class="main-container">
     <div class="header-grid">
-        <button class="btn-top" onclick="cloturerSession()">Fin</button>
-        <button id="m-toggle" class="btn-top" onclick="toggleModeM()">Switch</button>
-        <button class="btn-top" onclick="openM('modal-p')">Participants</button>
-        <button class="btn-top" onclick="openM('modal-g')">Tirage</button>
+        <button class="btn-top btn-fin" onclick="cloturerSession()">Fin</button>
+        <button class="btn-top btn-participants" onclick="openM('modal-p')">Participants</button>
+        <button id="m-toggle" class="btn-top btn-switch" onclick="toggleModeM()">Switch</button>
+        <button class="btn-top btn-tirage-nav" onclick="openM('modal-g')">Tirage</button>
     </div>
     <div id="current-players"></div>
 </div>
@@ -97,7 +102,7 @@
         <div style="overflow-y: auto;">
             <table class="groupes-table">
                 <thead>
-                    <tr><th style="width:15%"></th><th class="name-td">NOM</th><th>SCORE</th><th>PJ</th></tr>
+                    <tr><th style="width:10%"></th><th class="name-td">NOM</th><th>V</th><th>F</th><th>4</th><th>PJ</th></tr>
                 </thead>
                 <tbody id="body-g"></tbody>
             </table>
@@ -121,7 +126,11 @@
 
 <script>
     const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`;
-    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true, score: 0, pj: 0 }));
+    
+    // Initialisation avec les nouveaux compteurs
+    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"]
+        .map(n => ({ name: n, active: true, victories: 0, faf: 0, als4: 0, pj: 0 }));
+    
     let poolEnJeu = [];
     let playerStates = {};
     let modeM = false;
@@ -133,6 +142,18 @@
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
+    };
+
+    // Logique de tri complexe demandée
+    const sortPlayers = (list) => {
+        return list.sort((a, b) => {
+            return (b.victories - a.victories) || 
+                   (b.pj - a.pj) || 
+                   (b.faf - a.faf) || 
+                   (b.pj - a.pj) || 
+                   (b.als4 - a.als4) || 
+                   (b.pj - a.pj);
+        });
     };
 
     const renderDisplay = () => {
@@ -164,9 +185,7 @@
 
     const cloturerSession = async () => {
         if(confirm("Fin de séance ? Les scores actuels seront envoyés.")) {
-            if (poolEnJeu.length > 0) {
-                await sendResultsToSheet();
-            }
+            if (poolEnJeu.length > 0) await sendResultsToSheet();
             location.reload();
         }
     };
@@ -177,7 +196,10 @@
             poolEnJeu.forEach(n => {
                 let p = players.find(x => x.name === n);
                 let s = playerStates[n] || 1;
-                if(s === 2) p.score += 1; else if(s === 3) p.score += 2; else if(s === 4) p.score += 3;
+                // Attribution exclusive pour le classement interne
+                if(s === 4) p.victories += 1; 
+                else if(s === 3) p.faf += 1; 
+                else if(s === 2) p.als4 += 1;
             });
         }
 
@@ -186,24 +208,22 @@
                                    .filter(n => !poolEnJeu.includes(n));
         
         let selection = shuffle([...checkedElements]);
-
         let eligibles = shuffle(players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
-        let currentRanking = [...players].filter(p => p.active).sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
-
+        
         if (selection.length < 5) {
             if (selection.length > 0) {
                 let pivot = players.find(p => p.name === selection[0]);
+                let currentRanking = sortPlayers([...players].filter(p => p.active));
                 let pivotIdx = currentRanking.findIndex(p => p.name === pivot.name);
                 
                 if (pivotIdx < currentRanking.length / 2) {
-                    eligibles.sort((a,b) => b.score - a.score || b.pj - a.pj || (Math.random() - 0.5));
+                    sortPlayers(eligibles);
                 } else {
-                    eligibles.sort((a,b) => a.score - b.score || a.pj - b.pj || (Math.random() - 0.5));
+                    eligibles.sort((a,b) => (a.victories - b.victories) || (a.pj - b.pj));
                 }
             } else {
-                eligibles.sort((a,b) => a.pj - b.pj || (Math.random() - 0.5));
+                eligibles.sort((a,b) => a.pj - b.pj);
             }
-
             while (selection.length < 5 && eligibles.length > 0) {
                 selection.push(eligibles.shift().name);
             }
@@ -218,7 +238,7 @@
 
     const renderG = () => {
         const body = document.getElementById('body-g'); body.innerHTML = '';
-        let sorted = [...players].filter(p => p.active).sort((a,b) => b.score - a.score || b.pj - a.pj);
+        let sorted = sortPlayers([...players].filter(p => p.active));
         let minPJ = Math.min(...sorted.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
 
         sorted.forEach(p => {
@@ -232,7 +252,9 @@
             tr.innerHTML = `
                 <td><input type="checkbox" class="g-chk" value="${p.name}" ${shouldBeChecked ? 'checked' : ''} ${isPrevious ? 'disabled' : ''}></td>
                 <td class="name-td">${p.name}</td>
-                <td>${p.score}</td>
+                <td>${p.victories}</td>
+                <td>${p.faf}</td>
+                <td>${p.als4}</td>
                 <td>${p.pj}</td>
             `;
             body.appendChild(tr);
