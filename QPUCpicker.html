@@ -24,7 +24,6 @@
             display: flex; flex-direction: column; align-items: center;
             padding: 15px; box-sizing: border-box;
         }
-        /* Nouvelle grille pour les boutons du haut */
         .header-grid { 
             width: 100%; 
             display: grid; 
@@ -71,7 +70,7 @@
         .groupes-table th { font-size: 0.7rem; color: #777; text-align: center; text-transform: uppercase; }
         .groupes-table td { padding: 8px 4px; text-align: center; font-size: 1.1rem; }
         .name-td { text-align: left !important; width: 50%; }
-        .status-red { color: var(--red-win); }
+        .status-red { display: none; } /* Les joueurs non éligibles deviennent invisibles */
         .status-blue { color: var(--blue-qpuc); font-weight: bold; }
         input[type="checkbox"] { transform: scale(1.6); }
         .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
@@ -83,10 +82,10 @@
 
 <div class="main-container">
     <div class="header-grid">
-        <button class="btn-top" onclick="confirmReset()">Séance</button>
-        <button id="m-toggle" class="btn-top" onclick="toggleModeM()">Changer</button>
+        <button class="btn-top" onclick="cloturerSession()">Fin</button>
+        <button id="m-toggle" class="btn-top" onclick="toggleModeM()">Switch</button>
         <button class="btn-top" onclick="openM('modal-p')">Participants</button>
-        <button class="btn-top" onclick="openM('modal-g')">Groupes</button>
+        <button class="btn-top" onclick="openM('modal-g')">Tirage</button>
     </div>
     <div id="current-players"></div>
 </div>
@@ -161,6 +160,15 @@
     const sendResultsToSheet = async () => {
         const data = poolEnJeu.map(n => ({ name: n, status: playerStates[n] || 1 }));
         try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) }); } catch(e) {}
+    };
+
+    const cloturerSession = async () => {
+        if(confirm("Fin de séance ? Les scores actuels seront envoyés.")) {
+            if (poolEnJeu.length > 0) {
+                await sendResultsToSheet();
+            }
+            location.reload();
+        }
     };
 
     async function lancerTirage() {
@@ -260,7 +268,6 @@
     const openM = (id) => { if(id==='modal-g') renderG(); if(id==='modal-p') renderP(); document.getElementById(id).style.display='block'; };
     const closeM = (id) => { document.getElementById(id).style.display='none'; };
     const toggleModeM = () => { modeM = !modeM; document.getElementById('m-toggle').classList.toggle('active', modeM); };
-    const confirmReset = () => { if(confirm("Nouvelle séance ?")) location.reload(); };
 </script>
 </body>
 </html>
