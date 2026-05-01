@@ -36,7 +36,6 @@
             border-radius: 20px; padding: 8px 5px; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;
             width: 100%;
         }
-        /* Styles spécifiques des boutons */
         .btn-fin { border-color: var(--red-win); }
         .btn-participants { border-color: var(--blue-qpuc); }
         .btn-switch { background: #555; border: none; }
@@ -126,11 +125,8 @@
 
 <script>
     const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`;
-    
-    // Initialisation avec les nouveaux compteurs
     let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"]
         .map(n => ({ name: n, active: true, victories: 0, faf: 0, als4: 0, pj: 0 }));
-    
     let poolEnJeu = [];
     let playerStates = {};
     let modeM = false;
@@ -144,15 +140,22 @@
         return array;
     };
 
-    // Logique de tri complexe demandée
     const sortPlayers = (list) => {
         return list.sort((a, b) => {
-            return (b.victories - a.victories) || 
-                   (b.pj - a.pj) || 
-                   (b.faf - a.faf) || 
-                   (b.pj - a.pj) || 
-                   (b.als4 - a.als4) || 
-                   (b.pj - a.pj);
+            // 1. D'abord ceux qui ont des victoires (triés par victoires puis PJ)
+            if (b.victories !== a.victories) return b.victories - a.victories;
+            if (a.victories > 0) return b.pj - a.pj;
+
+            // 2. Ensuite ceux qui ont des FàF (triés par FàF puis PJ)
+            if (b.faf !== a.faf) return b.faf - a.faf;
+            if (a.faf > 0) return b.pj - a.pj;
+
+            // 3. Ensuite ceux qui ont des 4ALS (triés par 4ALS puis PJ)
+            if (b.als4 !== a.als4) return b.als4 - a.als4;
+            if (a.als4 > 0) return b.pj - a.pj;
+
+            // 4. Enfin les autres par PJ
+            return b.pj - a.pj;
         });
     };
 
@@ -196,17 +199,12 @@
             poolEnJeu.forEach(n => {
                 let p = players.find(x => x.name === n);
                 let s = playerStates[n] || 1;
-                // Attribution exclusive pour le classement interne
                 if(s === 4) p.victories += 1; 
                 else if(s === 3) p.faf += 1; 
                 else if(s === 2) p.als4 += 1;
             });
         }
-
-        let checkedElements = Array.from(document.querySelectorAll('.g-chk:checked'))
-                                   .map(cb => cb.value)
-                                   .filter(n => !poolEnJeu.includes(n));
-        
+        let checkedElements = Array.from(document.querySelectorAll('.g-chk:checked')).map(cb => cb.value);
         let selection = shuffle([...checkedElements]);
         let eligibles = shuffle(players.filter(p => p.active && !poolEnJeu.includes(p.name) && !selection.includes(p.name)));
         
@@ -215,20 +213,13 @@
                 let pivot = players.find(p => p.name === selection[0]);
                 let currentRanking = sortPlayers([...players].filter(p => p.active));
                 let pivotIdx = currentRanking.findIndex(p => p.name === pivot.name);
-                
-                if (pivotIdx < currentRanking.length / 2) {
-                    sortPlayers(eligibles);
-                } else {
-                    eligibles.sort((a,b) => (a.victories - b.victories) || (a.pj - b.pj));
-                }
+                if (pivotIdx < currentRanking.length / 2) sortPlayers(eligibles);
+                else eligibles.sort((a,b) => a.pj - b.pj);
             } else {
                 eligibles.sort((a,b) => a.pj - b.pj);
             }
-            while (selection.length < 5 && eligibles.length > 0) {
-                selection.push(eligibles.shift().name);
-            }
+            while (selection.length < 5 && eligibles.length > 0) selection.push(eligibles.shift().name);
         }
-
         poolEnJeu = shuffle(selection.slice(0, 5));
         playerStates = {};
         poolEnJeu.forEach(n => { players.find(p => p.name === n).pj++; playerStates[n] = 1; });
@@ -240,15 +231,12 @@
         const body = document.getElementById('body-g'); body.innerHTML = '';
         let sorted = sortPlayers([...players].filter(p => p.active));
         let minPJ = Math.min(...sorted.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
-
         sorted.forEach(p => {
             let isPrevious = poolEnJeu.includes(p.name);
             let tr = document.createElement('tr');
             if (isPrevious) tr.className = 'status-red';
             else if (p.pj === minPJ) tr.className = 'status-blue';
-
             let shouldBeChecked = (p.pj === 0 && !isPrevious);
-
             tr.innerHTML = `
                 <td><input type="checkbox" class="g-chk" value="${p.name}" ${shouldBeChecked ? 'checked' : ''} ${isPrevious ? 'disabled' : ''}></td>
                 <td class="name-td">${p.name}</td>
