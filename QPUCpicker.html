@@ -200,53 +200,51 @@
         let selection = [...checkedNames];
         
         if (selection.length < 5) {
-            // Déterminer la direction
-            let goUp = true; 
-            if (checkedNames.length > 0) {
-                let avgPos = checkedNames.reduce((acc, name) => acc + currentRanking.findIndex(p => p.name === name), 0) / checkedNames.length;
-                if (avgPos < currentRanking.length / 2) goUp = false; // On est en haut, on descend
-            }
-
-            // Création des groupes d'égalités (Blocs)
+            // Création des blocs d'égalités
             let blocks = [];
             currentRanking.forEach(p => {
-                if (!poolEnJeu.includes(p.name) && !selection.includes(p.name)) {
-                    let last = blocks[blocks.length - 1];
-                    if (last && last[0].victories === p.victories && last[0].faf === p.faf && last[0].als4 === p.als4) {
-                        last.push(p);
-                    } else {
-                        blocks.push([p]);
-                    }
+                let last = blocks[blocks.length - 1];
+                if (last && last[0].victories === p.victories && last[0].faf === p.faf && last[0].als4 === p.als4) {
+                    last.push(p);
+                } else {
+                    blocks.push([p]);
                 }
             });
 
-            // Trouver l'index du bloc de départ
-            let startBlockIdx = goUp ? blocks.length - 1 : 0;
+            // Direction par défaut : Remonter (partir du bas)
+            let goUp = true; 
+            let startBlockIdx = blocks.length - 1;
+
             if (checkedNames.length > 0) {
                 let firstChecked = currentRanking.find(p => p.name === checkedNames[0]);
                 startBlockIdx = blocks.findIndex(b => b[0].victories === firstChecked.victories && b[0].faf === firstChecked.faf && b[0].als4 === firstChecked.als4);
+                // Si coché en haut, on descend
+                if (startBlockIdx < blocks.length / 2) goUp = false;
             }
 
             let currentIdx = startBlockIdx;
             let minPJGlobal = Math.min(...currentRanking.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
 
-            while (selection.length < 5 && currentIdx >= 0 && currentIdx < blocks.length) {
+            while (selection.length < 5) {
                 let block = blocks[currentIdx];
-                // Priorité aux bleus (PJ minimum) dans le bloc
-                let priority = shuffle(block.filter(p => p.pj === minPJGlobal));
-                let others = shuffle(block.filter(p => p.pj !== minPJGlobal));
-                
-                let pool = [...priority, ...others];
-                while (selection.length < 5 && pool.length > 0) {
-                    selection.push(pool.shift().name);
+                if (block) {
+                    let candidates = block.filter(p => !selection.includes(p.name) && !poolEnJeu.includes(p.name));
+                    if (candidates.length > 0) {
+                        let priority = shuffle(candidates.filter(p => p.pj === minPJGlobal));
+                        let others = shuffle(candidates.filter(p => p.pj !== minPJGlobal));
+                        let pool = [...priority, ...others];
+                        while (selection.length < 5 && pool.length > 0) {
+                            selection.push(pool.shift().name);
+                        }
+                    }
                 }
-                
                 currentIdx += goUp ? -1 : 1;
-                // Si on arrive au bout d'un côté, on repart dans l'autre pour compléter
-                if (selection.length < 5 && (currentIdx < 0 || currentIdx >= blocks.length)) {
-                    goUp = !goUp;
-                    currentIdx = goUp ? blocks.length - 1 : 0;
-                }
+                // Si on sort des limites, on change de direction pour finir de remplir
+                if (currentIdx < 0) { goUp = false; currentIdx = 0; }
+                if (currentIdx >= blocks.length) { goUp = true; currentIdx = blocks.length - 1; }
+                
+                let totalEligible = currentRanking.filter(p => !poolEnJeu.includes(p.name)).length;
+                if (selection.length >= totalEligible || selection.length >= 5) break;
             }
         }
         
