@@ -3,167 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Régie QPUC</title>
+    <title>QPUC Picker - Régie</title>
     <style>
         :root {
             --bg-dark: #1a1a1a;
-            --blue-qpuc: #0091d2;
-            --green-tirage: #27ae60;
-            --red-exit: #d0002d;
+            --blue-main: #3498db;
+            --white: #ffffff;
             --yellow-4als: #f1c40f;
             --orange-faf: #e67e22;
             --red-win: #c0392b;
+            --btn-border: #ffffff;
         }
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: var(--bg-dark); color: white;
-            font-family: 'Arial', sans-serif; overflow: hidden;
+            background-color: var(--bg-dark); color: var(--white);
+            font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden;
         }
         .main-container {
-            width: 100%; max-width: 420px; height: 100vh; margin: 0 auto;
+            width: 100%; max-width: 400px; height: 100vh; margin: 0 auto;
             display: flex; flex-direction: column; align-items: center;
-            padding: 15px; box-sizing: border-box;
+            padding: 15px 15px calc(45px + env(safe-area-inset-bottom)) 15px; 
+            box-sizing: border-box; justify-content: space-between;
         }
-        .header-grid { 
-            width: 100%; 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            margin-bottom: 20px; 
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        .btn-top-reset {
+            background: none; border: 1.5px solid var(--btn-border);
+            color: white; border-radius: 30px; padding: 6px 15px;
+            font-size: 0.75rem; cursor: pointer; text-transform: uppercase; font-weight: 600;
         }
-        .btn-top {
-            background: none; border: 2px solid white; color: white;
-            border-radius: 20px; padding: 8px 5px; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;
-            width: 100%;
+        .btn-prochaine-partie {
+            background-color: var(--blue-main); color: white;
+            width: 100%; border-radius: 50px; padding: 15px 0;
+            font-size: 1.4rem; border: none; cursor: pointer;
+            text-transform: uppercase; margin-top: 10px; font-weight: 700;
         }
-        .btn-fin { border-color: var(--red-win); }
-        .btn-participants { border-color: var(--blue-qpuc); }
-        .btn-switch { background: #555; border: none; }
-        .btn-switch.active { background: var(--red-win); }
-        .btn-tirage-nav { background: var(--blue-qpuc); border: none; }
-        
-        #current-players { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; width: 100%; }
-        .player-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
+        .section-header { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
+        .section-title { color: var(--blue-main); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; }
+        .btn-m { 
+            background: #444; color: white; border: 1px solid white; border-radius: 5px; 
+            padding: 2px 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold;
+        }
+        .btn-m.active { background: var(--red-win); border-color: var(--red-win); animation: pulse 1s infinite; }
+        #current-players { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; flex: 1; width: 100%; }
+        .player-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
         .player-badge {
-            background: white; color: black; border-radius: 30px; padding: 12px;
-            font-size: 1.1rem; width: 125px; text-align: center;
-            cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5); text-transform: uppercase;
+            background: white; color: black; border-radius: 25px;
+            padding: 8px 15px; font-size: 1rem; min-width: 85px;
+            text-align: center; cursor: pointer; font-weight: 600; text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-        
+        .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px; }
+        .btn-nav {
+            background: none; border: 1.5px solid var(--btn-border);
+            color: white; border-radius: 30px; padding: 10px 0;
+            font-size: 0.85rem; cursor: pointer; text-transform: uppercase; width: 100%; font-weight: 600;
+        }
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; z-index: 1000;
+            background: rgba(0,0,0,0.85); display: none; z-index: 1000; padding: 10px; box-sizing: border-box;
         }
         .modal {
-            background: white; border-radius: 25px; width: 92%; max-width: 380px;
-            margin: 20px auto; color: black; position: relative; padding: 15px;
-            max-height: 90vh; display: flex; flex-direction: column;
+            background: white; border-radius: 25px; width: 98%; max-width: 395px;
+            margin: 20px auto; position: relative; padding: 12px;
+            color: black; display: flex; flex-direction: column; max-height: 85vh;
         }
-        .close-circle {
-            position: absolute; top: -12px; right: -12px; background: var(--red-exit);
-            color: white; width: 35px; height: 35px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            border: 2px solid white; font-size: 20px; font-weight: bold;
+        .modal-header {
+            background: var(--blue-main); color: white; border-radius: 20px;
+            padding: 10px; text-align: center; font-size: 1rem; text-transform: uppercase;
+            margin-bottom: 10px; font-weight: 700;
         }
-        .btn-tirage {
-            background: var(--green-tirage); color: white; border-radius: 15px;
-            padding: 10px 40px; font-size: 1.6rem; border: none; cursor: pointer;
-            align-self: center; margin-bottom: 10px; font-weight: bold;
+        .close-btn {
+            position: absolute; top: -10px; right: -5px; width: 35px; height: 35px;
+            background: #d00; border-radius: 50%; color: white; border: 2px solid white;
+            font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001;
         }
-        .groupes-table { width: 100%; border-collapse: collapse; }
-        .groupes-table th { font-size: 0.6rem; color: #777; text-align: center; text-transform: uppercase; }
-        .groupes-table td { padding: 8px 2px; text-align: center; font-size: 1rem; }
-        .name-td { text-align: left !important; width: 40%; font-size: 0.9rem !important; }
-        .status-red { display: none; } 
-        .status-blue { color: var(--blue-qpuc); font-weight: bold; }
-        input[type="checkbox"] { transform: scale(1.6); }
-        .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
-        .p-pill { border: 1.5px solid #ddd; border-radius: 20px; padding: 8px; text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; }
-        .p-pill.active { border-color: var(--blue-qpuc); color: black; background: #f8f9fa; }
+        .scroll-content { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .stats-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .stats-table th { font-size: 0.55rem; color: #888; text-align: center; padding-bottom: 5px; }
+        .stats-table td { padding: 8px 2px; text-align: center; font-size: 0.72rem; border-bottom: 1px solid #f0f0f0; font-weight: 600; }
+        .name-col { text-align: left !important; color: black; font-weight: 800 !important; width: 75px; overflow: hidden; }
+        .c-pj { color: black; }
+        .c-4als { color: var(--yellow-4als); }
+        .c-faf { color: var(--orange-faf); }
+        .c-win-pct { color: var(--red-win); }
+
+        /* AJOUT DU STYLE POUR LES BOUTONS PARTICIPANTS */
+        .p-pill { 
+            border: 1.5px solid #ddd; border-radius: 20px; padding: 8px 12px; 
+            text-align: center; font-size: 0.85rem; cursor: pointer; color: #999; 
+            font-weight: 600; margin-bottom: 5px;
+        }
+        .p-pill.active { border-color: var(--blue-main); color: black; background: #f8f9fa; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
-
-<div class="main-container">
-    <div class="header-grid">
-        <button class="btn-top btn-fin" onclick="cloturerSession()">Fin</button>
-        <button class="btn-top btn-participants" onclick="openM('modal-p')">Participants</button>
-        <button id="m-toggle" class="btn-top btn-switch" onclick="toggleModeM()">Switch</button>
-        <button class="btn-top btn-tirage-nav" onclick="openM('modal-g')">Tirage</button>
-    </div>
-    <div id="current-players"></div>
-</div>
-
-<div id="modal-g" class="overlay">
-    <div class="modal">
-        <div class="close-circle" onclick="closeM('modal-g')">✕</div>
-        <button class="btn-tirage" onclick="lancerTirage()">TIRAGE</button>
-        <div style="overflow-y: auto;">
-            <table class="groupes-table">
-                <thead>
-                    <tr><th style="width:10%"></th><th class="name-td">NOM</th><th>V</th><th>F</th><th>4</th><th>PJ</th></tr>
-                </thead>
-                <tbody id="body-g"></tbody>
-            </table>
+    <div class="main-container">
+        <div class="top-bar">
+            <button class="btn-top-reset" onclick="window.confirmReset()">Nouvelle séance</button>
+            <div id="status-sync" style="font-size: 0.5rem; opacity: 0.5;">Sync...</div>
+        </div>
+        <button id="btn-tirage" class="btn-prochaine-partie" onclick="window.tirage()">Prochaine Partie</button>
+        <div class="section-header">
+            <div class="section-title">Partie en cours :</div>
+            <button id="m-toggle" class="btn-m" onclick="window.toggleModeM()">M</button>
+        </div>
+        <div id="current-players"></div>
+        <div class="nav-buttons">
+            <button class="btn-nav" onclick="window.openM('modal-p')">Participants</button>
+            <button class="btn-nav" onclick="window.openM('modal-sj')">Séance en cours</button>
+            <button class="btn-nav" onclick="window.openM('modal-sp')">Statistiques</button>
         </div>
     </div>
-</div>
 
-<div id="modal-p" class="overlay">
-    <div class="modal">
-        <div class="close-circle" onclick="closeM('modal-p')">✕</div>
-        <div class="pill-grid" id="grid-p"></div>
-    </div>
-</div>
-
-<div id="modal-replacement" class="overlay">
-    <div class="modal">
-        <div class="close-circle" onclick="closeM('modal-replacement')">✕</div>
-        <div class="pill-grid" id="grid-replacement"></div>
-    </div>
-</div>
+    <div id="modal-replacement" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-replacement')">✕</div><div class="modal-header">Remplacer par...</div><div class="scroll-content"><div id="list-replacement" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div></div></div></div>
+    <div id="modal-p" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-p')">✕</div><div class="modal-header">Participants</div><div style="display:flex; gap:8px; margin-bottom:10px;"><input type="text" id="add-input" placeholder="NOM..." style="flex:1; border-radius:15px; border:1px solid #ccc; padding:8px; text-transform: uppercase;"><button onclick="window.addPlayer()" style="background:var(--blue-main); color:white; border:none; width:35px; border-radius:50%; cursor:pointer;">+</button></div><div class="scroll-content"><div id="list-p" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div></div></div></div>
+    <div id="modal-sj" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sj')">✕</div><div class="modal-header">Séance du jour</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>DERNIÈRE</th></tr></thead><tbody id="list-stats-jour"></tbody></table></div></div></div>
+    <div id="modal-sp" class="overlay"><div class="modal"><div class="close-btn" onclick="window.closeM('modal-sp')">✕</div><div class="modal-header">Stats Globales</div><div class="scroll-content"><table class="stats-table"><thead><tr><th class="name-col">NOM</th><th>PJ</th><th>%4ALS</th><th>%FAF</th><th>%WIN</th><th>W</th></tr></thead><tbody id="list-stats-perm"></tbody></table></div></div></div>
 
 <script>
-    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`;
-    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ARNAUD", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"]
-        .map(n => ({ name: n, active: true, victories: 0, faf: 0, als4: 0, pj: 0 }));
-    let poolEnJeu = [];
-    let playerStates = {};
-    let modeM = false;
-    let replacementTarget = null;
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQPwvi8vHPm7xDs4Yusv0xmZq7ek9Z2ZQJ8DvcWITvkoiwanW5pGwwqJzESzeBNW0LEa_WibdeA3b0Z/pub?output=csv`;
+    const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`; 
 
-    const shuffle = (array) => {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    };
+    
+    window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ROLANDE", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: true }));
+    window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
+    window.poolEnJeu = []; window.playerStates = {}; window.sheetData = []; window.modeM = false;
 
-    const sortPlayers = (list) => {
-        return list.sort((a, b) => {
-            if (b.victories !== a.victories) return b.victories - a.victories;
-            if (b.faf !== a.faf) return b.faf - a.faf;
-            if (b.als4 !== a.als4) return b.als4 - a.als4;
-            return b.pj - a.pj;
-        });
-    };
-
-    const renderDisplay = () => {
+    window.renderDisplay = function() {
         const div = document.getElementById('current-players'); div.innerHTML = '';
-        if(poolEnJeu.length === 0) return;
-        [poolEnJeu.slice(0, 3), poolEnJeu.slice(3, 5)].forEach(row => {
+        if(window.poolEnJeu.length === 0) return;
+        const rows = [window.poolEnJeu.slice(0, 3), window.poolEnJeu.slice(3, 5)];
+        rows.forEach(row => {
             const rDiv = document.createElement('div'); rDiv.className = 'player-row';
             row.forEach(n => {
                 const b = document.createElement('div'); b.className = 'player-badge';
-                const s = playerStates[n] || 1;
-                if(s === 2) { b.style.background = 'var(--yellow-4als)'; b.style.color = 'black'; }
-                else if(s === 3) { b.style.background = 'var(--orange-faf)'; b.style.color = 'white'; }
-                else if(s === 4) { b.style.background = 'var(--red-win)'; b.style.color = 'white'; }
+                const s = window.playerStates[n] || 1;
+                if(s === 2) b.style.background = 'var(--yellow-4als)';
+                else if(s === 3) b.style.background = 'var(--orange-faf)';
+                else if(s === 4) b.style.background = 'var(--red-win)';
+                if(s > 1) b.style.color = (s === 2) ? 'black' : 'white';
                 b.innerText = n;
                 b.onclick = () => {
-                    if(modeM) { replacementTarget = n; openReplacementModal(); }
-                    else { playerStates[n] = (playerStates[n] >= 4) ? 1 : (playerStates[n] || 1) + 1; renderDisplay(); }
+                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
+                    else { window.playerStates[n] = (window.playerStates[n] >= 4) ? 1 : (window.playerStates[n] || 1) + 1; window.renderDisplay(); }
                 };
                 rDiv.appendChild(b);
             });
@@ -171,141 +155,93 @@
         });
     };
 
-    const sendResultsToSheet = async () => {
-        const data = poolEnJeu.map(n => ({ name: n, status: playerStates[n] || 1 }));
-        try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) }); } catch(e) {}
+    window.tirage = async function() {
+        if (window.poolEnJeu.length > 0) await window.sendResultsToSheet();
+        window.compteurParties++;
+        const actifs = window.players.filter(p => p.active).map(p => p.name);
+        if(actifs.length < 5) return alert("Besoin de 5 joueurs.");
+        const candidats = actifs.map(name => {
+            let pjS = window.sessionStats[name] || 0;
+            let pen = (window.poolEnJeu.includes(name)) ? 1000 : 0;
+            return { name, score: (pjS * 10) + pen + Math.floor(Math.random() * 10) };
+        });
+        candidats.sort((a, b) => a.score - b.score);
+        window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
+        window.playerStates = {};
+        window.poolEnJeu.forEach(n => { window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; window.sessionLastPartie[n] = window.compteurParties; window.playerStates[n] = 1; });
+        window.renderDisplay();
     };
 
-    const cloturerSession = async () => {
-        if(confirm("Fin de séance ? Les scores actuels seront envoyés.")) {
-            if (poolEnJeu.length > 0) await sendResultsToSheet();
-            location.reload();
-        }
+    window.sendResultsToSheet = async function() {
+        const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 1 }));
+        try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dataToSend) }); } catch(e) {}
     };
 
-    async function lancerTirage() {
-        if (poolEnJeu.length > 0) {
-            await sendResultsToSheet();
-            poolEnJeu.forEach(n => {
-                let p = players.find(x => x.name === n);
-                let s = playerStates[n] || 1;
-                if(s === 4) p.victories += 1; 
-                else if(s === 3) p.faf += 1; 
-                else if(s === 2) p.als4 += 1;
+    window.openM = function(id) {
+        document.getElementById(id).style.display = 'block';
+        if(id === 'modal-sj') {
+            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
+            window.players.filter(p => window.sessionStats[p.name]).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]}</td></tr>`;
             });
         }
-        
-        let currentRanking = sortPlayers([...players].filter(p => p.active));
-        let checkedNames = Array.from(document.querySelectorAll('.g-chk:checked')).map(cb => cb.value);
-        let selection = [...checkedNames];
-        
-        if (selection.length < 5) {
-            // Création des blocs d'égalités
-            let blocks = [];
-            currentRanking.forEach(p => {
-                let last = blocks[blocks.length - 1];
-                if (last && last[0].victories === p.victories && last[0].faf === p.faf && last[0].als4 === p.als4) {
-                    last.push(p);
-                } else {
-                    blocks.push([p]);
-                }
+        if(id === 'modal-sp') {
+            const t = document.getElementById('list-stats-perm'); t.innerHTML = '';
+            const sorted = [...window.sheetData].sort((a,b) => (parseInt(b[1])||0) - (parseInt(a[1])||0));
+            sorted.forEach(c => { if(!c[0]) return;
+                const pj = parseInt(c[1]) || 0;
+                const pct = (v) => pj > 0 ? Math.round((parseInt(v)||0)/pj*100)+'%' : '0%';
+                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win-pct">${pct(c[4])}</td><td>${c[4]||0}</td></tr>`;
             });
-
-            // Direction par défaut : Remonter (partir du bas)
-            let goUp = true; 
-            let startBlockIdx = blocks.length - 1;
-
-            if (checkedNames.length > 0) {
-                let firstChecked = currentRanking.find(p => p.name === checkedNames[0]);
-                startBlockIdx = blocks.findIndex(b => b[0].victories === firstChecked.victories && b[0].faf === firstChecked.faf && b[0].als4 === firstChecked.als4);
-                // Si coché en haut, on descend
-                if (startBlockIdx < blocks.length / 2) goUp = false;
-            }
-
-            let currentIdx = startBlockIdx;
-            let minPJGlobal = Math.min(...currentRanking.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
-
-            while (selection.length < 5) {
-                let block = blocks[currentIdx];
-                if (block) {
-                    let candidates = block.filter(p => !selection.includes(p.name) && !poolEnJeu.includes(p.name));
-                    if (candidates.length > 0) {
-                        let priority = shuffle(candidates.filter(p => p.pj === minPJGlobal));
-                        let others = shuffle(candidates.filter(p => p.pj !== minPJGlobal));
-                        let pool = [...priority, ...others];
-                        while (selection.length < 5 && pool.length > 0) {
-                            selection.push(pool.shift().name);
-                        }
-                    }
-                }
-                currentIdx += goUp ? -1 : 1;
-                // Si on sort des limites, on change de direction pour finir de remplir
-                if (currentIdx < 0) { goUp = false; currentIdx = 0; }
-                if (currentIdx >= blocks.length) { goUp = true; currentIdx = blocks.length - 1; }
-                
-                let totalEligible = currentRanking.filter(p => !poolEnJeu.includes(p.name)).length;
-                if (selection.length >= totalEligible || selection.length >= 5) break;
-            }
         }
-        
-        poolEnJeu = shuffle(selection.slice(0, 5));
-        playerStates = {};
-        poolEnJeu.forEach(n => { players.find(p => p.name === n).pj++; playerStates[n] = 1; });
-        closeM('modal-g');
-        renderDisplay();
-    }
-
-    const renderG = () => {
-        const body = document.getElementById('body-g'); body.innerHTML = '';
-        let sorted = sortPlayers([...players].filter(p => p.active));
-        let minPJ = Math.min(...sorted.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
-        sorted.forEach(p => {
-            let isPrevious = poolEnJeu.includes(p.name);
-            let tr = document.createElement('tr');
-            if (isPrevious) tr.className = 'status-red';
-            else if (p.pj === minPJ) tr.className = 'status-blue';
-            let shouldBeChecked = (p.pj === 0 && !isPrevious);
-            tr.innerHTML = `
-                <td><input type="checkbox" class="g-chk" value="${p.name}" ${shouldBeChecked ? 'checked' : ''} ${isPrevious ? 'disabled' : ''}></td>
-                <td class="name-td">${p.name}</td>
-                <td>${p.victories}</td>
-                <td>${p.faf}</td>
-                <td>${p.als4}</td>
-                <td>${p.pj}</td>
-            `;
-            body.appendChild(tr);
-        });
     };
 
-    const renderP = () => {
-        const grid = document.getElementById('grid-p'); grid.innerHTML = '';
-        [...players].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
-            d.innerText = p.name;
-            d.onclick = () => { p.active = !p.active; renderP(); };
-            grid.appendChild(d);
-        });
-    };
-
-    function openReplacementModal() {
-        const grid = document.getElementById('grid-replacement'); grid.innerHTML = '';
-        shuffle(players.filter(p => p.active && !poolEnJeu.includes(p.name))).forEach(p => {
+    window.closeM = (id) => document.getElementById(id).style.display = 'none';
+    window.toggleModeM = () => { window.modeM = !window.modeM; document.getElementById('m-toggle').classList.toggle('active', window.modeM); };
+    window.openReplacementModal = function() {
+        const listDiv = document.getElementById('list-replacement'); listDiv.innerHTML = '';
+        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
             const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
             d.onclick = () => {
-                players.find(x => x.name === replacementTarget).pj--;
-                p.pj++;
-                poolEnJeu = poolEnJeu.map(n => n === replacementTarget ? p.name : n);
-                playerStates[p.name] = 1;
-                toggleModeM(); closeM('modal-replacement'); renderDisplay();
+                window.sessionStats[window.replacementTarget]--; window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
+                window.sessionLastPartie[p.name] = window.compteurParties;
+                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
+                window.playerStates[p.name] = 1; window.toggleModeM(); window.closeM('modal-replacement'); window.renderDisplay();
             };
-            grid.appendChild(d);
+            listDiv.appendChild(d);
         });
         document.getElementById('modal-replacement').style.display = 'block';
-    }
+    };
 
-    const openM = (id) => { if(id==='modal-g') renderG(); if(id==='modal-p') renderP(); document.getElementById(id).style.display='block'; };
-    const closeM = (id) => { document.getElementById(id).style.display='none'; };
-    const toggleModeM = () => { modeM = !modeM; document.getElementById('m-toggle').classList.toggle('active', modeM); };
+    window.updateUI = () => {
+        const cont = document.getElementById('list-p'); cont.innerHTML = '';
+        window.players.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
+            d.innerText = p.name; 
+            d.onclick = () => { 
+                p.active = !p.active; 
+                window.updateUI(); 
+            };
+            cont.appendChild(d);
+        });
+    };
+
+    window.addPlayer = () => {
+        const n = document.getElementById('add-input').value.trim().toUpperCase();
+        if(n) { window.players.push({ name: n, active: true }); window.updateUI(); document.getElementById('add-input').value=''; }
+    };
+
+    window.confirmReset = async () => { if(confirm("Nouvelle séance ?")) { await window.sendResultsToSheet(); location.reload(); } };
+
+    async function init() {
+        try {
+            const res = await fetch(CSV_URL + "&cb=" + Date.now()); const text = await res.text();
+            window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
+            document.getElementById('status-sync').innerText = "Sync OK";
+        } catch(e) { document.getElementById('status-sync').innerText = "Sync Error"; }
+        window.updateUI();
+    }
+    init();
 </script>
 </body>
 </html>
