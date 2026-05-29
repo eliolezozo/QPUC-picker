@@ -127,7 +127,8 @@
     const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`; 
 
     
-    window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ARNAUD", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: false })).sort((a,b)=>a.name.localeCompare(b.name));
+    window.players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ARNAUD", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"].map(n => ({ name: n, active: false }));
+    window.players.sort((a,b)=>a.name.localeCompare(b.name));
     window.sessionStats = {}; window.sessionLastPartie = {}; window.compteurParties = 0;
     window.poolEnJeu = []; window.playerStates = {}; window.sheetData = []; window.modeM = false;
 
@@ -141,4 +142,107 @@
                 const b = document.createElement('div'); b.className = 'player-badge';
                 const s = window.playerStates[n] || 1;
                 if(s === 2) b.style.background = 'var(--yellow-4als)';
-                else if(s
+                else if(s === 3) b.style.background = 'var(--orange-faf)';
+                else if(s === 4) b.style.background = 'var(--red-win)';
+                if(s > 1) b.style.color = (s === 2) ? 'black' : 'white';
+                b.innerText = n;
+                b.onclick = () => {
+                    if(window.modeM) { window.replacementTarget = n; window.openReplacementModal(); }
+                    else { window.playerStates[n] = (window.playerStates[n] >= 4) ? 1 : (window.playerStates[n] || 1) + 1; window.renderDisplay(); }
+                };
+                rDiv.appendChild(b);
+            });
+            div.appendChild(rDiv);
+        });
+    };
+
+    window.tirage = async function() {
+        if (window.poolEnJeu.length > 0) await window.sendResultsToSheet();
+        window.compteurParties++;
+        const actifs = window.players.filter(p => p.active).map(p => p.name);
+        if(actifs.length < 5) return alert("Besoin de 5 joueurs.");
+        const candidats = actifs.map(name => {
+            let pjS = window.sessionStats[name] || 0;
+            let pen = (window.poolEnJeu.includes(name)) ? 1000 : 0;
+            return { name, score: (pjS * 10) + pen + Math.floor(Math.random() * 10) };
+        });
+        candidats.sort((a, b) => a.score - b.score);
+        window.poolEnJeu = candidats.slice(0, 5).map(p => p.name);
+        window.playerStates = {};
+        window.poolEnJeu.forEach(n => { window.sessionStats[n] = (window.sessionStats[n] || 0) + 1; window.sessionLastPartie[n] = window.compteurParties; window.playerStates[n] = 1; });
+        window.renderDisplay();
+    };
+
+    window.sendResultsToSheet = async function() {
+        const dataToSend = window.poolEnJeu.map(n => ({ name: n, status: window.playerStates[n] || 1 }));
+        try { await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dataToSend) }); } catch(e) {}
+    };
+
+    window.openM = function(id) {
+        document.getElementById(id).style.display = 'block';
+        if(id === 'modal-sj') {
+            const b = document.getElementById('list-stats-jour'); b.innerHTML = '';
+            window.players.filter(p => window.sessionStats[p.name]).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+                b.innerHTML += `<tr><td class="name-col">${p.name}</td><td>${window.sessionStats[p.name]}</td><td>#${window.sessionLastPartie[p.name]}</td></tr>`;
+            });
+        }
+        if(id === 'modal-sp') {
+            const t = document.getElementById('list-stats-perm'); t.innerHTML = '';
+            const sorted = [...window.sheetData].sort((a,b) => (parseInt(b[1])||0) - (parseInt(a[1])||0));
+            sorted.forEach(c => { if(!c[0]) return;
+                const pj = parseInt(c[1]) || 0;
+                const pct = (v) => pj > 0 ? Math.round((parseInt(v)||0)/pj*100)+'%' : '0%';
+                t.innerHTML += `<tr><td class="name-col">${c[0]}</td><td class="c-pj">${pj}</td><td class="c-4als">${pct(c[2])}</td><td class="c-faf">${pct(c[3])}</td><td class="c-win-pct">${pct(c[4])}</td><td>${c[4]||0}</td></tr>`;
+            });
+        }
+    };
+
+    window.closeM = (id) => document.getElementById(id).style.display = 'none';
+    window.toggleModeM = () => { window.modeM = !window.modeM; document.getElementById('m-toggle').classList.toggle('active', window.modeM); };
+    window.openReplacementModal = function() {
+        const listDiv = document.getElementById('list-replacement'); listDiv.innerHTML = '';
+        window.players.filter(p => p.active && !window.poolEnJeu.includes(p.name)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const d = document.createElement('div'); d.className = 'p-pill active'; d.innerText = p.name;
+            d.onclick = () => {
+                window.sessionStats[window.replacementTarget]--; window.sessionStats[p.name] = (window.sessionStats[p.name] || 0) + 1;
+                window.sessionLastPartie[p.name] = window.compteurParties;
+                window.poolEnJeu = window.poolEnJeu.map(n => n === window.replacementTarget ? p.name : n);
+                window.playerStates[p.name] = 1; window.toggleModeM(); window.closeM('modal-replacement'); window.renderDisplay();
+            };
+            listDiv.appendChild(d);
+        });
+        document.getElementById('modal-replacement').style.display = 'block';
+    };
+
+    window.updateUI = () => {
+        const cont = document.getElementById('list-p'); cont.innerHTML = '';
+        window.players.forEach(p => {
+            const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
+            d.innerText = p.name; 
+            d.onclick = () => { 
+                p.active = !p.active; 
+                window.updateUI(); 
+            };
+            cont.appendChild(d);
+        });
+    };
+
+    window.addPlayer = () => {
+        const n = document.getElementById('add-input').value.trim().toUpperCase();
+        if(n) { window.players.push({ name: n, active: true }); window.players.sort((a,b)=>a.name.localeCompare(b.name)); window.updateUI(); document.getElementById('add-input').value=''; }
+    };
+
+    window.confirmReset = async () => { if(confirm("Nouvelle séance ?")) { await window.sendResultsToSheet(); location.reload(); } };
+
+    async function init() {
+        try {
+            const res = await fetch(CSV_URL + "&cb=" + Date.now()); const text = await res.text();
+            window.sheetData = text.split('\n').slice(1).map(r => r.split(','));
+            document.getElementById('status-sync').innerText = "Sync OK";
+        } catch(e) { document.getElementById('status-sync').innerText = "Sync Error"; }
+        window.updateUI();
+    }
+    init();
+</script>
+</body>
+</html>
