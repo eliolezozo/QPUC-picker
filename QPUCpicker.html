@@ -13,6 +13,7 @@
             --yellow-4als: #f1c40f;
             --orange-faf: #e67e22;
             --red-win: #c0392b;
+            --red-dark: #8b0000;
         }
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
@@ -70,11 +71,15 @@
             padding: 10px 40px; font-size: 1.6rem; border: none; cursor: pointer;
             align-self: center; margin-bottom: 10px; font-weight: bold;
         }
+        .options-container {
+            display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold;
+        }
         .groupes-table { width: 100%; border-collapse: collapse; }
         .groupes-table th { font-size: 0.6rem; color: #777; text-align: center; text-transform: uppercase; }
         .groupes-table td { padding: 8px 2px; text-align: center; font-size: 1rem; }
         .name-td { text-align: left !important; width: 40%; font-size: 0.9rem !important; }
         .status-red { display: none; } 
+        .status-previous-visible { color: var(--red-dark); font-weight: bold; }
         .status-blue { color: var(--blue-qpuc); font-weight: bold; }
         input[type="checkbox"] { transform: scale(1.6); }
         .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
@@ -98,6 +103,10 @@
     <div class="modal">
         <div class="close-circle" onclick="closeM('modal-g')">✕</div>
         <button class="btn-tirage" onclick="lancerTirage()">TIRAGE</button>
+        <div class="options-container">
+            <input type="checkbox" id="chk-include-previous" onchange="renderG()">
+            <label for="chk-include-previous">Inclure sortants</label>
+        </div>
         <div style="overflow-y: auto;">
             <table class="groupes-table">
                 <thead>
@@ -184,6 +193,7 @@
     };
 
     async function lancerTirage() {
+        const includePrevious = document.getElementById('chk-include-previous').checked;
         if (poolEnJeu.length > 0) {
             await sendResultsToSheet();
             poolEnJeu.forEach(n => {
@@ -223,12 +233,12 @@
             }
 
             let currentIdx = startBlockIdx;
-            let minPJGlobal = Math.min(...currentRanking.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
+            let minPJGlobal = Math.min(...currentRanking.filter(p => includePrevious || !poolEnJeu.includes(p.name)).map(p => p.pj));
 
             while (selection.length < 5) {
                 let block = blocks[currentIdx];
                 if (block) {
-                    let candidates = block.filter(p => !selection.includes(p.name) && !poolEnJeu.includes(p.name));
+                    let candidates = block.filter(p => !selection.includes(p.name) && (includePrevious || !poolEnJeu.includes(p.name)));
                     if (candidates.length > 0) {
                         let priority = shuffle(candidates.filter(p => p.pj === minPJGlobal));
                         let others = shuffle(candidates.filter(p => p.pj !== minPJGlobal));
@@ -243,7 +253,7 @@
                 if (currentIdx < 0) { goUp = false; currentIdx = 0; }
                 if (currentIdx >= blocks.length) { goUp = true; currentIdx = blocks.length - 1; }
                 
-                let totalEligible = currentRanking.filter(p => !poolEnJeu.includes(p.name)).length;
+                let totalEligible = currentRanking.filter(p => includePrevious || !poolEnJeu.includes(p.name)).length;
                 if (selection.length >= totalEligible || selection.length >= 5) break;
             }
         }
@@ -257,16 +267,26 @@
 
     const renderG = () => {
         const body = document.getElementById('body-g'); body.innerHTML = '';
+        const includePrevious = document.getElementById('chk-include-previous').checked;
         let sorted = sortPlayers([...players].filter(p => p.active));
-        let minPJ = Math.min(...sorted.filter(p => !poolEnJeu.includes(p.name)).map(p => p.pj));
+        let minPJ = Math.min(...sorted.filter(p => includePrevious || !poolEnJeu.includes(p.name)).map(p => p.pj));
         sorted.forEach(p => {
             let isPrevious = poolEnJeu.includes(p.name);
             let tr = document.createElement('tr');
-            if (isPrevious) tr.className = 'status-red';
-            else if (p.pj === minPJ) tr.className = 'status-blue';
+            
+            if (isPrevious) {
+                if (includePrevious) {
+                    tr.className = 'status-previous-visible';
+                } else {
+                    tr.className = 'status-red';
+                }
+            } else if (p.pj === minPJ) {
+                tr.className = 'status-blue';
+            }
+            
             let shouldBeChecked = (p.pj === 0 && !isPrevious);
             tr.innerHTML = `
-                <td><input type="checkbox" class="g-chk" value="${p.name}" ${shouldBeChecked ? 'checked' : ''} ${isPrevious ? 'disabled' : ''}></td>
+                <td><input type="checkbox" class="g-chk" value="${p.name}" ${shouldBeChecked ? 'checked' : ''} ${(isPrevious && !includePrevious) ? 'disabled' : ''}></td>
                 <td class="name-td">${p.name}</td>
                 <td>${p.victories}</td>
                 <td>${p.faf}</td>
@@ -279,7 +299,7 @@
 
     const renderP = () => {
         const grid = document.getElementById('grid-p'); grid.innerHTML = '';
-        [...players].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+        [players].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
             d.innerText = p.name;
             d.onclick = () => { p.active = !p.active; renderP(); };
