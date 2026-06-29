@@ -134,7 +134,7 @@
 
 <script>
     const WEB_APP_URL = `https://script.google.com/macros/s/AKfycbw7rQ1oTrRFAVH5XAbfLT-2KiCp-rAoPRV4JG2am-59AyRrag2OvcGXNQNbSXEFDgJN/exec`;
-    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "PHILIPPE L", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ARNAUD", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"]
+    let players = ["ANTOINE", "CYRILLE", "DAMIEN", "DANIÈLE", "ELIOTT", "ERIC", "GEOFFREY", "HENRICK", "LOUIS", "LYSIANE", "MADELEINE", "MICHÈLE", "PATRICE", "PATRICIA C", "PATRICIA L", "CHARLENE", "PHILIPPE M", "PHILIPPE O", "RENÉ", "ARNAUD", "SÉBASTIEN", "VALERIE", "YANN", "WILLIAM"]
         .map(n => ({ name: n, active: true, victories: 0, faf: 0, als4: 0, pj: 0 }));
     let poolEnJeu = [];
     let playerStates = {};
@@ -299,7 +299,7 @@
 
     const renderP = () => {
         const grid = document.getElementById('grid-p'); grid.innerHTML = '';
-        [players].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+        [...players].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
             const d = document.createElement('div'); d.className = `p-pill ${p.active?'active':''}`;
             d.innerText = p.name;
             d.onclick = () => { p.active = !p.active; renderP(); };
